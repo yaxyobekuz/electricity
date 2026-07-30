@@ -22,12 +22,20 @@ export interface DonutSlice {
   color?: string;
   /** Formatlanган ko'rinish (tooltip va jadval uchun). */
   display?: string;
+  /**
+   * Bu bo'lak JAMINING qismi EMAS — legendada foizsiz ko'rsatiladi va
+   * halqada chizilmaydi. Oqim ko'rsatkichlari uchun (masalan «davr
+   * ichida uzilgan»), ular zaxira bilan bir shkalada emas.
+   */
+  noShare?: boolean;
 }
 
 interface DonutProps {
   slices: DonutSlice[];
-  /** Markazdagi katta raqam. */
+  /** Markazdagi katta raqam — BIRLIKSIZ. */
   centerValue?: string;
+  /** Birlik alohida qatorda: aks holda «17.4 ming kWh» teshikka sig'maydi. */
+  centerUnit?: string;
   centerLabel?: string;
   height?: number;
   csvName?: string;
@@ -40,17 +48,31 @@ interface DonutProps {
    * Har bir band: rangli nuqta, yorliq, qiymat va ulush.
    */
   legendSide?: boolean;
+  /** Legenda halqadan KEYIN, pastda va kattaroq yozuv bilan. */
+  legendBelow?: boolean;
 }
 
 export function Donut({
-  slices, centerValue, centerLabel, height = 220,
-  csvName = 'donut', title, maxColors = 3, formatValue, legendSide = false,
+  slices, centerValue, centerUnit, centerLabel, height = 220,
+  csvName = 'donut', title, maxColors = 3, formatValue, legendSide = false, legendBelow = false,
 }: DonutProps) {
   const t = useVizTokens();
 
+  /*
+   * Markazdagi matn O'LCHAMI diagramma balandligidan kelib chiqadi.
+   *
+   * Qat'iy `text-lg` da «17.4 ming kWh» halqaning teshigidan kengroq
+   * bo'lib, segmentlar ustiga chiqib ketardi. Teshik diametri —
+   * `innerRadius` 0.68, ya'ni diagrammaning ~68% i.
+   */
+  const valueFs = Math.max(12, Math.min(20, Math.round(height * 0.115)));
+
+  /** Halqada chizilmaydigan, faqat legendada turadigan bandlar. */
+  const extras = useMemo(() => slices.filter((s) => s.noShare), [slices]);
+
   const prepared = useMemo(() => {
     const palette = t.series.slice(0, Math.min(maxColors, 3));
-    const sorted = [...slices].filter((s) => s.value > 0);
+    const sorted = [...slices].filter((s) => !s.noShare && s.value > 0);
 
     if (sorted.length <= palette.length) {
       return sorted.map((s, i) => ({ ...s, color: s.color ?? palette[i] ?? t.muted }));
@@ -78,39 +100,60 @@ export function Donut({
     },
     {
       key: 'pct', label: 'Ulushi', align: 'right',
-      render: (r) => `${total > 0 ? ((r.value / total) * 100).toFixed(1) : '0'}%`,
-      raw: (r) => (total > 0 ? Number(((r.value / total) * 100).toFixed(1)) : 0),
+      // Oqim bandlarida ulush ma'nosiz — jamining qismi emas.
+      render: (r) =>
+        r.noShare || total === 0 ? '—' : `${((r.value / total) * 100).toFixed(1)}%`,
+      raw: (r) => (r.noShare || total === 0 ? 0 : Number(((r.value / total) * 100).toFixed(1))),
     },
   ];
+
+  /** Jadval-egizak va CSV — legendadagi HAMMA band, oqimlar bilan birga. */
+  const tableRows: DonutSlice[] = [...prepared, ...extras];
 
   if (prepared.length === 0) {
     return <div className="flex h-32 items-center justify-center text-sm text-muted">Ma’lumot yo‘q</div>;
   }
 
-  /** Yon legenda — rangli nuqta + yorliq + qiymat + ulush. */
+  /**
+   * Yon legenda — rangli nuqta + yorliq, ostida qiymat va ulush.
+   *
+   * Halqadagi bo'laklardan keyin `noShare` bandlari qo'shiladi: ular
+   * jamining qismi emas, shuning uchun foizsiz beriladi.
+   */
+  const legendRows = legendSide
+    ? [
+        ...prepared.map((s) => ({ ...s, share: true })),
+        ...extras.map((s, i) => ({
+          ...s,
+          color: s.color ?? t.series[(prepared.length + i) % t.series.length]!,
+          share: false,
+        })),
+      ]
+    : [];
+
   const sideLegend = legendSide ? (
-    <ul className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
-      {prepared.map((s) => (
-        <li key={s.id} className="flex items-start gap-2">
-          <span
-            aria-hidden="true"
-            className="mt-1 inline-block size-2 shrink-0 rounded-full"
-            style={{ background: s.color }}
-          />
-          <div className="min-w-0">
-            <p className="truncate text-[11px] leading-tight text-muted">{s.label}</p>
-            <p
-              className="text-[12.5px] font-semibold leading-tight"
-              style={{ fontVariantNumeric: 'tabular-nums' }}
-            >
-              {s.display ?? fmt(s.value)}
-              {total > 0 && (
-                <span className="ml-1 font-normal text-muted">
-                  ({((s.value / total) * 100).toFixed(1)}%)
-                </span>
-              )}
-            </p>
-          </div>
+    <ul className="flex min-w-0 flex-1 flex-col justify-center gap-3">
+      {legendRows.map((s) => (
+        <li key={s.id} className="min-w-0">
+          <p className="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className="inline-block size-2.5 shrink-0 rounded-full"
+              style={{ background: s.color }}
+            />
+            <span className="truncate text-[12px] leading-tight text-muted">{s.label}</span>
+          </p>
+          <p
+            className="mt-1 truncate pl-4.5 text-[14px] font-bold leading-tight"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
+            {s.display ?? fmt(s.value)}
+            {s.share && total > 0 && (
+              <span className="ml-1 text-[11.5px] font-medium text-muted">
+                ({((s.value / total) * 100).toFixed(1)}%)
+              </span>
+            )}
+          </p>
         </li>
       ))}
     </ul>
@@ -121,12 +164,22 @@ export function Donut({
       csvName={csvName}
       height={height}
       legend={legendSide ? undefined : prepared.map((s) => ({ label: s.label, color: s.color! }))}
+      legendPlacement={legendBelow ? 'bottom' : 'top'}
       tableColumns={columns}
-      tableData={prepared}
+      tableData={tableRows}
       title={title}
     >
-      <div className={legendSide ? 'flex h-full items-center gap-3' : 'relative h-full'}>
-        <div className={legendSide ? 'relative h-full w-[46%] shrink-0' : 'contents'}>
+      {/*
+        DIQQAT: pastdagi o'ram `display: contents` BO'LMASLIGI kerak.
+
+        Nivo `ResponsivePie` o'z ichida `height: 100%` li div chizadi va uni
+        o'lchaydi. `display: contents` li ota-elementdan foizli balandlik
+        ishonchli hisoblanmaydi — o'lcham 0 chiqadi va halqa umuman
+        chizilmaydi. Markazdagi raqam esa `absolute inset-0` bo'lgani uchun
+        ko'rinib turaveradi: natijada "raqam bor, diagramma yo'q".
+      */}
+      <div className={legendSide ? 'flex h-full items-center gap-3' : 'h-full'}>
+        <div className={legendSide ? 'relative h-full w-[46%] shrink-0' : 'relative h-full w-full'}>
         <ResponsivePie
           activeOuterRadiusOffset={5}
           arcLabel={() => ''}
@@ -165,14 +218,27 @@ export function Donut({
           )}
         />
           {(centerValue || centerLabel) && (
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            /*
+              `px-[17%]` — mazmun halqaning TESHIGI ichida qoladi.
+              `innerRadius` 0.68 bo'lgani uchun har tomondan ~16% chetlash
+              kerak; usiz uzun qiymat segmentlar ustiga chiqib ketadi.
+            */
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-[17%] text-center">
               {centerValue && (
-                <span className="tabular text-lg font-bold leading-none">{centerValue}</span>
+                <span
+                  className="tabular font-bold leading-none"
+                  style={{ fontSize: valueFs }}
+                >
+                  {centerValue}
+                </span>
+              )}
+              {centerUnit && (
+                <span className="mt-0.5 text-[10px] font-medium leading-none text-muted">
+                  {centerUnit}
+                </span>
               )}
               {centerLabel && (
-                <span className="mt-1 max-w-[80%] text-center text-[10px] leading-tight text-muted">
-                  {centerLabel}
-                </span>
+                <span className="mt-1 text-[9.5px] leading-tight text-muted">{centerLabel}</span>
               )}
             </div>
           )}

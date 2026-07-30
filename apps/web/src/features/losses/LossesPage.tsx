@@ -77,7 +77,7 @@ export default function LossesPage() {
       />
 
       {/* ── 4 ta xulosa ──────────────────────────────────────────────── */}
-      <div className="mb-2.5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MiniStat
           hint={`Tarmoqqa kirgan: ${energy(totals?.kwhIn ?? 0).text}`}
           icon={<TrendingDown className="size-4.5" />}
@@ -110,12 +110,13 @@ export default function LossesPage() {
       </div>
 
       {/* ── Tuzilma · xarita · natijadorlik ──────────────────────────── */}
-      <div className="mb-2.5 grid grid-cols-1 gap-2.5 xl:grid-cols-12">
+      <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-12">
         <Panel className="xl:col-span-3" title="Yo‘qotish tuzilmasi">
           {structure.data ? (
             <Donut
               centerLabel="jami yo‘qotish"
-              centerValue={energy(structure.data.totalKwh).text}
+              centerUnit={energy(structure.data.totalKwh).unit}
+              centerValue={num(energy(structure.data.totalKwh).value, 1)}
               csvName="yoqotish-tuzilmasi"
               formatValue={(v) => energy(v).text}
               height={214}
@@ -216,7 +217,7 @@ export default function LossesPage() {
       </div>
 
       {/* ── Standart bilan solishtirish ──────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-2.5 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
         <Panel
           className="xl:col-span-5"
           subtitle="amaldagi va standart texnik yo‘qotish farqi"

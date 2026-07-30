@@ -5,6 +5,7 @@
  * ko'rinishidagi faol menyu bandi. Pastda samaradorlik indeksi kartasi.
  * Kontent maydoni yumshoq ko'k fonda, kartalar soya bilan "suzadi".
  */
+import { dateLabel, dateTimeLabel } from '@beap/shared';
 import { Button, Chip, Dropdown, Tooltip, cn } from '@heroui/react';
 import {
   Activity, BarChart3, Bell, Building2, CalendarDays, CircleDollarSign,
@@ -147,9 +148,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="text-[10px] leading-tight text-muted">
               {t('common.updatedAt')}:{' '}
               <span className="font-semibold text-foreground">
-                {new Date(boot.lastRefreshAt).toLocaleString('uz-Latn-UZ', {
-                  day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-                })}
+                {dateTimeLabel(boot.lastRefreshAt)}
               </span>
             </p>
           </div>
@@ -178,9 +177,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {boot?.dataRange.maxDate && (
               <span className="hidden items-center gap-1.5 rounded-lg bg-surface px-2.5 py-1.5 text-[11px] font-medium shadow-surface lg:inline-flex">
                 <CalendarDays className="size-3.5 text-muted" />
-                {new Date(boot.dataRange.maxDate).toLocaleDateString('uz-Latn-UZ', {
-                  day: '2-digit', month: 'short', year: 'numeric',
-                })}
+                {dateLabel(boot.dataRange.maxDate)}
               </span>
             )}
 

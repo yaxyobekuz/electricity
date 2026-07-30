@@ -147,7 +147,7 @@ export function useAlerts(period?: string) {
   });
 }
 
-export function useDistrictSeries(params: { from?: string; to?: string; bucket?: 'day' | 'week' | 'month' } = {}) {
+export function useDistrictSeries(params: { from?: string; to?: string; bucket?: 'day' | 'week' | 'month'; last?: number } = {}) {
   return useQuery({
     queryKey: keys.district('series', params),
     queryFn: ({ signal }) => api.get<TimeSeriesPoint[]>(`/dash/district/series${qs(params)}`, signal),
@@ -181,7 +181,7 @@ export function useMfyOverview(id: number, period?: string) {
   });
 }
 
-export function useMfyDynamics(id: number, params: { from?: string; to?: string; bucket?: 'day' | 'week' | 'month' } = {}) {
+export function useMfyDynamics(id: number, params: { from?: string; to?: string; bucket?: 'day' | 'week' | 'month'; last?: number } = {}) {
   return useQuery({
     queryKey: keys.mfy(id, 'dynamics', params),
     queryFn: ({ signal }) => api.get<TimeSeriesPoint[]>(`/dash/mfy/${id}/dynamics${qs(params)}`, signal),

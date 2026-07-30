@@ -10,6 +10,20 @@ import * as q from '../db/queries/dashboard.ts';
 import { getMfy } from '../db/queries/ref.ts';
 
 const periodQ = z.object({ period: z.string().regex(/^\d{4}-\d{2}$/).optional() });
+
+/**
+ * Vaqt qatori so'rovi.
+ *
+ * `last` — oxirgi nechta NUQTA qaytsin. Diagrammada 7 kun ko'rsatilsa ham
+ * 90 kunlik javob yuborish isrof; kesish serverda bo'ladi, chunki oxirgi
+ * sana ma'lumotga bog'liq va mijoz uni oldindan bilmaydi.
+ */
+const seriesQ = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  bucket: z.enum(['day', 'week', 'month']).default('day'),
+  last: z.coerce.number().int().min(2).max(365).optional(),
+});
 const dateQ = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() });
 const idParam = z.object({ id: z.coerce.number().int().positive() });
 
@@ -135,11 +149,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.get('/district/series', async (req) => {
-    const { from, to, bucket } = z.object({
-      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      bucket: z.enum(['day', 'week', 'month']).default('day'),
-    }).parse(req.query);
+    const { from, to, bucket, last } = seriesQ.parse(req.query);
 
     // Oyni vakillik qiladigan davr bo'yicha tugatamiz — aks holda qisman
     // to'ldirilgan joriy oy grafikda "qulash" bo'lib ko'rinadi.
@@ -150,7 +160,8 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     startDefault.setUTCDate(startDefault.getUTCDate() - 89);
     const start = from ?? startDefault.toISOString().slice(0, 10);
 
-    return q.timeSeries(req.ctx, start, end, bucket);
+    const rows = await q.timeSeries(req.ctx, start, end, bucket);
+    return last ? rows.slice(-last) : rows;
   });
 
   app.get('/district/loss-structure', async (req) => {
@@ -197,18 +208,17 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/mfy/:id/dynamics', async (req) => {
     const { id } = idParam.parse(req.params);
-    const { from, to, bucket } = z.object({
-      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      bucket: z.enum(['day', 'week', 'month']).default('day'),
-    }).parse(req.query);
+    const { from, to, bucket, last } = seriesQ.parse(req.query);
 
     const p = await q.latestPeriod(req.ctx);
     const end = to ?? (p ? await q.latestDateInPeriod(req.ctx, p) : null);
     if (!end) return [];
     const startDefault = new Date(`${end}T00:00:00Z`);
     startDefault.setUTCDate(startDefault.getUTCDate() - 89);
-    return q.timeSeries(req.ctx, from ?? startDefault.toISOString().slice(0, 10), end, bucket, id);
+    const rows = await q.timeSeries(
+      req.ctx, from ?? startDefault.toISOString().slice(0, 10), end, bucket, id,
+    );
+    return last ? rows.slice(-last) : rows;
   });
 
   app.get('/mfy/:id/capacity', async (req) => {

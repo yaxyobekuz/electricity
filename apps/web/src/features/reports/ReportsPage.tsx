@@ -56,7 +56,7 @@ export default function ReportsPage() {
         title={t('nav.reports')}
       />
 
-      <div className="mb-2.5 grid grid-cols-1 gap-2.5 xl:grid-cols-12">
+      <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-12">
         {/* ── Davriy hisobot ─────────────────────────────────────────── */}
         <Panel
           className="xl:col-span-5"
@@ -190,7 +190,7 @@ export default function ReportsPage() {
             {mfys.map((m) => (
               <li
                 key={m.id}
-                className="flex items-center gap-2.5 rounded-lg bg-surface-secondary px-3 py-2"
+                className="flex items-center gap-3 rounded-lg bg-surface-secondary px-3 py-2"
               >
                 <Building2 className="size-4 shrink-0 text-accent" />
                 <span className="min-w-0 flex-1">

@@ -76,7 +76,9 @@ function SparkBars({
     });
   }, [values, width, height]);
 
-  if (!bars) return <div style={{ width, height }} aria-hidden="true" />;
+  // Ma'lumot bo'lmasa ham JOY BAND QILINADI (className bilan birga) — aks
+  // holda ma'lumotsiz karta qo'shnisidan past bo'lib, qator notekis chiqadi.
+  if (!bars) return <div aria-hidden="true" className={className} style={{ height }} />;
 
   const c = color ?? 'var(--tone-solid, var(--accent))';
 
@@ -90,6 +92,11 @@ function SparkBars({
       width={width}
     >
       {bars.map((b, i) => (
+        /*
+          Ustunlar chapdan o'ngga navbat bilan o'sib chiqadi.
+          `transform-box: fill-box` + `transform-origin: bottom` —
+          SVG'da o'sish PASTDAN yuqoriga bo'lishi uchun shart.
+        */
         <rect
           key={i}
           fill={c}
@@ -99,6 +106,11 @@ function SparkBars({
           width={b.w}
           x={b.x}
           y={b.y}
+          style={{
+            transformBox: 'fill-box',
+            transformOrigin: 'bottom',
+            animation: `beap-bar-grow 0.5s cubic-bezier(0.22,0.68,0.32,1) ${i * 22}ms both`,
+          }}
         />
       ))}
     </svg>
@@ -141,7 +153,7 @@ function SparkLine({
     return { line, area, last: points.at(-1)! };
   }, [values, width, height]);
 
-  if (!geometry) return <div style={{ width, height }} aria-hidden="true" />;
+  if (!geometry) return <div aria-hidden="true" className={className} style={{ height }} />;
 
   const stroke = color ?? 'var(--viz-muted)';
   const dot = accent ?? color ?? 'var(--viz-1)';

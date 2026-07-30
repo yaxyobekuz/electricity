@@ -10,7 +10,7 @@ import { GaugeChart } from 'echarts/charts';
 import { TooltipComponent } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CHART_FONT, useVizTokens } from '../../lib/chart-theme.ts';
 
@@ -40,6 +40,7 @@ export function Gauge({
   const ref = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
   const t = useVizTokens();
+  const [box, setBox] = useState({ w: 0, h: 0 });
 
   const resolvedBands = useMemo<[number, string][]>(() => {
     if (bands) return bands;
@@ -66,6 +67,26 @@ export function Gauge({
     return resolvedBands.at(-1)?.[1] ?? t.series[0]!;
   }, [value, min, max, resolvedBands, t]);
 
+  /*
+   * O'LCHAMGA BOG'LIQ TIPOGRAFIYA — bu yerda majburiy.
+   *
+   * ECharts gauge radiusini konteynerning KICHIK tomonidan hisoblaydi,
+   * matn o'lchami esa qat'iy piksel edi. Natijada past panelda halqa
+   * kichrayib, "57.9%" o'sha halqani bosib ketardi. Endi halqa qalinligi
+   * ham, matn ham radiusdan kelib chiqadi.
+   */
+  const geom = useMemo(() => {
+    const base = Math.min(box.w || height, box.h || height);
+    const r = (base / 2) * 0.92;
+    return {
+      ring: Math.max(7, Math.round(r * 0.2)),
+      detail: Math.max(13, Math.round(r * 0.4)),
+      title: Math.max(9, Math.round(r * 0.15)),
+      /** Yorliq faqat joy yetganda — aks holda raqamga tegib ketadi. */
+      showTitle: Boolean(label) && r >= 46,
+    };
+  }, [box, height, label]);
+
   useEffect(() => {
     if (!ref.current) return;
     chartRef.current ??= echarts.init(ref.current, undefined, { renderer: 'canvas' });
@@ -83,49 +104,46 @@ export function Gauge({
             endAngle: -30,
             min,
             max,
-            radius: '96%',
-            center: ['50%', '62%'],
+            radius: '92%',
+            // 240° yoy: pastda bo'shliq bor, shuning uchun markaz tepada.
+            center: ['50%', '57%'],
             // Ignasiz "progress" ko'rinishi — o'qish osonroq.
             pointer: { show: false },
             progress: {
               show: true,
-              width: 14,
+              width: geom.ring,
               roundCap: true,
               itemStyle: { color: activeColor },
             },
             axisLine: {
               lineStyle: {
-                width: 14,
+                width: geom.ring,
                 color: [[1, t.grid]],
               },
             },
+            /*
+             * Bo'linish chiziqlari va o'q yorliqlari O'CHIRILGAN.
+             * Kichik o'lchamda ular halqa ichida uzuq-yuluq shtrixlarga
+             * aylanib, "buzilgan" ko'rinish berardi. Aniq qiymat markazda
+             * raqam bilan, chegaralari esa yon jadvalda ko'rsatiladi.
+             */
             axisTick: { show: false },
-            splitLine: {
-              distance: -16,
-              length: 6,
-              lineStyle: { color: t.axis, width: 1 },
-            },
-            axisLabel: {
-              distance: -30,
-              color: t.muted,
-              fontSize: 10,
-              fontFamily: CHART_FONT,
-              formatter: (v: number) => (v === min || v === max ? String(v) : ''),
-            },
+            splitLine: { show: false },
+            axisLabel: { show: false },
             anchor: { show: false },
             title: {
-              show: Boolean(label),
-              offsetCenter: [0, '38%'],
+              show: geom.showTitle,
+              offsetCenter: [0, '36%'],
               color: t.muted,
-              fontSize: 11,
+              fontSize: geom.title,
               fontFamily: CHART_FONT,
             },
             detail: {
               valueAnimation: true,
-              offsetCenter: [0, '4%'],
+              offsetCenter: [0, geom.showTitle ? '2%' : '10%'],
               formatter: (v: number) => `${Math.round(v * 10) / 10}${suffix}`,
               color: t.ink,
-              fontSize: 30,
+              fontSize: geom.detail,
               fontWeight: 600,
               fontFamily: CHART_FONT,
             },
@@ -137,13 +155,18 @@ export function Gauge({
     );
 
     return undefined;
-  }, [value, min, max, label, suffix, activeColor, t]);
+  }, [value, min, max, label, suffix, activeColor, geom, t]);
 
-  // O'lcham o'zgarishini kuzatish
+  // O'lcham o'zgarishini kuzatish — tipografiya ham shundan qayta hisoblanadi.
   useEffect(() => {
-    if (!ref.current) return;
-    const ro = new ResizeObserver(() => chartRef.current?.resize());
-    ro.observe(ref.current);
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect;
+      if (r && r.width > 0) setBox({ w: r.width, h: r.height });
+      chartRef.current?.resize();
+    });
+    ro.observe(el);
     return () => ro.disconnect();
   }, []);
 

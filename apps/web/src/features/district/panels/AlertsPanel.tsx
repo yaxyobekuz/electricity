@@ -33,12 +33,19 @@ export function AlertsPanel({ items }: { items: AlertItem[] }) {
 
   return (
     <div className="flex flex-col">
-      <ul className="scroll-y max-h-[276px] divide-y divide-separator/50">
+      <ul className="scroll-y max-h-69 divide-y divide-separator/50">
         {items.map((item) => {
           const meta = SEVERITY_META[item.severity];
           const Icon = meta.icon;
           const body = (
-            <div className="flex gap-2.5 px-4 py-2.5">
+            /*
+              `items-start` — chipni qator balandligiga cho'zilishdan
+              saqlaydi. `flex` sukut bo'yicha `align-items: stretch`,
+              `shrink-0` esa faqat asosiy o'qqa ta'sir qiladi: matn uch
+              qatorga bo'linganda "Jiddiy" belgisi baland kapsulaga
+              aylanib qolardi.
+            */
+            <div className="flex items-start gap-2.5 px-4 py-2.5">
               <Icon
                 className="mt-0.5 size-4 shrink-0"
                 style={{ color: meta.color }}
@@ -78,9 +85,6 @@ export function AlertsPanel({ items }: { items: AlertItem[] }) {
           );
         })}
       </ul>
-      <p className="border-t border-separator/50 px-4 py-2 text-[10px] leading-tight text-muted">
-        {t('alerts.note')}
-      </p>
     </div>
   );
 }

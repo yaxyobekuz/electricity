@@ -73,7 +73,7 @@ export default function EnergyBalancePage() {
       />
 
       {/* ── 4 ta xulosa ──────────────────────────────────────────────── */}
-      <div className="mb-2.5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MiniStat
           hint={`${num(rows.length)} ta mahalladan`}
           icon={<Zap className="size-4.5" />}
@@ -109,7 +109,7 @@ export default function EnergyBalancePage() {
       </div>
 
       {/* ── Sankey + tarkib jadvali ──────────────────────────────────── */}
-      <div className="mb-2.5 grid grid-cols-1 gap-2.5 xl:grid-cols-12">
+      <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-12">
         <Panel
           className="xl:col-span-8"
           subtitle="manbadan iste’molchigacha bo‘lgan oqim"
@@ -173,7 +173,7 @@ export default function EnergyBalancePage() {
             ))}
           </ToggleButtonGroup>
         }
-        className="mb-2.5"
+        className="mb-3"
         subtitle="oxirgi 90 kun"
         title="Balans dinamikasi"
       >

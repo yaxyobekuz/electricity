@@ -1,0 +1,186 @@
+/**
+ * Raqam / birlik formatlash — dashboard va input panel uchun yagona qoida.
+ *
+ * Muhim: mijoz hujjatlarida birlik chalkashligi bor (kWh vs ming kWh, mln vs mlrd so'm).
+ * Shu sababli SAQLASH birligi qat'iy va formatlash faqat shu yerda bo'ladi:
+ *   • energiya  → kWh          (baza), ko'rsatishda avtomatik ming/mln kWh
+ *   • qarzdorlik → mln so'm    (baza), ko'rsatishda avtomatik mlrd so'm
+ *   • uzunlik   → km
+ *   • masofa    → m
+ */
+const LOCALE = 'uz-Latn-UZ';
+/** Ba'zi muhitlarda `uz-Latn-UZ` mavjud emas — o'sha holatda `en-US` ga tushadi. */
+function nf(options) {
+    try {
+        return new Intl.NumberFormat(LOCALE, options);
+    }
+    catch {
+        return new Intl.NumberFormat('en-US', options);
+    }
+}
+const cache = new Map();
+function fmt(options) {
+    const key = JSON.stringify(options);
+    let f = cache.get(key);
+    if (!f) {
+        f = nf(options);
+        cache.set(key, f);
+    }
+    return f;
+}
+// ─── Umumiy raqam ────────────────────────────────────────────────────────────
+export function num(value, digits = 0) {
+    if (value == null || !Number.isFinite(value))
+        return '—';
+    return fmt({ minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
+}
+export function pct(value, digits = 1) {
+    if (value == null || !Number.isFinite(value))
+        return '—';
+    return `${fmt({ minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value)}%`;
+}
+/** Farq (foiz punkti) — doim ishora bilan. */
+export function deltaPp(value, digits = 1) {
+    if (value == null || !Number.isFinite(value))
+        return '—';
+    const s = fmt({ minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Math.abs(value));
+    if (Math.abs(value) < 10 ** -digits / 2)
+        return `0.0 p.p.`;
+    return `${value > 0 ? '+' : '−'}${s} p.p.`;
+}
+/** Nisbiy o'zgarish foizda — doim ishora bilan. */
+export function deltaPct(value, digits = 1) {
+    if (value == null || !Number.isFinite(value))
+        return '—';
+    const s = fmt({ minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Math.abs(value));
+    return `${value > 0 ? '↑' : value < 0 ? '↓' : ''}${s}%`;
+}
+export function energy(kwh) {
+    if (kwh == null || !Number.isFinite(kwh))
+        return { value: 0, unit: 'kWh', text: '—' };
+    const abs = Math.abs(kwh);
+    if (abs >= 1e6) {
+        const v = kwh / 1e6;
+        return { value: v, unit: 'mln kWh', text: `${num(v, 1)} mln kWh` };
+    }
+    if (abs >= 1e4) {
+        const v = kwh / 1e3;
+        return { value: v, unit: 'ming kWh', text: `${num(v, 1)} ming kWh` };
+    }
+    return { value: kwh, unit: 'kWh', text: `${num(kwh, 0)} kWh` };
+}
+/** Faqat qiymat (birliksiz) — KPI kartalari uchun, birlik alohida ko'rsatiladi. */
+export function energyParts(kwh) {
+    const e = energy(kwh);
+    return { value: kwh == null ? '—' : num(e.value, e.unit === 'kWh' ? 0 : 1), unit: e.unit };
+}
+/** Pasport 8 va 10-qatorlari uchun: ming kWh. */
+export function thousandKwh(kwh, digits = 1) {
+    if (kwh == null || !Number.isFinite(kwh))
+        return '—';
+    return `${num(kwh / 1000, digits)} ming kWh`;
+}
+// ─── Pul (baza birligi: mln so'm) ────────────────────────────────────────────
+export function money(mln) {
+    if (mln == null || !Number.isFinite(mln))
+        return { value: 0, unit: 'mln so‘m', text: '—' };
+    if (Math.abs(mln) >= 1000) {
+        const v = mln / 1000;
+        return { value: v, unit: 'mlrd so‘m', text: `${num(v, 1)} mlrd so‘m` };
+    }
+    return { value: mln, unit: 'mln so‘m', text: `${num(mln, 1)} mln so‘m` };
+}
+export function moneyParts(mln) {
+    const m = money(mln);
+    return { value: mln == null ? '—' : num(m.value, 1), unit: m.unit };
+}
+// ─── O'lchamlar ──────────────────────────────────────────────────────────────
+export const km = (v, digits = 1) => (v == null ? '—' : `${num(v, digits)} km`);
+export const meters = (v) => (v == null ? '—' : `${num(v, 0)} m`);
+export const kva = (v) => (v == null ? '—' : `${num(v, 0)} kVA`);
+export const kw = (v) => (v == null ? '—' : `${num(v, 0)} kW`);
+export const volts = (v) => (v == null ? '—' : `${num(v, 0)} V`);
+export const pieces = (v) => (v == null ? '—' : `${num(v, 0)} ta`);
+// ─── Sana / davr ─────────────────────────────────────────────────────────────
+const MONTHS_UZ_LATN = [
+    'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
+    'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr',
+];
+const MONTHS_UZ_CYRL = [
+    'январ', 'феврал', 'март', 'апрел', 'май', 'июн',
+    'июл', 'август', 'сентабр', 'октабр', 'ноябр', 'декабр',
+];
+/**
+ * TIZIM BO'YICHA YAGONA SANA KO'RINISHI: `21-may, 2025`.
+ *
+ * Raqamli ko'rinishlar (`21.05.2025`, `05/21/2025`, `2025-05-21`) taqiqlanadi —
+ * kun/oy tartibi o'quvchiga bog'liq bo'lib qoladi va hisobotlarda chalkashlik
+ * tug'diradi. Oy nomi yozilganda tartib bir ma'noli bo'ladi.
+ *
+ * Shuning uchun sana KO'RSATISH faqat shu yerdagi funksiyalar orqali bo'ladi:
+ * komponentlarda `toLocaleDateString` yoki qo'lda `split('-')` ishlatilmaydi.
+ */
+/** `2026-06-23` → `23-iyun, 2025` — tizimdagi ASOSIY sana ko'rinishi. */
+export function dateLabel(iso, script = 'latn') {
+    const [y, m, d] = String(iso).slice(0, 10).split('-');
+    const names = script === 'cyrl' ? MONTHS_UZ_CYRL : MONTHS_UZ_LATN;
+    const name = names[Number(m) - 1];
+    return name && y ? `${Number(d)}-${name}, ${y}` : iso;
+}
+/** `2026-06` → `iyun, 2026` — kunsiz davr (oylik hisobotlar). */
+export function periodLabel(period, script = 'latn') {
+    const [y, m] = String(period).split('-');
+    const names = script === 'cyrl' ? MONTHS_UZ_CYRL : MONTHS_UZ_LATN;
+    const name = names[Number(m) - 1];
+    return name && y ? `${name}, ${y}` : period;
+}
+/** `periodLabel` ning taxallusi — diagramma o'qlarida ma'noni oydinlashtiradi. */
+export const monthLabel = periodLabel;
+/**
+ * `2026-05-17` → `17-may` — yilsiz, FAQAT diagramma o'qlari uchun.
+ *
+ * O'qda 9 ta belgi yonma-yon turadi; har biriga yil qo'shilsa yorliqlar
+ * bir-birini bosadi. Yil sarlavha va tooltipda to'liq ko'rinadi.
+ */
+export function dateDayMonth(iso, script = 'latn') {
+    const [, m, d] = String(iso).slice(0, 10).split('-');
+    const names = script === 'cyrl' ? MONTHS_UZ_CYRL : MONTHS_UZ_LATN;
+    const name = names[Number(m) - 1];
+    return name ? `${Number(d)}-${name}` : iso;
+}
+/** `Date` yoki ISO belgi → `21-may, 2025 14:30`. */
+export function dateTimeLabel(d, script = 'latn') {
+    const dt = typeof d === 'string' ? new Date(d) : d;
+    if (Number.isNaN(dt.getTime()))
+        return '—';
+    return `${dateLabel(isoDate(dt), script)} ${timeLabel(dt)}`;
+}
+/** Mahalliy vaqt zonasidagi `YYYY-MM-DD` — `toISOString` UTC ga surib yuboradi. */
+export function isoDate(d) {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+/**
+ * Qisqartirilgan raqam — diagramma o'qlari uchun: `1500000` → `1.5M`.
+ *
+ * O'q yorliqlari to'liq raqamlar bilan («1 500 000») bir-biriga tegib
+ * ketadi va o'qib bo'lmaydi. Aniq qiymat tooltip va jadvalda qoladi.
+ */
+export function compact(value) {
+    const abs = Math.abs(value);
+    const strip = (n) => {
+        const s = n.toFixed(1);
+        return s.endsWith('.0') ? s.slice(0, -2) : s;
+    };
+    if (abs >= 1e9)
+        return `${strip(value / 1e9)}B`;
+    if (abs >= 1e6)
+        return `${strip(value / 1e6)}M`;
+    if (abs >= 1e3)
+        return `${strip(value / 1e3)}k`;
+    return strip(value);
+}
+export function timeLabel(d) {
+    const dt = typeof d === 'string' ? new Date(d) : d;
+    return `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+}

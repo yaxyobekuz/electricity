@@ -1,28 +1,45 @@
-/** Transformator monitoringi — yuklama chizig'i va holat chipi bilan jadval. */
+/** Transformatorlar holati — raqamli jadval: yuklama foizi, holat va standart chipi. */
 import type { TpMonitorRow } from '@beap/shared';
-import { kva, meters, pct } from '@beap/shared';
+import { num } from '@beap/shared';
 import { Chip } from '@heroui/react';
-import { Check, X } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { useVizTokens } from '../../../lib/chart-theme.ts';
 import { EmptyPanel } from '../../../components/ui/Panel.tsx';
 
+type StatusKey = 'good' | 'warning' | 'serious' | 'critical';
+
+/** Jadvaldagi qisqa yorliq — ustun tor, shuning uchun bir so'z. */
 const CONDITION_LABEL: Record<string, string> = {
   GOOD: 'Yaxshi',
+  ATTENTION: 'Diqqat',
+  OVERLOAD: 'Ogohlantirish',
+  FAULT: 'Nosozlik',
+};
+
+/** To'liq ma'no — `title` sifatida, qisqa yorliq noaniq qolmasligi uchun. */
+const CONDITION_HINT: Record<string, string> = {
+  GOOD: 'Yaxshi — yuklama me’yorda',
   ATTENTION: 'Diqqat talab qiladi',
   OVERLOAD: 'Ortiqcha yuklama',
   FAULT: 'Nosozlik',
 };
 
-const CONDITION_STATUS: Record<string, 'good' | 'warning' | 'serious' | 'critical'> = {
+const CONDITION_STATUS: Record<string, StatusKey> = {
   GOOD: 'good',
   ATTENTION: 'warning',
   OVERLOAD: 'critical',
   FAULT: 'serious',
 };
 
-export function TpMonitorPanel({ rows, showMfy = true }: { rows: TpMonitorRow[]; showMfy?: boolean }) {
+const CHIP_COLOR: Record<StatusKey, 'success' | 'warning' | 'danger'> = {
+  good: 'success',
+  warning: 'warning',
+  serious: 'danger',
+  critical: 'danger',
+};
+
+export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]; showMfy?: boolean }) {
   const t = useVizTokens();
 
   if (rows.length === 0) return <EmptyPanel message="Ma’lumot yo‘q" />;
@@ -30,30 +47,38 @@ export function TpMonitorPanel({ rows, showMfy = true }: { rows: TpMonitorRow[];
   return (
     <div className="scroll-y max-h-75 overflow-x-auto">
       {/*
-        `table-fixed` + aniq ustun kengliklari: aks holda "Ortiqcha yuklama"
-        va "448 m" kabi matnlar ikki qatorga bo'linib, qatorlar bir-biriga
-        yopishib qolardi. Tor panelda jadval siqilmaydi — gorizontal siljiydi.
+        `table-fixed` + NISBIY (foizli) kengliklar.
+
+        Piksellarda berilganda ortiqcha kenglikning HAMMASI birinchi
+        ustunga tushardi: keng panelda "TR-0108" yonida katta bo'shliq
+        qolib, yuklama va holat ustunlari siqilib turardi. Foiz bilan
+        ortiqcha joy hamma ustunga taqsimlanadi.
+
+        `min-w` — tor panelda jadval siqilmaydi, gorizontal siljiydi.
       */}
-      <table className="dt min-w-105 table-fixed">
+      <table className="dt min-w-[31rem] table-fixed">
         <thead>
           <tr>
-            <th>TP</th>
-            <th className="w-18 text-right">Quvvat</th>
-            <th className="w-30">Yuklama</th>
-            <th className="w-20 text-right">Masofa</th>
-            <th className="w-33">Holat</th>
+            <th className="w-[7%] text-center">№</th>
+            <th className="w-[19%]">Transformator</th>
+            <th className="w-[15%] text-right">Quvvat (kVA)</th>
+            <th className="w-[14%] text-right">Yuklama (%)</th>
+            <th className="w-[19%]">Holat</th>
+            <th className="w-[13%] text-right">Masofa (m)</th>
+            <th className="w-[13%]">Standart</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => {
+          {rows.map((r, i) => {
             const status = CONDITION_STATUS[r.condition] ?? 'good';
             const color = t.status[status];
             return (
               <tr key={r.tpId}>
+                <td className="num !text-center text-[12px] text-muted">{i + 1}</td>
                 <td className="truncate">
                   <Link
                     to={`/dashboard/mfy/${r.mfyId}`}
-                    className="block truncate text-[12.5px] font-medium hover:underline"
+                    className="block truncate text-[12.5px] font-semibold text-accent hover:underline"
                   >
                     {r.code}
                   </Link>
@@ -63,50 +88,48 @@ export function TpMonitorPanel({ rows, showMfy = true }: { rows: TpMonitorRow[];
                     </span>
                   )}
                 </td>
-                <td className="num whitespace-nowrap text-[12.5px]">{kva(r.ratedKva)}</td>
-                <td>
-                  <div className="flex items-center gap-1.5">
-                    <span className="loadbar flex-1">
-                      <span
-                        className="loadbar__fill"
-                        style={{ width: `${Math.min(100, r.loadPct)}%`, background: color }}
-                      />
-                      {/* Optimal chegara belgisi */}
-                      <span
-                        className="loadbar__mark"
-                        style={{ left: `${Math.min(100, r.optimalPct)}%` }}
-                        aria-hidden="true"
-                      />
-                    </span>
-                    <span className="tabular w-9 shrink-0 text-right text-[12px] font-semibold">
-                      {r.loadPct.toFixed(0)}%
-                    </span>
-                  </div>
-                  <span className="mt-0.5 block whitespace-nowrap text-[10px] leading-none text-muted">
-                    optimal {pct(r.optimalPct, 0)}
-                  </span>
-                </td>
-                <td className="num whitespace-nowrap text-[12.5px]">
-                  <span className="inline-flex items-center gap-1">
-                    {meters(r.avgDistanceM)}
-                    {r.distanceCompliant === true && (
-                      <Check className="size-3 shrink-0 text-viz-good" aria-label="Normaga mos" />
-                    )}
-                    {r.distanceCompliant === false && (
-                      <X className="size-3 shrink-0 text-viz-critical" aria-label="Normadan uzoq" />
-                    )}
-                  </span>
+                <td className="num whitespace-nowrap text-[12.5px]">{num(r.ratedKva)}</td>
+                {/*
+                  Foiz rangi holat rangi bilan BIR XIL manbadan olinadi —
+                  chip bilan raqam hech qachon boshqa-boshqa signal bermaydi.
+                */}
+                <td
+                  className="num whitespace-nowrap text-[12.5px] font-semibold"
+                  style={{ color }}
+                  title={`Optimal: ${num(r.optimalPct)}%`}
+                >
+                  {r.loadPct.toFixed(0)}%
                 </td>
                 <td>
                   <Chip
                     className="whitespace-nowrap"
-                    color={status === 'good' ? 'success' : status === 'warning' ? 'warning' : 'danger'}
+                    color={CHIP_COLOR[status]}
                     size="sm"
+                    title={CONDITION_HINT[r.condition] ?? r.condition}
                     variant="soft"
                   >
-                    <span className={`dot dot--${status}`} aria-hidden="true" />
                     <Chip.Label>{CONDITION_LABEL[r.condition] ?? r.condition}</Chip.Label>
                   </Chip>
+                </td>
+                <td className="num whitespace-nowrap text-[12.5px]">{num(r.avgDistanceM)}</td>
+                <td>
+                  {r.distanceCompliant == null ? (
+                    <span className="text-[12px] text-muted">—</span>
+                  ) : (
+                    <Chip
+                      className="whitespace-nowrap"
+                      color={r.distanceCompliant ? 'success' : 'danger'}
+                      size="sm"
+                      title={
+                        r.distanceCompliant
+                          ? 'Masofa normaga mos'
+                          : 'Masofa normadan uzoq'
+                      }
+                      variant="soft"
+                    >
+                      <Chip.Label>{r.distanceCompliant ? 'Mos' : 'Mos emas'}</Chip.Label>
+                    </Chip>
+                  )}
                 </td>
               </tr>
             );

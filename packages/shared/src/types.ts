@@ -107,12 +107,27 @@ export interface KpiTile {
   labelUz: string;
   value: number | null;
   unit: string;
-  /** Kunga nisbatan nisbiy o'zgarish, %. */
+  /** O'tgan davrga nisbatan nisbiy o'zgarish, %. */
   deltaPct: number | null;
+  /**
+   * O'tgan davrdagi AYNIQ qiymat.
+   *
+   * Foizning o'zi yetarli emas: "↑ 0.2%" nimaga nisbatan ekani ko'rinmaydi.
+   * Solishtirish qiymati ko'rsatilsa, raqam o'z-o'zini izohlaydi.
+   */
+  prevValue: number | null;
+  /** Solishtirish davri, masalan `2026-05` — "o'tgan oy" degani. */
+  prevPeriod: string;
   /** O'sish yaxshimi yoki yomonmi — rangni shu belgilaydi. */
   goodDirection: 'up' | 'down';
-  /** Sparkline uchun oxirgi 30 nuqta. */
+  /** Sparkline nuqtalari. */
   spark: number[];
+  /**
+   * Sparkline nuqtalari qaysi davrni bildiradi.
+   * Energiya ko'rsatkichlari kunlik, abonent/qarzdorlik/TP esa oylik yoziladi,
+   * shuning uchun diagrammalar bir xil davrni ko'rsatmaydi — buni aytish shart.
+   */
+  sparkBucket: 'day' | 'month';
   /** Manba (provenance) kaliti — "i" popoveri uchun. */
   metric: string;
 }
@@ -269,8 +284,12 @@ export interface CapacityInfo {
 export interface ConsumerBreakdown {
   total: number;
   active: number;
+  /** ZAXIRA: hozirda uzilgan holatda turgan abonentlar. */
   disconnected: number;
+  /** OQIM: davr ichida yangi ulanganlar. */
   new: number;
+  /** OQIM: davr ichida uzilganlar — `disconnected` dan farqli o'laroq. */
+  disconnectedNew: number;
   population: number;
   legal: number;
 }

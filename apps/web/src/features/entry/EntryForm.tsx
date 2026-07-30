@@ -12,7 +12,7 @@
  */
 import type { EnergyBalanceDay, MonthlyReturn, Submission, ValidationReport } from '@beap/shared';
 import {
-  DOMAIN_LABEL_UZ, balanceTolerance, dateLabel, num, periodDates, periodLabel,
+  DOMAIN_LABEL_UZ, balanceTolerance, dateDayMonth, num, periodDates, periodLabel, timeLabel,
 } from '@beap/shared';
 import {
   AlertDialog, Alert, Button, Chip, Description, Input, InputGroup, Label,
@@ -407,8 +407,9 @@ function EnergyBalanceGrid({
 
                 return (
                   <tr key={date} className={mismatch ? 'bg-danger/5' : undefined}>
+                    {/* Yil sarlavhada turibdi — har qatorda takrorlanmaydi. */}
                     <td className="sticky left-0 z-10 bg-surface font-medium">
-                      {dateLabel(date).replace(/ \d{4}$/, '')}
+                      {dateDayMonth(date)}
                     </td>
                     <NumCell
                       readOnly={readOnly}
@@ -710,7 +711,7 @@ function MonthlyReturnForm({
             <span className="text-[11px] text-muted">
               {saveState === 'saving' ? 'Saqlanmoqda…'
                 : saveState === 'saved' && savedAt
-                  ? `Saqlandi ${new Date(savedAt).toLocaleTimeString('uz-Latn-UZ', { hour: '2-digit', minute: '2-digit' })}`
+                  ? `Saqlandi ${timeLabel(savedAt)}`
                   : ''}
             </span>
             <Button

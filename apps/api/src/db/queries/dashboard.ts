@@ -136,27 +136,71 @@ async function periodTotals(
 }
 
 /** Oxirgi 30 kunlik qiymatlar — sparkline uchun. */
+interface Sparks {
+  kwhIn: number[]; kwhSold: number[]; lossPct: number[]; naturalPct: number[];
+  debt: number[]; consumersActive: number[]; consumersDisconnected: number[]; tpCount: number[];
+}
+
+/**
+ * KPI kartalaridagi mikro-diagrammalar.
+ *
+ * IKKI XIL DAVR, chunki manbalar ham har xil:
+ *   • energiya ko'rsatkichlari KUNLIK yoziladi  → oxirgi 30 kun
+ *   • abonent / qarzdorlik / TP soni OYLIK      → oxirgi 12 oy
+ *
+ * Har bir kartada sparkline BO'LISHI shart: aks holda ba'zi kartalarning
+ * pastida bo'sh joy qolib, qator notekis ko'rinadi.
+ */
 async function sparklines(
   ctx: AppContext, period: string, mfyId: number | null, elektrosetId: number | null,
-): Promise<{ kwhIn: number[]; kwhSold: number[]; lossPct: number[] }> {
+): Promise<Sparks> {
   const { clause, params } = scopeFilter(mfyId, elektrosetId);
-  const rows = await query<{ kwh_in: number; kwh_sold: number; loss_pct: number | null }>(
-    `SELECT a.biz_date,
-            sum(a.kwh_in)   AS kwh_in,
-            sum(a.kwh_sold) AS kwh_sold,
-            CASE WHEN sum(a.kwh_in) > 0
-                 THEN round(100 * sum(a.kwh_loss_total) / sum(a.kwh_in), 2) END AS loss_pct
-     FROM agg.mfy_daily a
-     WHERE a.biz_date <= (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '1 day')::date
-       AND a.biz_date >  (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '31 days')::date
-       ${clause}
-     GROUP BY a.biz_date ORDER BY a.biz_date`,
-    [period, ...params], ctx,
-  );
+
+  const [daily, monthly] = await Promise.all([
+    query<{
+      kwh_in: number; kwh_sold: number; loss_pct: number | null; natural_pct: number | null;
+    }>(
+      `SELECT a.biz_date,
+              sum(a.kwh_in)   AS kwh_in,
+              sum(a.kwh_sold) AS kwh_sold,
+              CASE WHEN sum(a.kwh_in) > 0
+                   THEN round(100 * sum(a.kwh_loss_total) / sum(a.kwh_in), 2) END AS loss_pct,
+              CASE WHEN sum(a.kwh_in) > 0
+                   THEN round(100 * sum(a.kwh_loss_natural) / sum(a.kwh_in), 2) END AS natural_pct
+       FROM agg.mfy_daily a
+       WHERE a.biz_date <= (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '1 day')::date
+         AND a.biz_date >  (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '31 days')::date
+         ${clause}
+       GROUP BY a.biz_date ORDER BY a.biz_date`,
+      [period, ...params], ctx,
+    ),
+    query<{
+      debt_total_mln: number; consumers_active: number;
+      consumers_disconnected: number; tp_total: number;
+    }>(
+      `SELECT a.period_month,
+              sum(a.debt_total_mln)         AS debt_total_mln,
+              sum(a.consumers_active)       AS consumers_active,
+              sum(a.consumers_disconnected) AS consumers_disconnected,
+              sum(a.tp_total)               AS tp_total
+       FROM agg.mfy_monthly a
+       WHERE a.period_month <= ($1 || '-01')::date
+         AND a.period_month >  (($1 || '-01')::date - INTERVAL '12 months')::date
+         ${clause}
+       GROUP BY a.period_month ORDER BY a.period_month`,
+      [period, ...params], ctx,
+    ),
+  ]);
+
   return {
-    kwhIn: rows.map((r) => Number(r.kwh_in)),
-    kwhSold: rows.map((r) => Number(r.kwh_sold)),
-    lossPct: rows.map((r) => Number(r.loss_pct ?? 0)),
+    kwhIn: daily.map((r) => Number(r.kwh_in)),
+    kwhSold: daily.map((r) => Number(r.kwh_sold)),
+    lossPct: daily.map((r) => Number(r.loss_pct ?? 0)),
+    naturalPct: daily.map((r) => Number(r.natural_pct ?? 0)),
+    debt: monthly.map((r) => Number(r.debt_total_mln ?? 0)),
+    consumersActive: monthly.map((r) => Number(r.consumers_active ?? 0)),
+    consumersDisconnected: monthly.map((r) => Number(r.consumers_disconnected ?? 0)),
+    tpCount: monthly.map((r) => Number(r.tp_total ?? 0)),
   };
 }
 
@@ -182,48 +226,74 @@ export async function districtOverview(
   if (!cur) return null;
   const p = prev ?? cur;
 
+  /**
+   * Kartani bir joyda quramiz — `prevValue` va `deltaPct` DOIM bitta
+   * manbadan chiqadi. Ilgari har biri alohida yozilgani uchun solishtirish
+   * qiymatini qo'shishni unutish oson edi.
+   */
+  const tile = (
+    t: Pick<KpiTile, 'key' | 'metric' | 'labelUz' | 'unit' | 'goodDirection'> & {
+      value: number | null;
+      prev: number | null;
+      spark: number[];
+      sparkBucket: 'day' | 'month';
+    },
+  ): KpiTile => ({
+    key: t.key,
+    metric: t.metric,
+    labelUz: t.labelUz,
+    unit: t.unit,
+    value: t.value,
+    prevValue: t.prev,
+    prevPeriod,
+    deltaPct: pctDelta(t.value ?? 0, t.prev ?? 0),
+    goodDirection: t.goodDirection,
+    spark: t.spark,
+    sparkBucket: t.sparkBucket,
+  });
+
   const tiles: KpiTile[] = [
-    {
+    tile({
       key: 'kwhIn', metric: 'kwhIn', labelUz: 'Jami iste’mol', unit: 'kWh',
-      value: cur.kwh_in, deltaPct: pctDelta(cur.kwh_in, p.kwh_in),
-      goodDirection: 'down', spark: spark.kwhIn,
-    },
-    {
+      value: cur.kwh_in, prev: p.kwh_in,
+      goodDirection: 'down', spark: spark.kwhIn, sparkBucket: 'day',
+    }),
+    tile({
       key: 'kwhSold', metric: 'kwhSold', labelUz: 'Sotilgan elektr energiyasi', unit: 'kWh',
-      value: cur.kwh_sold, deltaPct: pctDelta(cur.kwh_sold, p.kwh_sold),
-      goodDirection: 'up', spark: spark.kwhSold,
-    },
-    {
+      value: cur.kwh_sold, prev: p.kwh_sold,
+      goodDirection: 'up', spark: spark.kwhSold, sparkBucket: 'day',
+    }),
+    tile({
       key: 'lossPct', metric: 'lossPct', labelUz: 'Jami yo’qotish', unit: '%',
-      value: cur.loss_pct, deltaPct: pctDelta(cur.loss_pct ?? 0, p.loss_pct ?? 0),
-      goodDirection: 'down', spark: spark.lossPct,
-    },
-    {
+      value: cur.loss_pct, prev: p.loss_pct,
+      goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
+    }),
+    tile({
       key: 'naturalPct', metric: 'naturalLossPct', labelUz: 'Tabiiy yo’qotish', unit: '%',
-      value: cur.natural_pct, deltaPct: pctDelta(cur.natural_pct ?? 0, p.natural_pct ?? 0),
-      goodDirection: 'down', spark: [],
-    },
-    {
+      value: cur.natural_pct, prev: p.natural_pct,
+      goodDirection: 'down', spark: spark.naturalPct, sparkBucket: 'day',
+    }),
+    tile({
       key: 'debt', metric: 'debtTotalMln', labelUz: 'Qarzdorlik', unit: 'mln so‘m',
-      value: cur.debt_total_mln, deltaPct: pctDelta(cur.debt_total_mln, p.debt_total_mln),
-      goodDirection: 'down', spark: [],
-    },
-    {
+      value: cur.debt_total_mln, prev: p.debt_total_mln,
+      goodDirection: 'down', spark: spark.debt, sparkBucket: 'month',
+    }),
+    tile({
       key: 'consumersActive', metric: 'consumersActive', labelUz: 'Faol abonentlar', unit: 'ta',
-      value: cur.consumers_active, deltaPct: pctDelta(cur.consumers_active, p.consumers_active),
-      goodDirection: 'up', spark: [],
-    },
-    {
+      value: cur.consumers_active, prev: p.consumers_active,
+      goodDirection: 'up', spark: spark.consumersActive, sparkBucket: 'month',
+    }),
+    tile({
       key: 'consumersDisconnected', metric: 'consumersDisconnected',
       labelUz: 'Tarmoqdan ajralgan', unit: 'ta',
-      value: cur.consumers_disconnected, deltaPct: pctDelta(cur.consumers_disconnected, p.consumers_disconnected),
-      goodDirection: 'down', spark: [],
-    },
-    {
+      value: cur.consumers_disconnected, prev: p.consumers_disconnected,
+      goodDirection: 'down', spark: spark.consumersDisconnected, sparkBucket: 'month',
+    }),
+    tile({
       key: 'tpCount', metric: 'tpCount', labelUz: 'Transformatorlar', unit: 'ta',
-      value: cur.tp_total, deltaPct: pctDelta(cur.tp_total, p.tp_total),
-      goodDirection: 'up', spark: [],
-    },
+      value: cur.tp_total, prev: p.tp_total,
+      goodDirection: 'up', spark: spark.tpCount, sparkBucket: 'month',
+    }),
   ];
 
   return { period, prevPeriod, tiles, totals: cur };
@@ -705,10 +775,31 @@ export async function capacity(ctx: AppContext, mfyId: number, period: string): 
 }
 
 export async function consumers(ctx: AppContext, mfyId: number, period: string): Promise<ConsumerBreakdown> {
-  const t = await periodTotals(ctx, period, mfyId, null);
+  /*
+   * `consumers_disconnected_new` ATAYLAB fakt jadvalidan olinadi.
+   *
+   * U `agg.mfy_monthly` matview'ida yo'q, matview'ni esa faqat DROP +
+   * CREATE bilan o'zgartirish mumkin — bu unga bog'liq boshqa view'larni
+   * ham qayta qurishni talab qiladi. Bitta ustun uchun bunday xavf
+   * o'rinsiz: bu yerda so'rov bitta MFY va bitta oy bo'yicha, ya'ni
+   * arzon.
+   */
+  const [t, flow] = await Promise.all([
+    periodTotals(ctx, period, mfyId, null),
+    queryOne<{ disconnected_new: number }>(
+      `SELECT coalesce(sum(r.consumers_disconnected_new), 0)::int AS disconnected_new
+       FROM fact.mfy_monthly_return r
+       JOIN fact.submission s ON s.id = r.submission_id AND s.status = 'approved'
+       WHERE r.mfy_id = $1 AND r.period_month = ($2 || '-01')::date`,
+      [mfyId, period],
+      ctx,
+    ),
+  ]);
+
   return {
     total: t?.consumers_total ?? 0, active: t?.consumers_active ?? 0,
     disconnected: t?.consumers_disconnected ?? 0, new: t?.consumers_new ?? 0,
+    disconnectedNew: flow?.disconnected_new ?? 0,
     population: t?.consumers_population ?? 0, legal: t?.consumers_legal ?? 0,
   };
 }

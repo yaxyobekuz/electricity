@@ -72,7 +72,7 @@ export default function DebtPage() {
       />
 
       {/* ── Jami + toifalar ──────────────────────────────────────────── */}
-      <div className="mb-2.5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MiniStat
           hint={`1 abonentga: ${num(perConsumer, 0)} so‘m`}
           icon={<CircleDollarSign className="size-4.5" />}
@@ -93,12 +93,13 @@ export default function DebtPage() {
       </div>
 
       {/* ── Donut + TOP qarzdorlar ───────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-2.5 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
         <Panel className="xl:col-span-4" title="Toifalar bo‘yicha taqsimot">
           {byCategory.length > 0 ? (
             <Donut
               centerLabel="jami qarzdorlik"
-              centerValue={money(totalMln).text}
+              centerUnit={money(totalMln).unit}
+              centerValue={num(money(totalMln).value, 1)}
               csvName="qarzdorlik-toifalar"
               formatValue={(v) => money(v).text}
               height={262}

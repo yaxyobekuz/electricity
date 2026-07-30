@@ -3,16 +3,10 @@
  * Mockupdagi "Amalga oshirilgan ishlar" / "Rejalashtirilgan ishlar" panellari.
  */
 import type { WorkRow } from '@beap/shared';
+import { dateLabel } from '@beap/shared';
 import { Chip } from '@heroui/react';
 
 import { EmptyPanel } from '../../components/ui/Panel.tsx';
-
-/** `2026-05-22` → `22.05.2026` */
-function dotDate(iso: string | null): string {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  return `${d}.${m}.${y}`;
-}
 
 const STATUS_LABEL: Record<string, string> = {
   PLANNED: 'Reja',
@@ -43,10 +37,10 @@ export function WorkTimeline({
           className="flex items-center gap-3 px-5 py-2.5 [&+&]:border-t [&+&]:border-separator"
         >
           <span
-            className="w-[68px] shrink-0 text-[11px] font-medium text-muted"
+            className="w-23 shrink-0 text-[11px] font-medium text-muted"
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
-            {dotDate(planned ? w.plannedEnd : w.actualEnd)}
+            {((d) => (d ? dateLabel(d) : '—'))(planned ? w.plannedEnd : w.actualEnd)}
           </span>
 
           <span className="min-w-0 flex-1 truncate text-[12px]" title={w.titleUz}>

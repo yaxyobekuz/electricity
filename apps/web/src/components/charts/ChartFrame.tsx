@@ -41,11 +41,18 @@ interface ChartFrameProps<T> {
   csvName?: string;
   actions?: ReactNode;
   className?: string;
+  /**
+   * Legenda diagrammadan KEYIN, pastda chiqsin.
+   * Doiraviy diagrammalarda o'qish tartibi tabiiyroq: avval shakl,
+   * keyin uning izohi. Bunda yorliqlar kattaroq yoziladi.
+   */
+  legendPlacement?: 'top' | 'bottom';
 }
 
 export function ChartFrame<T>({
   title, subtitle, legend, height = 240, children,
   tableData, tableColumns, csvName = 'export', actions, className,
+  legendPlacement = 'top',
 }: ChartFrameProps<T>) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const hasTable = Boolean(tableData && tableColumns);
@@ -74,16 +81,47 @@ export function ChartFrame<T>({
     URL.revokeObjectURL(url);
   };
 
+  const atBottom = legendPlacement === 'bottom';
+
+  const legendList =
+    legend && legend.length > 1 && view === 'chart' ? (
+      <ul className={cn('chart-frame__legend', atBottom && 'chart-frame__legend--lg')}>
+        {legend.map((item) => (
+          <li key={item.label} className="flex items-center gap-1.5">
+            <span
+              className="chart-frame__swatch"
+              style={{ background: item.color }}
+              aria-hidden="true"
+            />
+            <span>{item.label}</span>
+          </li>
+        ))}
+      </ul>
+    ) : null;
+
+  /*
+   * Sarlavha bo'lmasa legenda AYNAN SHU qatorda chapda turadi — aks holda
+   * yuqorida faqat tugmalar turgan bo'sh qator paydo bo'lardi.
+   * Panelning o'z sarlavhasi bor bo'lgan hollarda shunday bo'ladi.
+   */
+  const legendInHeader = !title && !subtitle && !atBottom;
+
   return (
     <div className={cn('flex min-w-0 flex-col gap-3', className)}>
       {(title || legend || hasTable || actions) && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+          <div className="min-w-0 flex-1">
             {title && <p className="text-[13px] font-semibold leading-tight">{title}</p>}
             {subtitle && <p className="text-[11px] text-muted">{subtitle}</p>}
+            {legendInHeader && legendList}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          {/*
+            `ml-auto` — legenda keng bo'lib tugmalar keyingi qatorga tushganda
+            ham ular O'NGDA qoladi. `justify-between` yolg'iz o'zi bunday
+            holatda yagona elementni chapga tashlab yuboradi.
+          */}
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
             {actions}
             {hasTable && (
               <>
@@ -120,27 +158,18 @@ export function ChartFrame<T>({
       )}
 
       {/* Legenda — ≥2 seriya bo'lsa doim ko'rinadi */}
-      {legend && legend.length > 1 && view === 'chart' && (
-        <ul className="chart-frame__legend">
-          {legend.map((item) => (
-            <li key={item.label} className="flex items-center gap-1.5">
-              <span
-                className="chart-frame__swatch"
-                style={{ background: item.color }}
-                aria-hidden="true"
-              />
-              <span>{item.label}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {!legendInHeader && !atBottom && legendList}
 
       {view === 'chart' ? (
-        <div style={{ height }} className="min-w-0">
-          {children}
-        </div>
+        <>
+          <div style={{ height }} className="min-w-0">
+            {children}
+          </div>
+          {/* Diagrammadan KEYINGI legenda */}
+          {atBottom && legendList}
+        </>
       ) : (
-        <div className="scroll-y max-h-[320px] rounded-lg border border-border/70">
+        <div className="scroll-y max-h-80 rounded-lg border border-border/70">
           <table className="dt">
             <thead>
               <tr>

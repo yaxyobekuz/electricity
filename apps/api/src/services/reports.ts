@@ -10,6 +10,7 @@
  *      (kiritiladimi yoki hisoblanadimi).
  */
 import type { Passport, PassportRow } from '@beap/shared';
+import { periodLabel } from '@beap/shared';
 import ExcelJS from 'exceljs';
 import pdfmakeModule from 'pdfmake';
 import type { TableCell, TDocumentDefinitions } from 'pdfmake/interfaces.js';
@@ -112,7 +113,7 @@ export async function passportXlsx(passport: Passport): Promise<Buffer> {
   ws.getCell('A2').alignment = { horizontal: 'center' };
 
   ws.mergeCells('A3:E3');
-  ws.getCell('A3').value = `Hisobot davri: ${passport.period}`;
+  ws.getCell('A3').value = `Hisobot davri: ${periodLabel(passport.period)}`;
   ws.getCell('A3').alignment = { horizontal: 'center' };
   ws.getCell('A3').font = { size: 10, color: { argb: 'FF666666' } };
 
@@ -212,7 +213,7 @@ export async function periodXlsx(input: PeriodReportInput): Promise<Buffer> {
   s1.getCell('A1').value = `${input.kindLabel} hisobot — ${input.scopeName}`;
   s1.getCell('A1').font = { size: 14, bold: true };
   s1.mergeCells('A2:C2');
-  s1.getCell('A2').value = `Davr: ${input.period}`;
+  s1.getCell('A2').value = `Davr: ${periodLabel(input.period)}`;
   s1.getCell('A2').font = { size: 10, color: { argb: 'FF666666' } };
   s1.addRow([]);
 
@@ -346,7 +347,7 @@ export async function passportPdf(passport: Passport): Promise<Buffer> {
       { text: 'PASPORT', fontSize: 15, bold: true, alignment: 'center' },
       { text: passport.scopeName, fontSize: 12, bold: true, alignment: 'center', margin: [0, 3, 0, 0] },
       {
-        text: `Hisobot davri: ${passport.period}`,
+        text: `Hisobot davri: ${periodLabel(passport.period)}`,
         fontSize: 9, color: '#666666', alignment: 'center', margin: [0, 2, 0, 10],
       },
       {
@@ -423,7 +424,7 @@ export async function periodPdf(input: PeriodReportInput): Promise<Buffer> {
     content: [
       { text: `${input.kindLabel} hisobot`, fontSize: 14, bold: true },
       { text: input.scopeName, fontSize: 11, bold: true, margin: [0, 2, 0, 0] },
-      { text: `Davr: ${input.period}`, fontSize: 9, color: '#666666', margin: [0, 1, 0, 10] },
+      { text: `Davr: ${periodLabel(input.period)}`, fontSize: 9, color: '#666666', margin: [0, 1, 0, 10] },
 
       { text: 'Umumiy ko‘rsatkichlar', fontSize: 10, bold: true, margin: [0, 0, 0, 4] },
       {

@@ -6,7 +6,7 @@
  * va tasdiqlaydi yoki sabab bilan rad etadi.
  */
 import type { Submission, SubmissionDiffRow } from '@beap/shared';
-import { DOMAIN_LABEL_UZ, num, periodLabel } from '@beap/shared';
+import { DOMAIN_LABEL_UZ, dateTimeLabel, num, periodLabel } from '@beap/shared';
 import {
   AlertDialog, Alert, Button, Chip, Label, Modal, TextArea, TextField, toast,
 } from '@heroui/react';
@@ -111,9 +111,7 @@ export default function ReviewQueue() {
                   <td className="tabular text-muted">#{s.revision}</td>
                   <td className="text-muted">{s.createdByName}</td>
                   <td className="tabular text-muted">
-                    {s.submittedAt
-                      ? new Date(s.submittedAt).toLocaleDateString('uz-Latn-UZ')
-                      : '—'}
+                    {s.submittedAt ? dateTimeLabel(s.submittedAt) : '—'}
                   </td>
                   <td>
                     <div className="flex items-center gap-1">

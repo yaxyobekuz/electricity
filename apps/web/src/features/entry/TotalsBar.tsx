@@ -7,7 +7,7 @@
  *
  * Jami qiymat HECH QACHON kiritilmaydi — u shu yerda hisoblanib turadi.
  */
-import { balanceTolerance, num } from '@beap/shared';
+import { balanceTolerance, num, timeLabel } from '@beap/shared';
 import { Button, Chip } from '@heroui/react';
 import { CheckCircle2, TriangleAlert, Wand2 } from 'lucide-react';
 
@@ -125,10 +125,7 @@ export function SaveIndicator({
   if (state === 'saved' && savedAt) {
     return (
       <span className="text-[11px] text-viz-good">
-        Saqlandi{' '}
-        {new Date(savedAt).toLocaleTimeString('uz-Latn-UZ', {
-          hour: '2-digit', minute: '2-digit',
-        })}
+        Saqlandi {timeLabel(savedAt)}
       </span>
     );
   }

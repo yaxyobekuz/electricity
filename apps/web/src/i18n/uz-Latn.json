@@ -217,7 +217,6 @@
   },
   "alerts": {
     "empty": "Diqqat talab qiladigan holat aniqlanmadi",
-    "note": "Bu ro‘yxat deterministik SQL qoidalari asosida tuziladi. Sun’iy intellekt yoki tashqi xizmat ishlatilmaydi.",
     "view": "Ko‘rish"
   },
   "auth": {
