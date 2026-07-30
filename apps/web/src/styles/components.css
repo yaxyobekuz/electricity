@@ -226,6 +226,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Ustuni ko'p jadval (transformatorlar holati — 7 ustun) tor kartada ham
+ * gorizontal siljishsiz sig'sin: yon chetlash kichrayadi, tik chetlash emas.
+ */
+.dt--compact thead th,
+.dt--compact tbody td {
+  @apply px-2.5;
+}
+
 /* ── Status nuqtasi — DOIM matn bilan birga ─────────────────────────────── */
 
 .dot {

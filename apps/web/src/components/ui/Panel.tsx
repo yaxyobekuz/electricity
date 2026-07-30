@@ -1,7 +1,22 @@
 /** Dashboard paneli — barcha kartalarning yagona ramkasi. */
 import { cn } from '@heroui/react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
+
+/**
+ * Sarlavha qatoridagi BO'SH JOY — panel ichidagi diagramma o'z boshqaruv
+ * tugmalarini (jadval/diagramma almashtirgichi, CSV) shu yerga portal orqali
+ * ko'chiradi.
+ *
+ * Shuning uchun: har bir kartada BITTA qator — chapda sarlavha, o'ngda barcha
+ * tugmalar. Ilgari tugmalar diagramma ustida alohida qator egallab turardi.
+ */
+const PanelHeaderSlotContext = createContext<HTMLElement | null>(null);
+
+/** Panel sarlavhasidagi portal nishoni (panel tashqarisida `null`). */
+export function usePanelHeaderSlot(): HTMLElement | null {
+  return useContext(PanelHeaderSlotContext);
+}
 
 interface PanelProps {
   title?: ReactNode;
@@ -19,6 +34,8 @@ interface PanelProps {
 export function Panel({
   title, subtitle, actions, children, className, bodyClassName, flush, footerAction,
 }: PanelProps) {
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
+
   return (
     <section className={cn('panel', className)}>
       {(title || actions) && (
@@ -27,20 +44,30 @@ export function Panel({
             {title && <h2 className="panel__title truncate">{title}</h2>}
             {subtitle && <p className="panel__subtitle truncate">{subtitle}</p>}
           </div>
-          {actions && <div className="flex shrink-0 items-center gap-1.5">{actions}</div>}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {actions}
+            {/*
+              `display: contents` — bu o'ram QUTI hosil qilmaydi, portal bilan
+              kelgan tugmalar to'g'ridan-to'g'ri yuqoridagi flex qatorining
+              bandlari bo'ladi va `gap` ular uchun ham ishlaydi.
+            */}
+            <div ref={setHeaderSlot} className="contents" />
+          </div>
         </header>
       )}
 
-      <div
-        className={cn(
-          'panel__body',
-          flush && 'panel__body--flush',
-          footerAction && !flush && 'pb-3',
-          bodyClassName,
-        )}
-      >
-        {children}
-      </div>
+      <PanelHeaderSlotContext.Provider value={headerSlot}>
+        <div
+          className={cn(
+            'panel__body',
+            flush && 'panel__body--flush',
+            footerAction && !flush && 'pb-3',
+            bodyClassName,
+          )}
+        >
+          {children}
+        </div>
+      </PanelHeaderSlotContext.Provider>
 
       {footerAction && (
         <Link className="panel__action" to={footerAction.to}>

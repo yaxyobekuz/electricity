@@ -109,7 +109,7 @@ export default function TpListPage() {
       </div>
 
       <Panel flush>
-        <TpMonitorPanel rows={rows} />
+        <TpMonitorPanel rows={rows} showMfy />
       </Panel>
     </>
   );

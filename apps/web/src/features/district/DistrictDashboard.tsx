@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import { DivergingBar } from '../../components/charts/DivergingBar.tsx';
 import { Donut } from '../../components/charts/Donut.tsx';
@@ -72,7 +72,8 @@ export default function DistrictDashboard() {
   const overview = useDistrictOverview(period ?? undefined);
   const balance = useEnergyBalance(period ?? undefined);
   const efficiency = useEfficiency(period ?? undefined);
-  const tp = useTpMonitoring(period ?? undefined, 40);
+  // Kartada 5 qator ko'rinadi — ortiqchasini so'rashning hojati yo'q.
+  const tp = useTpMonitoring(period ?? undefined, 5);
   const ranking = useMfyRanking();
   const technical = useTechnicalLoss(period ?? undefined);
   const distance = useDistance(period ?? undefined);
@@ -271,16 +272,20 @@ export default function DistrictDashboard() {
       <div className="mb-3 grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-12">
         <Panel
           actions={
-            <Chip size="sm" variant="soft">
-              <Chip.Label>{num(data?.totals.tpCount ?? 0)} ta</Chip.Label>
-            </Chip>
+            <Link
+              className="text-[11.5px] font-semibold text-accent hover:underline"
+              to="/transformers"
+            >
+              Barchasi ({num(data?.totals.tpCount ?? 0)})
+            </Link>
           }
           className="xl:col-span-4"
           flush
           footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
           title={t('panel.tpMonitoring')}
         >
-          <TpMonitorPanel rows={tp.data ?? []} />
+          {/* 5 qator — qolgani "Barcha transformatorlar" sahifasida. */}
+          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 5)} />
         </Panel>
 
         <Panel

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { Donut } from '../../components/charts/Donut.tsx';
 import { Gauge } from '../../components/charts/Gauge.tsx';
@@ -321,16 +321,20 @@ export default function MfyDashboard() {
       <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
         <Panel
           actions={
-            <Chip size="sm" variant="soft">
-              <Chip.Label>{num(tp.data?.length ?? 0)} ta</Chip.Label>
-            </Chip>
+            <Link
+              className="text-[11.5px] font-semibold text-accent hover:underline"
+              to="/transformers"
+            >
+              Barchasi ({num(tp.data?.length ?? 0)})
+            </Link>
           }
           className="md:col-span-2 xl:col-span-6"
           flush
           footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
           title="Transformatorlar holati"
         >
-          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 6)} showMfy={false} />
+          {/* 5 qator — qatordagi qo'shni kartalar bilan bir xil balandlik. */}
+          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 5)} />
         </Panel>
 
         <Panel className="xl:col-span-3" title="Yo‘qotishlar tuzilmasi">

@@ -10,6 +10,9 @@
 import { Button, ToggleButton, ToggleButtonGroup, cn } from '@heroui/react';
 import { BarChart3, Download, Table2 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import { usePanelHeaderSlot } from '../ui/Panel.tsx';
 
 export interface TableColumn<T> {
   key: string;
@@ -42,6 +45,11 @@ interface ChartFrameProps<T> {
   actions?: ReactNode;
   className?: string;
   /**
+   * Boshqaruv tugmalarini panel sarlavhasi qatoriga ko'chirish.
+   * Standart — ko'chiriladi: karta ichida bo'sh qator qolmaydi.
+   */
+  hoistControls?: boolean;
+  /**
    * Legenda diagrammadan KEYIN, pastda chiqsin.
    * Doiraviy diagrammalarda o'qish tartibi tabiiyroq: avval shakl,
    * keyin uning izohi. Bunda yorliqlar kattaroq yoziladi.
@@ -52,10 +60,11 @@ interface ChartFrameProps<T> {
 export function ChartFrame<T>({
   title, subtitle, legend, height = 240, children,
   tableData, tableColumns, csvName = 'export', actions, className,
-  legendPlacement = 'top',
+  legendPlacement = 'top', hoistControls = true,
 }: ChartFrameProps<T>) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const hasTable = Boolean(tableData && tableColumns);
+  const headerSlot = usePanelHeaderSlot();
 
   const downloadCsv = (): void => {
     if (!tableData || !tableColumns) return;
@@ -106,9 +115,61 @@ export function ChartFrame<T>({
    */
   const legendInHeader = !title && !subtitle && !atBottom;
 
+  /*
+   * Tugmalar sarlavha qatoriga FAQAT diagrammaning o'z sarlavhasi bo'lmaganda
+   * ko'chiriladi — bunda sarlavha panelniki, ya'ni ular bir xil kartaga tegishli.
+   */
+  const hoist = hoistControls && Boolean(headerSlot) && !title && !subtitle;
+
+  const controls =
+    actions || hasTable ? (
+      /*
+        `ml-auto` — legenda keng bo'lib tugmalar keyingi qatorga tushganda
+        ham ular O'NGDA qoladi. `justify-between` yolg'iz o'zi bunday
+        holatda yagona elementni chapga tashlab yuboradi.
+      */
+      <div className={cn('flex shrink-0 items-center gap-1.5', !hoist && 'ml-auto')}>
+        {actions}
+        {hasTable && (
+          <>
+            <ToggleButtonGroup
+              aria-label="Ko‘rinish"
+              selectedKeys={new Set([view])}
+              selectionMode="single"
+              size="sm"
+              onSelectionChange={(keys) => {
+                const next = [...keys][0];
+                if (next === 'chart' || next === 'table') setView(next);
+              }}
+            >
+              <ToggleButton aria-label="Diagramma" id="chart">
+                <BarChart3 className="size-3.5" />
+              </ToggleButton>
+              <ToggleButton aria-label="Jadval" id="table">
+                <Table2 className="size-3.5" />
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Button
+              isIconOnly
+              aria-label="CSV yuklab olish"
+              size="sm"
+              variant="ghost"
+              onPress={downloadCsv}
+            >
+              <Download className="size-3.5" />
+            </Button>
+          </>
+        )}
+      </div>
+    ) : null;
+
+  const headerLeft = title || subtitle || (legendInHeader && legendList);
+
   return (
     <div className={cn('flex min-w-0 flex-col gap-3', className)}>
-      {(title || legend || hasTable || actions) && (
+      {hoist && controls && headerSlot && createPortal(controls, headerSlot)}
+
+      {(headerLeft || (!hoist && controls)) && (
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
           <div className="min-w-0 flex-1">
             {title && <p className="text-[13px] font-semibold leading-tight">{title}</p>}
@@ -116,44 +177,7 @@ export function ChartFrame<T>({
             {legendInHeader && legendList}
           </div>
 
-          {/*
-            `ml-auto` — legenda keng bo'lib tugmalar keyingi qatorga tushganda
-            ham ular O'NGDA qoladi. `justify-between` yolg'iz o'zi bunday
-            holatda yagona elementni chapga tashlab yuboradi.
-          */}
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
-            {actions}
-            {hasTable && (
-              <>
-                <ToggleButtonGroup
-                  aria-label="Ko‘rinish"
-                  selectedKeys={new Set([view])}
-                  selectionMode="single"
-                  size="sm"
-                  onSelectionChange={(keys) => {
-                    const next = [...keys][0];
-                    if (next === 'chart' || next === 'table') setView(next);
-                  }}
-                >
-                  <ToggleButton aria-label="Diagramma" id="chart">
-                    <BarChart3 className="size-3.5" />
-                  </ToggleButton>
-                  <ToggleButton aria-label="Jadval" id="table">
-                    <Table2 className="size-3.5" />
-                  </ToggleButton>
-                </ToggleButtonGroup>
-                <Button
-                  isIconOnly
-                  aria-label="CSV yuklab olish"
-                  size="sm"
-                  variant="ghost"
-                  onPress={downloadCsv}
-                >
-                  <Download className="size-3.5" />
-                </Button>
-              </>
-            )}
-          </div>
+          {!hoist && controls}
         </div>
       )}
 

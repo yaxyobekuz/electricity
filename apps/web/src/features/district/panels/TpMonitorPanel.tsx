@@ -56,7 +56,7 @@ export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]
 
         `min-w` — tor panelda jadval siqilmaydi, gorizontal siljiydi.
       */}
-      <table className="dt min-w-[31rem] table-fixed">
+      <table className="dt dt--compact min-w-md table-fixed">
         <thead>
           <tr>
             <th className="w-[7%] text-center">№</th>
@@ -74,7 +74,7 @@ export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]
             const color = t.status[status];
             return (
               <tr key={r.tpId}>
-                <td className="num !text-center text-[12px] text-muted">{i + 1}</td>
+                <td className="num text-center! text-[12px] text-muted">{i + 1}</td>
                 <td className="truncate">
                   <Link
                     to={`/dashboard/mfy/${r.mfyId}`}
