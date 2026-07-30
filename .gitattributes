@@ -1,0 +1,16 @@
+# SQL migration files are hashed (sha256) by the migration runner.
+# Line endings MUST be identical across machines or the hash check fails.
+* text=auto eol=lf
+*.sql   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.json  text eol=lf
+*.css   text eol=lf
+*.md    text eol=lf
+
+# Binary assets
+*.ttf   binary
+*.png   binary
+*.jpg   binary
+*.xlsx  binary
+*.pdf   binary

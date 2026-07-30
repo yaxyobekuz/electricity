@@ -1,0 +1,407 @@
+/**
+ * API javob tiplari — server va klient o'rtasidagi shartnoma.
+ * Route handler'lar shu tiplarni qaytaradi, TanStack Query shu tiplarni oladi.
+ */
+
+import type {
+  ConsumerCategory,
+  Domain,
+  RagStatus,
+  Role,
+  SubmissionStatus,
+  TpCondition,
+  ViolationStatus,
+  WorkStatus,
+  WorkType,
+} from './constants.ts';
+
+// ─── Spravochniklar ──────────────────────────────────────────────────────────
+
+export interface Elektroset {
+  id: number;
+  code: string;
+  nameUz: string;
+  nameUzCyr: string | null;
+}
+
+export interface Mfy {
+  id: number;
+  elektrosetId: number;
+  elektrosetName: string;
+  code: string;
+  nameUz: string;
+  nameUzCyr: string | null;
+  shortName: string;
+  sortOrder: number;
+  gridRow: number | null;
+  gridCol: number | null;
+}
+
+export interface Tp {
+  id: number;
+  mfyId: number;
+  mfyName: string;
+  code: string;
+  name: string | null;
+  ratedKva: number;
+  voltageClass: string;
+  avgDistanceM: number | null;
+  commissionedOn: string | null;
+  decommissionedOn: string | null;
+}
+
+export interface NetworkSegment {
+  id: number;
+  mfyId: number;
+  voltageKv: number;
+  lineType: 'overhead' | 'cable';
+  lengthKm: number;
+  installedOn: string | null;
+  retiredOn: string | null;
+}
+
+export interface Norm {
+  id: number;
+  scopeType: 'TUMAN' | 'ELEKTROSET' | 'MFY';
+  scopeId: number | null;
+  metric: string;
+  valueNum: number;
+  unit: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  sourceDoc: string | null;
+}
+
+export interface Bootstrap {
+  elektrosets: Elektroset[];
+  mfys: Mfy[];
+  norms: Norm[];
+  categories: { code: ConsumerCategory; nameUz: string }[];
+  /** Ma'lumotlar oxirgi marta qachon agregatlangani — header'dagi ishonch belgisi. */
+  lastRefreshAt: string | null;
+  /** Ma'lumot mavjud bo'lgan davrlar oralig'i. */
+  dataRange: { minDate: string | null; maxDate: string | null };
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+export interface AuthUser {
+  id: number;
+  login: string;
+  fullName: string;
+  role: Role;
+  /** Foydalanuvchi yoza oladigan MFY id lari (viewer/admin uchun bo'sh = hammasi). */
+  mfyIds: number[];
+  elektrosetIds: number[];
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  user: AuthUser;
+}
+
+// ─── Dashboard: umumiy bloklar ───────────────────────────────────────────────
+
+export interface KpiTile {
+  key: string;
+  labelUz: string;
+  value: number | null;
+  unit: string;
+  /** Kunga nisbatan nisbiy o'zgarish, %. */
+  deltaPct: number | null;
+  /** O'sish yaxshimi yoki yomonmi — rangni shu belgilaydi. */
+  goodDirection: 'up' | 'down';
+  /** Sparkline uchun oxirgi 30 nuqta. */
+  spark: number[];
+  /** Manba (provenance) kaliti — "i" popoveri uchun. */
+  metric: string;
+}
+
+export interface EnergyBalanceNode {
+  key: 'in' | 'sold' | 'natural' | 'technical' | 'illegal';
+  labelUz: string;
+  kwh: number;
+  /** Tarmoqqa kirgan energiyaga nisbatan ulushi, %. */
+  pct: number;
+}
+
+export interface EfficiencyBreakdown {
+  score: number;
+  components: { key: string; labelUz: string; weight: number; score: number }[];
+  /** Statistik prognoz (Holt-Winters) — mavjud bo'lsa. */
+  forecast: { period: string; lossPct: number }[] | null;
+}
+
+export interface MfyRankRow {
+  mfyId: number;
+  nameUz: string;
+  lossPct: number;
+  prevLossPct: number | null;
+  deltaPp: number | null;
+  rank: number;
+  prevRank: number | null;
+  rankDelta: number | null;
+  trend: 'up' | 'down' | 'flat';
+}
+
+export interface TechnicalLossRow {
+  mfyId: number;
+  nameUz: string;
+  actualPct: number;
+  standardPct: number;
+  gapPp: number;
+  status: RagStatus;
+}
+
+export interface DistanceRow {
+  mfyId: number;
+  nameUz: string;
+  avgDistanceM: number;
+  standardM: number;
+  compliant: boolean;
+  tpCount: number;
+  tpOverStandard: number;
+}
+
+export interface TpMonitorRow {
+  tpId: number;
+  code: string;
+  mfyId: number;
+  mfyName: string;
+  ratedKva: number;
+  loadPct: number;
+  optimalPct: number;
+  condition: TpCondition;
+  avgDistanceM: number | null;
+  distanceCompliant: boolean | null;
+}
+
+export interface DebtBreakdown {
+  totalMln: number;
+  byCategory: { category: ConsumerCategory; labelUz: string; amountMln: number; pct: number }[];
+  topDebtors: { rank: number; debtorName: string; category: ConsumerCategory; amountMln: number; mfyName: string }[];
+}
+
+export interface LossMapCell {
+  mfyId: number;
+  nameUz: string;
+  shortName: string;
+  /** Plitka maydoni — tarmoqqa kirgan energiya. */
+  kwhIn: number;
+  lossPct: number;
+  normPct: number;
+  /** Rang qiymati — normadan farq (p.p.). */
+  gapPp: number;
+  status: RagStatus;
+  gridRow: number | null;
+  gridCol: number | null;
+}
+
+export interface WorkRow {
+  id: number;
+  mfyId: number;
+  mfyName: string;
+  tpCode: string | null;
+  workType: WorkType;
+  titleUz: string;
+  status: WorkStatus;
+  plannedStart: string | null;
+  plannedEnd: string | null;
+  actualEnd: string | null;
+  progressPct: number;
+  quantity: number;
+  unit: string;
+  costMln: number;
+  effectLossPctBefore: number | null;
+  effectLossPctAfter: number | null;
+  effectSavingKwhMonth: number;
+}
+
+export interface AlertItem {
+  id: string;
+  severity: 'critical' | 'serious' | 'warning' | 'info';
+  titleUz: string;
+  detailUz: string;
+  /** Bosilganda o'tiladigan sahifa. */
+  href: string | null;
+  mfyId: number | null;
+  /** Qoida kodi — bu deterministik SQL qoidasi, AI emas. */
+  rule: string;
+}
+
+export interface TimeSeriesPoint {
+  date: string;
+  kwhIn: number;
+  kwhSold: number;
+  kwhLoss: number;
+  lossPct: number;
+}
+
+// ─── Dashboard: to'plangan javoblar ──────────────────────────────────────────
+
+export interface DistrictOverview {
+  period: { from: string; to: string };
+  tiles: KpiTile[];
+  totals: {
+    kwhIn: number;
+    kwhSold: number;
+    kwhLossTotal: number;
+    lossPct: number;
+    consumersTotal: number;
+    consumersActive: number;
+    consumersDisconnected: number;
+    tpCount: number;
+    debtTotalMln: number;
+  };
+}
+
+export interface MfyOverview extends DistrictOverview {
+  mfy: Mfy;
+}
+
+export interface CapacityInfo {
+  capacityKva: number;
+  currentKva: number;
+  reserveKva: number;
+  loadPct: number;
+}
+
+export interface ConsumerBreakdown {
+  total: number;
+  active: number;
+  disconnected: number;
+  new: number;
+  population: number;
+  legal: number;
+}
+
+export interface LossStructure {
+  totalKwh: number;
+  parts: { key: 'natural' | 'technical' | 'illegal'; labelUz: string; kwh: number; pct: number }[];
+}
+
+export interface OperationalMetrics {
+  maxLoadKw: number | null;
+  minLoadKw: number | null;
+  avgVoltageV: number | null;
+  outageCount: number | null;
+  outageMinutes: number | null;
+  nominalVoltageV: number;
+}
+
+export interface ResultsSummary {
+  lossPctStart: number | null;
+  lossPctEnd: number | null;
+  improvementPp: number | null;
+  savedKwh: number;
+  periodFrom: string;
+  periodTo: string;
+}
+
+// ─── Pasport ─────────────────────────────────────────────────────────────────
+
+export interface PassportRow {
+  no: number;
+  labelUz: string;
+  labelUzCyr: string;
+  unit: string;
+  value: number | null;
+  /** Ichki bo'linmalar ("shundan ..."). */
+  children?: { labelUz: string; labelUzCyr: string; value: number | null }[];
+  /** Bu qator kiritiladimi yoki hisoblanadimi. */
+  source: 'input' | 'derived';
+}
+
+export interface Passport {
+  scopeType: 'MFY' | 'TUMAN';
+  scopeId: number | null;
+  scopeName: string;
+  period: string;
+  rows: PassportRow[];
+  frozen: { at: string; by: string; sha256: string } | null;
+}
+
+export interface PassportReconcileRow {
+  no: number;
+  labelUz: string;
+  sumOfMfy: number | null;
+  frozenValue: number | null;
+  diff: number | null;
+  ok: boolean;
+}
+
+// ─── Input panel ─────────────────────────────────────────────────────────────
+
+export interface Submission {
+  id: number;
+  scopeType: 'MFY' | 'ELEKTROSET' | 'TUMAN';
+  scopeId: number;
+  scopeName: string;
+  domain: Domain;
+  periodStart: string;
+  periodEnd: string;
+  revision: number;
+  status: SubmissionStatus;
+  supersedesId: number | null;
+  createdBy: number;
+  createdByName: string;
+  createdAt: string;
+  submittedAt: string | null;
+  reviewedBy: number | null;
+  reviewedByName: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+}
+
+export interface ValidationIssue {
+  path: string;
+  message: string;
+  severity: 'error' | 'warning';
+  /** Qaysi qator (kunlik jadval uchun). */
+  rowKey?: string;
+}
+
+export interface ValidationReport {
+  ok: boolean;
+  issues: ValidationIssue[];
+  /** Kiritilgan qatorlar / kutilgan qatorlar. */
+  completeness: { filled: number; expected: number };
+}
+
+export interface CompletenessCell {
+  mfyId: number;
+  mfyName: string;
+  domain: Domain;
+  status: SubmissionStatus | 'missing';
+  submissionId: number | null;
+  updatedAt: string | null;
+}
+
+export interface SubmissionDiffRow {
+  path: string;
+  labelUz: string;
+  before: number | string | null;
+  after: number | string | null;
+  deltaPct: number | null;
+  /** >30% o'zgarish uchun operator izohi. */
+  justification: string | null;
+}
+
+// ─── Umumiy ──────────────────────────────────────────────────────────────────
+
+export interface ApiError {
+  error: string;
+  message: string;
+  /** Maydonga bog'langan xatolar — HeroUI `<Form validationErrors>` uchun. */
+  errors?: Record<string, string>;
+  requestId?: string;
+}
+
+export interface Paged<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type { ConsumerCategory, Domain, RagStatus, Role, SubmissionStatus, TpCondition, ViolationStatus, WorkStatus, WorkType };

@@ -1,0 +1,83 @@
+/*
+ * Global CSS.
+ *
+ * HeroUI v3 talabi: `tailwindcss` BIRINCHI, keyin `@heroui/styles`.
+ * Tartibni o'zgartirmang — hujjatlarda alohida ogohlantirilgan.
+ */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/*
+ * Inter — LOKAL bundle qilinadi (`@fontsource-variable/inter`).
+ * Google Fonts yoki boshqa CDN ISHLATILMAYDI: `.woff2` fayllari npm paketidan
+ * keladi va Vite ularni `dist/assets/` ga nusxalaydi.
+ *
+ * `wght.css` — o'zgaruvchan (variable) og'irlik o'qi, faqat normal uslub
+ * (kursiv alohida faylda va bizga kerak emas). Ichida har bir subset uchun
+ * `unicode-range` bor, shuning uchun brauzer FAQAT kerakli qismini yuklaydi:
+ *   • latin        — U+02BB-02BC ni ham qamraydi, ya'ni oʻ / gʻ ishlaydi
+ *   • latin-ext    — kengaytirilgan lotin
+ *   • cyrillic     — ў ъ ш …
+ *   • cyrillic-ext — қ ғ ҳ  (o'zbek kirili uchun MAJBURIY)
+ *   • greek        — Σ (manba formulalarida ishlatiladi)
+ */
+@import "@fontsource-variable/inter/wght.css";
+
+@import "./theme-gov.css" layer(theme);
+@import "./components.css";
+@import "./print.css";
+
+@theme inline {
+  /* Inter yuklanmasa — tizim shriftlariga tushadi (ular ham lokal). */
+  --font-sans: "Inter Variable", "Inter", "Segoe UI", system-ui, -apple-system,
+    "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Consolas", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /*
+   * Inter'ning belgilarni farqlash to'plami. Ma'lumot paneli uchun muhim:
+   *   cv05 — dumli kichik "l"  (1 / l / I ni ajratadi)
+   *   cv08 — serifli katta "I"
+   * TP kodlari (TR-0102), abonent raqamlari va login'lar aniq o'qiladi.
+   */
+  font-feature-settings: "cv05" 1, "cv08" 1;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/*
+ * Raqamlar ustunlarda tekis turishi uchun — jadval va KPI kartalarida.
+ * `tnum` bilan birga yuqoridagi belgi-farqlash to'plami ham saqlanadi
+ * (`font-feature-settings` merosga o'tmaydi, qayta yozilsa eskisi yo'qoladi).
+ */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "cv05" 1, "cv08" 1;
+}
+
+/* Fokus halqasi klaviatura bilan yurganda doim ko'rinadi. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Harakatni kamaytirish so'ralganda barcha animatsiya o'chadi (grafiklar ham). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "beap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BEAP — Baliqchi tumani Elektr energiya Analitik Platformasi",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev --workspace @beap/api",
+    "dev:web": "npm run dev --workspace @beap/web",
+    "build": "npm run build --workspace @beap/shared && npm run build --workspace @beap/api && npm run build --workspace @beap/web",
+    "migrate": "npm run migrate --workspace @beap/api",
+    "migrate:reset": "npm run migrate:reset --workspace @beap/api",
+    "seed": "npm run seed --workspace @beap/api",
+    "verify:passport": "npm run verify:passport --workspace @beap/api",
+    "verify:offline": "node scripts/scan-dist.mjs",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "tsc -b --pretty"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
+  }
+}

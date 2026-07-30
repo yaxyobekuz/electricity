@@ -1,0 +1,217 @@
+/*
+ * BEAP dizayn tizimi — ikki tema.
+ *
+ *   gov       → yorug'  (ASOSIY): yumshoq ko'k-oq fon, oq kartalar,
+ *                chegara emas SOYA bilan ajratilgan, katta radius
+ *   gov-dark  → qorong'i: kechki smena va katta ekranlar uchun
+ *
+ * DIQQAT: HeroUI v3 da brend rangi `--accent`. `--primary` MAVJUD EMAS.
+ *
+ * `--viz-*` — diagramma qatlami. `--tone-*` — KPI kartalarining rangli
+ * variantlari (har bir ko'rsatkich o'z tusiga ega).
+ */
+
+@layer base {
+  /* ═══════════════════════════ YORUG' ═══════════════════════════ */
+  :root,
+  [data-theme="gov"] {
+    color-scheme: light;
+
+    --radius: 1rem;
+
+    /* Fon — sof oq emas, yumshoq ko'k-kulrang. Oq kartalar shunda "suzadi". */
+    --background: #f2f6fc;
+    --foreground: #0f172a;
+
+    --surface: #ffffff;
+    --surface-foreground: var(--foreground);
+    --surface-secondary: #f7fafd;
+    --surface-tertiary: #eef3fa;
+
+    --overlay: #ffffff;
+    --overlay-foreground: var(--foreground);
+
+    --muted: #64748b;
+
+    /* Chegaralar deyarli ko'rinmaydi — ajratish SOYA bilan qilinadi. */
+    --border: #e9eff8;
+    --separator: #eff4fa;
+
+    --accent: #2563eb;
+    --accent-foreground: #ffffff;
+
+    --success: #16a34a;
+    --success-foreground: #ffffff;
+    --warning: #f59e0b;
+    --warning-foreground: #422006;
+    --danger: #e11d48;
+    --danger-foreground: #ffffff;
+
+    --focus: var(--accent);
+
+    --field-background: #f7fafd;
+    --field-foreground: var(--foreground);
+    --field-border: transparent;
+    --field-radius: 0.75rem;
+
+    /* Yumshoq, ko'k tusli soyalar — kartalarni fondan ko'taradi. */
+    --surface-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 4px 12px rgba(37, 99, 235, 0.06);
+    --overlay-shadow:
+      0 4px 16px rgba(15, 23, 42, 0.08),
+      0 12px 32px rgba(37, 99, 235, 0.1);
+    --field-shadow: none;
+
+    /* ── KPI kartalarining ranglari ── */
+    --tone-blue-bg: #eff6ff;    --tone-blue-solid: #3b82f6;
+    --tone-green-bg: #effdf4;   --tone-green-solid: #22c55e;
+    --tone-orange-bg: #fff7ed;  --tone-orange-solid: #f97316;
+    --tone-purple-bg: #faf5ff;  --tone-purple-solid: #a855f7;
+    --tone-pink-bg: #fef1f5;    --tone-pink-solid: #f43f5e;
+    --tone-sky-bg: #eff8ff;     --tone-sky-solid: #0ea5e9;
+    --tone-amber-bg: #fffbeb;   --tone-amber-solid: #f59e0b;
+    --tone-cyan-bg: #ecfeff;    --tone-cyan-solid: #06b6d4;
+
+    /* ── Diagramma tokenlari ── */
+    --viz-surface: #ffffff;
+    --viz-ink: #0f172a;
+    --viz-ink-2: #475569;
+    --viz-muted: #94a3b8;
+    --viz-grid: #eef3fa;
+    --viz-axis: #dbe4f0;
+
+    --viz-1: #2563eb;
+    --viz-2: #f97316;
+    --viz-3: #16a34a;
+    --viz-4: #a855f7;
+    --viz-5: #e11d48;
+    --viz-6: #0891b2;
+    --viz-7: #7c3aed;
+    --viz-8: #ca8a04;
+
+    --viz-seq-1: #dbeafe;
+    --viz-seq-2: #93c5fd;
+    --viz-seq-3: #60a5fa;
+    --viz-seq-4: #2563eb;
+    --viz-seq-5: #1d4ed8;
+
+    --viz-div-neg: #2563eb;
+    --viz-div-mid: #eef3fa;
+    --viz-div-pos: #e11d48;
+
+    --viz-good: #16a34a;
+    --viz-warning: #f59e0b;
+    --viz-serious: #f97316;
+    --viz-critical: #e11d48;
+    --viz-delta-good: #16a34a;
+    --viz-delta-bad: #e11d48;
+  }
+
+  /* ═══════════════════════════ QORONG'I ═══════════════════════════ */
+  .dark,
+  [data-theme="dark"],
+  [data-theme="gov-dark"] {
+    color-scheme: dark;
+
+    --radius: 1rem;
+
+    --background: #0b1120;
+    --foreground: #f1f5f9;
+
+    --surface: #131c2f;
+    --surface-foreground: var(--foreground);
+    --surface-secondary: #18233a;
+    --surface-tertiary: #1f2c46;
+
+    --overlay: #162034;
+    --overlay-foreground: var(--foreground);
+
+    --muted: #94a3b8;
+
+    --border: #1e293b;
+    --separator: #1b2537;
+
+    --accent: #3b82f6;
+    --accent-foreground: #ffffff;
+
+    --success: #22c55e;
+    --success-foreground: #04240f;
+    --warning: #fbbf24;
+    --warning-foreground: #251a03;
+    --danger: #fb5b78;
+    --danger-foreground: #2a0710;
+
+    --focus: var(--accent);
+
+    --field-background: #1a2438;
+    --field-foreground: var(--foreground);
+    --field-border: transparent;
+    --field-radius: 0.75rem;
+
+    --surface-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.28);
+    --overlay-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    --field-shadow: none;
+
+    /* Qorong'ida tus foni to'yingan emas — rangning shaffof qatlami. */
+    --tone-blue-bg: #16264a;    --tone-blue-solid: #3b82f6;
+    --tone-green-bg: #10301f;   --tone-green-solid: #22c55e;
+    --tone-orange-bg: #341f10;  --tone-orange-solid: #f97316;
+    --tone-purple-bg: #271a3d;  --tone-purple-solid: #a855f7;
+    --tone-pink-bg: #35131f;    --tone-pink-solid: #f43f5e;
+    --tone-sky-bg: #10283f;     --tone-sky-solid: #0ea5e9;
+    --tone-amber-bg: #33260c;   --tone-amber-solid: #f59e0b;
+    --tone-cyan-bg: #0d2b31;    --tone-cyan-solid: #06b6d4;
+
+    --viz-surface: #131c2f;
+    --viz-ink: #f1f5f9;
+    --viz-ink-2: #cbd5e1;
+    --viz-muted: #7c8ba1;
+    --viz-grid: #1e293b;
+    --viz-axis: #26344b;
+
+    --viz-1: #60a5fa;
+    --viz-2: #fb923c;
+    --viz-3: #4ade80;
+    --viz-4: #c084fc;
+    --viz-5: #fb7185;
+    --viz-6: #22d3ee;
+    --viz-7: #a78bfa;
+    --viz-8: #fbbf24;
+
+    --viz-seq-1: #1e3a8a;
+    --viz-seq-2: #1d4ed8;
+    --viz-seq-3: #3b82f6;
+    --viz-seq-4: #60a5fa;
+    --viz-seq-5: #93c5fd;
+
+    --viz-div-neg: #60a5fa;
+    --viz-div-mid: #26344b;
+    --viz-div-pos: #fb7185;
+
+    --viz-good: #4ade80;
+    --viz-warning: #fbbf24;
+    --viz-serious: #fb923c;
+    --viz-critical: #fb7185;
+    --viz-delta-good: #4ade80;
+    --viz-delta-bad: #fb7185;
+  }
+}
+
+/* Tokenlarni Tailwind utility sifatida ochish. */
+@theme inline {
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
+  --color-viz-3: var(--viz-3);
+  --color-viz-4: var(--viz-4);
+  --color-viz-5: var(--viz-5);
+  --color-viz-good: var(--viz-good);
+  --color-viz-warning: var(--viz-warning);
+  --color-viz-serious: var(--viz-serious);
+  --color-viz-critical: var(--viz-critical);
+  --color-viz-grid: var(--viz-grid);
+  --color-viz-ink-2: var(--viz-ink-2);
+  --color-viz-muted: var(--viz-muted);
+  --color-delta-good: var(--viz-delta-good);
+  --color-delta-bad: var(--viz-delta-bad);
+}

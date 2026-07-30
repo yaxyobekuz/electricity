@@ -1,0 +1,52 @@
+/*
+ * Chop etish uslubi — rasmiy pasport hujjati uchun.
+ * `/passport/print/...` marshruti chrome'siz shu uslubda chiqadi.
+ */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  /* Chop etishda doim yorug' tema — siyoh tejaladi va hujjat rasmiy ko'rinadi. */
+  :root {
+    color-scheme: light !important;
+    --background: #ffffff !important;
+    --surface: #ffffff !important;
+    --foreground: #000000 !important;
+    --border: #999999 !important;
+    --separator: #cccccc !important;
+  }
+
+  .no-print,
+  nav,
+  aside,
+  button:not(.print-keep) {
+    display: none !important;
+  }
+
+  .panel,
+  .card {
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .print-page-break {
+    break-after: page;
+  }
+
+  .dt thead th {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+  }
+
+  a[href]::after {
+    content: "";
+  }
+
+  body {
+    font-size: 11pt;
+  }
+}

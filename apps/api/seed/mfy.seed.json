@@ -1,0 +1,131 @@
+{
+  "_readme": [
+    "MFY ro'yxati — demo ma'lumot uchun YAGONA manba.",
+    "Mijoz haqiqiy ro'yxatni tasdiqlaganda FAQAT shu fayl o'zgaradi.",
+    "",
+    "TASDIQLANGAN (mijoz PDF'laridan): Sarnaul, Go'ravon.",
+    "MOCKUPDAN: Chinobod, Navbahor, Bunyodkor, Obod, Istiqlol, Zarbdor, Mustaqillik, Gulshan.",
+    "QOLGANLARI generatsiya qilingan — mijoz bilan ALBATTA tasdiqlanishi kerak.",
+    "",
+    "weight  — iste'molchi/energiya ulushining nisbiy og'irligi",
+    "profile — demo hikoyasi uchun xatti-harakat namunasi",
+    "pinned  — MFY o'z pasportidan olingan qat'iy qiymatlar (taqsimlashda o'zgarmaydi)",
+    "grid    — kelajakdagi heks-kartogramma uchun joy (xarita EMAS, geo ma'lumot yo'q)"
+  ],
+
+  "district": {
+    "nameUz": "Baliqchi tumani",
+    "nameUzCyr": "Балиқчи тумани",
+    "region": "Andijon viloyati"
+  },
+
+  "//": "Tuman pasportidan olingan jami qiymatlar. Seed shularga KALIBROVKA qilinadi.",
+  "districtTotals": {
+    "consumersPopulation": 43318,
+    "consumersLegal": 1564,
+    "_consumersTotalStated": 44884,
+    "_consumersTotalActual": 44882,
+    "_note_consumers": "Pasportda 44,884 yozilgan, bo'laklar yig'indisi 44,882. Tizim bo'laklardan hisoblaydi.",
+
+    "tpCount": 574,
+    "substationCount": 4,
+
+    "lineKm04": 789.2,
+    "lineKm10": 466.5,
+    "_lineKm10Stated": 4665.0,
+    "_note_lines": "Pasportda 10 kV = 4,665.0 yozilgan, lekin 789.2 + 4,665.0 = 5,454.2 ≠ 1,255.7 jami. 466.5 bo'lsa aynan mos keladi — vergul xatosi. Mijoz tasdiqlashi kerak.",
+
+    "debtPopulationMln": 2449.1,
+    "debtLegalMln": 1816.5,
+    "debtBudgetMln": 0,
+
+    "metersOfflineCnt": 1456,
+    "lowConsumptionCnt": 8194,
+    "metersReplaceNeedCnt": 153,
+    "metersReplacedCnt": 69,
+
+    "tpRepairNeeded": 179,
+    "repairKm04": 104.2,
+    "repairKm10": 101.3,
+
+    "treeClearingKmYear": 145.6,
+
+    "_commercialLossStated": 12642,
+    "_identifiedLossStated": 4923,
+    "_note_commercial": "Birlik noaniq: 12,642 (kWh?) 8-qatordagi oylik oqim 11,200 dan katta. Mijozdan aniqlanishi kerak. Seed illegal yo'qotishdan hisoblaydi.",
+
+    "monthlyKwhIn": 14200000,
+    "_note_energy": "Mockupdagi 'Tarmoqqa kirgan energiya 14.2 mln kWh'. Oylik."
+  },
+
+  "//lossModel": "Yo'qotish 24 oy davomida 11.4% dan 8.1% ga tushadi (NATIJADORLIK hikoyasi).",
+  "lossModel": {
+    "startTotalPct": 11.4,
+    "endTotalPct": 8.1,
+    "startSplit": { "natural": 4.1, "technical": 3.9, "illegal": 3.4 },
+    "endSplit": { "natural": 3.9, "technical": 3.0, "illegal": 1.2 }
+  },
+
+  "mfys": [
+    {
+      "code": "MFY-SARNAUL", "nameUz": "Sarnaul MFY", "nameUzCyr": "Сарнаул МФЙ",
+      "shortName": "Sarnaul", "elektroset": "BALIQCHI", "weight": 1.0,
+      "profile": "normal", "grid": [1, 2],
+      "source": "PDF pasport — tasdiqlangan",
+      "pinned": {
+        "consumersPopulation": 754, "consumersLegal": 34,
+        "tpCount": 13, "lineKm04": 9.4, "lineKm10": 4.3,
+        "metersOfflineCnt": 9, "lowConsumptionCnt": 69,
+        "metersReplaceNeedCnt": 0, "metersReplacedCnt": 0,
+        "tpRepairNeeded": 2, "repairKm04": 1.2, "repairKm10": 1.0,
+        "treeClearingKmYear": 3.2
+      }
+    },
+    {
+      "code": "MFY-GORAVON", "nameUz": "Go‘ravon MFY", "nameUzCyr": "Гўравон МФЙ",
+      "shortName": "Go‘ravon", "elektroset": "BALIQCHI", "weight": 1.15,
+      "profile": "data-quality", "grid": [1, 3],
+      "source": "PDF pasport — tasdiqlangan",
+      "pinned": {
+        "consumersPopulation": 820, "consumersLegal": 9,
+        "tpCount": 9,
+        "metersOfflineCnt": 18, "lowConsumptionCnt": 145,
+        "metersReplaceNeedCnt": 18, "metersReplacedCnt": 0
+      }
+    },
+
+    { "code": "MFY-CHINOBOD",   "nameUz": "Chinobod MFY",   "nameUzCyr": "Чинобод МФЙ",   "shortName": "Chinobod",   "elektroset": "CHINOBOD", "weight": 2.40, "profile": "problem-illegal",   "grid": [2, 4], "source": "Mockup" },
+    { "code": "MFY-NAVBAHOR",   "nameUz": "Navbahor MFY",   "nameUzCyr": "Навбаҳор МФЙ",  "shortName": "Navbahor",   "elektroset": "CHINOBOD", "weight": 1.30, "profile": "problem-technical", "grid": [2, 3], "source": "Mockup" },
+    { "code": "MFY-BUNYODKOR",  "nameUz": "Bunyodkor MFY",  "nameUzCyr": "Бунёдкор МФЙ",  "shortName": "Bunyodkor",  "elektroset": "BALIQCHI", "weight": 1.60, "profile": "improving",         "grid": [1, 4], "source": "Mockup" },
+    { "code": "MFY-OBOD",       "nameUz": "Obod MFY",       "nameUzCyr": "Обод МФЙ",      "shortName": "Obod",       "elektroset": "BALIQCHI", "weight": 0.90, "profile": "good",              "grid": [3, 4], "source": "Mockup" },
+    { "code": "MFY-ISTIQLOL",   "nameUz": "Istiqlol MFY",   "nameUzCyr": "Истиқлол МФЙ",  "shortName": "Istiqlol",   "elektroset": "CHINOBOD", "weight": 1.75, "profile": "problem-technical", "grid": [2, 1], "source": "Mockup" },
+    { "code": "MFY-ZARBDOR",    "nameUz": "Zarbdor MFY",    "nameUzCyr": "Зарбдор МФЙ",   "shortName": "Zarbdor",    "elektroset": "BALIQCHI", "weight": 1.10, "profile": "problem-debt",      "grid": [3, 3], "source": "Mockup" },
+    { "code": "MFY-MUSTAQILLIK","nameUz": "Mustaqillik MFY","nameUzCyr": "Мустақиллик МФЙ","shortName": "Mustaqillik","elektroset": "CHINOBOD", "weight": 2.10, "profile": "normal",            "grid": [3, 2], "source": "Mockup" },
+    { "code": "MFY-GULSHAN",    "nameUz": "Gulshan MFY",    "nameUzCyr": "Гулшан МФЙ",    "shortName": "Gulshan",    "elektroset": "BALIQCHI", "weight": 1.05, "profile": "late-submitter",    "grid": [2, 2], "source": "Mockup" },
+
+    { "code": "MFY-YANGIOBOD",   "nameUz": "Yangiobod MFY",    "nameUzCyr": "Янгиобод МФЙ",    "shortName": "Yangiobod",   "elektroset": "BALIQCHI", "weight": 1.20, "profile": "normal", "grid": [1, 1], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-DOSTLIK",     "nameUz": "Do‘stlik MFY",     "nameUzCyr": "Дўстлик МФЙ",     "shortName": "Do‘stlik",    "elektroset": "CHINOBOD", "weight": 1.45, "profile": "normal", "grid": [4, 3], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-BAHOR",       "nameUz": "Bahor MFY",        "nameUzCyr": "Баҳор МФЙ",       "shortName": "Bahor",       "elektroset": "BALIQCHI", "weight": 0.95, "profile": "good",   "grid": [4, 4], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-SOHIL",       "nameUz": "Sohil MFY",        "nameUzCyr": "Соҳил МФЙ",       "shortName": "Sohil",       "elektroset": "BALIQCHI", "weight": 0.80, "profile": "good",   "grid": [4, 5], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-OQOLTIN",     "nameUz": "Oqoltin MFY",      "nameUzCyr": "Оқолтин МФЙ",     "shortName": "Oqoltin",     "elektroset": "CHINOBOD", "weight": 1.35, "profile": "normal", "grid": [3, 1], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-YANGIHAYOT",  "nameUz": "Yangihayot MFY",   "nameUzCyr": "Янгиҳаёт МФЙ",    "shortName": "Yangihayot",  "elektroset": "CHINOBOD", "weight": 1.55, "profile": "normal", "grid": [2, 5], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-GULISTON",    "nameUz": "Guliston MFY",     "nameUzCyr": "Гулистон МФЙ",    "shortName": "Guliston",    "elektroset": "BALIQCHI", "weight": 1.00, "profile": "normal", "grid": [4, 2], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-BESHKAPA",    "nameUz": "Beshkapa MFY",     "nameUzCyr": "Бешкапа МФЙ",     "shortName": "Beshkapa",    "elektroset": "BALIQCHI", "weight": 0.75, "profile": "good",   "grid": [5, 3], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-QUMQISHLOQ",  "nameUz": "Qumqishloq MFY",   "nameUzCyr": "Қумқишлоқ МФЙ",   "shortName": "Qumqishloq",  "elektroset": "CHINOBOD", "weight": 0.85, "profile": "normal", "grid": [5, 2], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-UCHTEPA",     "nameUz": "Uchtepa MFY",      "nameUzCyr": "Учтепа МФЙ",      "shortName": "Uchtepa",     "elektroset": "CHINOBOD", "weight": 1.25, "profile": "normal", "grid": [5, 4], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-KATTAQISHLOQ","nameUz": "Kattaqishloq MFY", "nameUzCyr": "Каттақишлоқ МФЙ", "shortName": "Kattaqishloq","elektroset": "BALIQCHI", "weight": 1.65, "profile": "normal", "grid": [3, 5], "source": "Generatsiya — tasdiqlanmagan" },
+    { "code": "MFY-YANGIQORGON", "nameUz": "Yangiqo‘rg‘on MFY","nameUzCyr": "Янгиқўрғон МФЙ",  "shortName": "Yangiqo‘rg‘on","elektroset": "CHINOBOD","weight": 1.40, "profile": "normal", "grid": [4, 1], "source": "Generatsiya — tasdiqlanmagan" }
+  ],
+
+  "//profiles": "Har bir profil demo hikoyasidagi rolni belgilaydi.",
+  "profiles": {
+    "good":              { "lossFactor": 0.70, "debtFactor": 0.60, "distanceM": [180, 260], "note": "Namunali MFY" },
+    "normal":            { "lossFactor": 1.00, "debtFactor": 1.00, "distanceM": [200, 300], "note": "O'rtacha" },
+    "improving":         { "lossFactor": 1.55, "debtFactor": 1.10, "distanceM": [220, 310], "note": "Ishlar natijasida keskin yaxshilangan — NATIJADORLIK paneli" },
+    "problem-illegal":   { "lossFactor": 1.85, "debtFactor": 1.20, "distanceM": [240, 330], "note": "Noqonuniy foydalanish yuqori" },
+    "problem-technical": { "lossFactor": 1.60, "debtFactor": 0.95, "distanceM": [340, 460], "note": "Texnik yo'qotish standartdan 1.8x, TP lar ortiqcha yuklangan, masofa normadan uzoq" },
+    "problem-debt":      { "lossFactor": 1.05, "debtFactor": 3.40, "distanceM": [210, 300], "note": "Yuridik qarzdorlik oyiga +12%" },
+    "late-submitter":    { "lossFactor": 1.10, "debtFactor": 1.00, "distanceM": [200, 300], "note": "Joriy oy qoralamada qoladi — to'liqlik matritsasida qizil katak" },
+    "data-quality":      { "lossFactor": 1.25, "debtFactor": 1.15, "distanceM": [230, 320], "note": "Seed tuman qarzdorligini shu MFY ga yozishga URINADI — trigger bloklaydi" }
+  }
+}
