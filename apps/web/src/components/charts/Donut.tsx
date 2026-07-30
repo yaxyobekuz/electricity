@@ -35,11 +35,16 @@ interface DonutProps {
   /** Nechta kategorik rang ishlatilsin (maks 3). */
   maxColors?: number;
   formatValue?: (v: number) => string;
+  /**
+   * Legendani diagramma YONIDA (o'ngda) ko'rsatish — mockupdagi ko'rinish.
+   * Har bir band: rangli nuqta, yorliq, qiymat va ulush.
+   */
+  legendSide?: boolean;
 }
 
 export function Donut({
   slices, centerValue, centerLabel, height = 220,
-  csvName = 'donut', title, maxColors = 3, formatValue,
+  csvName = 'donut', title, maxColors = 3, formatValue, legendSide = false,
 }: DonutProps) {
   const t = useVizTokens();
 
@@ -82,16 +87,46 @@ export function Donut({
     return <div className="flex h-32 items-center justify-center text-sm text-muted">Ma’lumot yo‘q</div>;
   }
 
+  /** Yon legenda — rangli nuqta + yorliq + qiymat + ulush. */
+  const sideLegend = legendSide ? (
+    <ul className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
+      {prepared.map((s) => (
+        <li key={s.id} className="flex items-start gap-2">
+          <span
+            aria-hidden="true"
+            className="mt-1 inline-block size-2 shrink-0 rounded-full"
+            style={{ background: s.color }}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-[11px] leading-tight text-muted">{s.label}</p>
+            <p
+              className="text-[12.5px] font-semibold leading-tight"
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
+              {s.display ?? fmt(s.value)}
+              {total > 0 && (
+                <span className="ml-1 font-normal text-muted">
+                  ({((s.value / total) * 100).toFixed(1)}%)
+                </span>
+              )}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  ) : null;
+
   return (
     <ChartFrame
       csvName={csvName}
       height={height}
-      legend={prepared.map((s) => ({ label: s.label, color: s.color! }))}
+      legend={legendSide ? undefined : prepared.map((s) => ({ label: s.label, color: s.color! }))}
       tableColumns={columns}
       tableData={prepared}
       title={title}
     >
-      <div className="relative h-full">
+      <div className={legendSide ? 'flex h-full items-center gap-3' : 'relative h-full'}>
+        <div className={legendSide ? 'relative h-full w-[46%] shrink-0' : 'contents'}>
         <ResponsivePie
           activeOuterRadiusOffset={5}
           arcLabel={() => ''}
@@ -129,18 +164,20 @@ export function Donut({
             </div>
           )}
         />
-        {(centerValue || centerLabel) && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            {centerValue && (
-              <span className="tabular text-xl font-semibold leading-none">{centerValue}</span>
-            )}
-            {centerLabel && (
-              <span className="mt-1 max-w-[70%] text-center text-[10px] leading-tight text-muted">
-                {centerLabel}
-              </span>
-            )}
-          </div>
-        )}
+          {(centerValue || centerLabel) && (
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              {centerValue && (
+                <span className="tabular text-lg font-bold leading-none">{centerValue}</span>
+              )}
+              {centerLabel && (
+                <span className="mt-1 max-w-[80%] text-center text-[10px] leading-tight text-muted">
+                  {centerLabel}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        {sideLegend}
       </div>
     </ChartFrame>
   );

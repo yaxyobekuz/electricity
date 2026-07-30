@@ -1,12 +1,47 @@
 /**
  * API klienti.
  *
- * Barcha so'rovlar NISBIY manzilga ketadi (`/api/...`) — bir xil origin.
- * Tashqi host YO'Q. CSP `connect-src 'self'` buni majburlaydi.
+ * Manzil `.env` dagi `VITE_API_BASE` orqali beriladi:
+ *   • bo'sh yoki `/api`  → nisbiy manzil, Vite proksi orqali (bir xil origin);
+ *   • `http://192.168.1.132:3001/api` → to'g'ridan-to'g'ri API serveriga.
+ *
+ * Absolyut manzil berilganda ham sahifa QAYSI hostdan ochilgan bo'lsa, so'rov
+ * o'sha hostga yuboriladi — faqat port va yo'l `.env` dan olinadi. Sabab:
+ * LAN IP o'zgarishi mumkin, hamda `localhost:5173` dan ochilganda so'rov
+ * `localhost:3001` ga ketsa, refresh cookie (SameSite=Strict) yo'qolmaydi.
+ * Tashqi tarmoq YO'Q — hammasi shu kompyuter/LAN ichida.
  */
 import type { ApiError } from '@beap/shared';
 
-const BASE = '/api';
+/** `VITE_API_BASE` ni joriy sahifa hostiga moslab hal qiladi. */
+function resolveBase(): string {
+  const configured = String(import.meta.env.VITE_API_BASE ?? '').trim();
+
+  // Berilmagan yoki nisbiy — o'zgarishsiz ishlatamiz (Vite proksi yo'li).
+  if (!configured || configured.startsWith('/')) {
+    return (configured || '/api').replace(/\/+$/, '');
+  }
+
+  try {
+    const url = new URL(configured);
+    // Brauzerda — hostni joriy sahifadan olamiz, port/yo'l sozlamadan qoladi.
+    if (typeof window !== 'undefined' && window.location.hostname) {
+      url.hostname = window.location.hostname;
+      url.protocol = window.location.protocol;
+    }
+    return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
+  } catch {
+    // Noto'g'ri yozilgan manzil butun ilovani sindirmasin.
+    return '/api';
+  }
+}
+
+const BASE = resolveBase();
+
+/** To'liq API manzilini quradi — `api.ts` tashqarisidagi `fetch` lar uchun. */
+export function apiUrl(path: string): string {
+  return `${BASE}${path}`;
+}
 
 let accessToken: string | null = null;
 let onUnauthorized: (() => void) | null = null;
@@ -53,7 +88,8 @@ async function refreshAccessToken(): Promise<boolean> {
     try {
       const res = await fetch(`${BASE}/auth/refresh`, {
         method: 'POST',
-        credentials: 'same-origin',
+        // API boshqa portda bo'lishi mumkin — cookie baribir yuborilsin.
+        credentials: 'include',
       });
       if (!res.ok) return false;
       const data = (await res.json()) as { accessToken: string };
@@ -82,7 +118,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     return fetch(`${BASE}${path}`, {
       method,
       headers,
-      credentials: 'same-origin',
+      credentials: 'include',
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       ...(signal ? { signal } : {}),
     });

@@ -32,20 +32,29 @@
   box-shadow: var(--surface-shadow);
 }
 
+/*
+ * `.panel` QATLAMSIZ e'lon qilingan, shuning uchun u `flex-col` yordamchi
+ * sinfini ham yengadi. Yotiq panel uchun alohida modifikator kerak —
+ * `class="panel flex-row"` ISHLAMAYDI.
+ */
+.panel--row {
+  @apply flex-row items-center;
+}
+
 .panel__header {
-  @apply flex items-center justify-between gap-3 px-5 pb-3 pt-4;
+  @apply flex items-center justify-between gap-2 px-4 pb-2 pt-3;
 }
 
 .panel__title {
-  @apply text-[13px] font-bold uppercase tracking-wide text-foreground;
+  @apply text-[12px] font-bold uppercase tracking-wide text-foreground;
 }
 
 .panel__subtitle {
-  @apply text-[11px] font-normal normal-case tracking-normal text-muted;
+  @apply text-[10.5px] font-normal normal-case tracking-normal text-muted;
 }
 
 .panel__body {
-  @apply flex-1 px-5 pb-5;
+  @apply flex-1 px-4 pb-4;
 }
 
 .panel__body--flush {
@@ -54,8 +63,8 @@
 
 /* Panel pastidagi harakat havolasi — mockupdagi "Batafsil" / "Barchasi" */
 .panel__action {
-  @apply block w-full rounded-b-xl border-t border-separator px-5 py-3
-         text-center text-xs font-semibold text-accent transition-colors;
+  @apply block w-full rounded-b-xl border-t border-separator px-4 py-2
+         text-center text-[11px] font-semibold text-accent transition-colors;
 }
 .panel__action:hover {
   background: color-mix(in oklab, var(--accent) 6%, transparent);
@@ -64,27 +73,27 @@
 /* ── KPI kartasi ────────────────────────────────────────────────────────── */
 
 .kpi {
-  @apply relative flex flex-col gap-2.5 overflow-hidden rounded-xl p-4;
+  @apply relative flex flex-col gap-1.5 overflow-hidden rounded-xl px-3.5 py-3;
   background: var(--tone-bg, var(--surface));
 }
 
 .kpi__badge {
-  @apply flex size-9 shrink-0 items-center justify-center rounded-xl text-white;
+  @apply flex size-8 shrink-0 items-center justify-center rounded-lg text-white;
   background: var(--tone-solid, var(--accent));
   box-shadow: 0 4px 10px color-mix(in oklab, var(--tone-solid, var(--accent)) 35%, transparent);
 }
 
 .kpi__label {
-  @apply text-[12px] font-medium leading-tight text-muted;
+  @apply text-[11.5px] font-medium leading-tight text-muted;
 }
 
 .kpi__value {
-  @apply text-[26px] font-bold leading-none tracking-tight text-foreground;
+  @apply text-[23px] font-bold leading-none tracking-tight text-foreground;
   font-variant-numeric: tabular-nums;
 }
 
 .kpi__unit {
-  @apply pb-0.5 text-xs font-medium text-muted;
+  @apply pb-px text-[11px] font-medium text-muted;
 }
 
 /* Tus variantlari — `theme-gov.css` dagi tokenlarga bog'lanadi. */
@@ -104,12 +113,12 @@
 }
 
 .dt thead th {
-  @apply sticky top-0 z-10 bg-surface px-4 py-2.5 text-left text-[11px]
+  @apply sticky top-0 z-10 bg-surface px-3.5 py-2 text-left text-[10.5px]
          font-semibold uppercase tracking-wide text-muted;
 }
 
 .dt tbody td {
-  @apply px-4 py-2.5 align-middle;
+  @apply px-3.5 py-1.5 align-middle;
   border-top: 1px solid var(--separator);
 }
 

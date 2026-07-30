@@ -19,6 +19,7 @@ import dashRoutes from './routes/dash.ts';
 import entryRoutes from './routes/entry.ts';
 import passportRoutes from './routes/passport.ts';
 import refRoutes from './routes/ref.ts';
+import reportRoutes from './routes/report.ts';
 import { lastRefreshAt } from './services/aggregates.ts';
 import { queryOne } from './db/pool.ts';
 
@@ -64,9 +65,20 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cookie, { secret: config.auth.jwtSecret });
 
   // Dev rejimida Vite (5173) API ga murojaat qiladi. Prod da bir xil origin.
+  //
+  // LAN dan kirish: sahifa `http://192.168.1.132:5173` dan ochilganda origin
+  // API origin'idan farq qiladi, shuning uchun faqat LOKAL TARMOQ manzillariga
+  // ruxsat beramiz. Internet origin'lari (domenlar, publik IP) rad etiladi —
+  // tizim LAN doirasidan chiqmaydi.
   if (!config.isProd) {
+    const LOCAL_ORIGIN =
+      /^https?:\/\/(?:localhost|\[::1\]|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(?::\d{1,5})?$/;
+
     await app.register(cors, {
-      origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+      // `origin` yo'q — bu brauzer emas (curl, server-to-server) — ruxsat.
+      origin: (origin, cb) => {
+        cb(null, !origin || LOCAL_ORIGIN.test(origin));
+      },
       credentials: true,
     });
   }
@@ -101,6 +113,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(dashRoutes, { prefix: '/api/dash' });
   await app.register(passportRoutes, { prefix: '/api/passport' });
   await app.register(entryRoutes, { prefix: '/api/entry' });
+  await app.register(reportRoutes, { prefix: '/api/report' });
 
   return app;
 }

@@ -30,8 +30,9 @@ export default function PassportPage() {
   const [tab, setTab] = useState<string>(routeMfyId ? 'mfy' : 'tuman');
 
   const tuman = useTumanPassport(period ?? undefined);
-  const mfy = useMfyPassport(selectedMfy ?? 0, period ?? undefined);
-  const effectivePeriod = period ?? tuman.data?.period ?? '';
+  const mfy = useMfyPassport(selectedMfy, period ?? undefined);
+  // Davr hali aniq bo'lmasa `null` — so'rovlar kutib turadi.
+  const effectivePeriod = period ?? tuman.data?.period ?? null;
   const reconcile = useReconcile(effectivePeriod);
 
   if (tuman.isLoading) return <LoadingState rows={5} />;
@@ -46,7 +47,7 @@ export default function PassportPage() {
 
   const openPrint = (): void => {
     const scope = tab === 'mfy' && selectedMfy ? `mfy/${selectedMfy}` : 'tuman/0';
-    window.open(`/passport/print/${scope}/${effectivePeriod}`, '_blank');
+    window.open(`/passport/print/${scope}/${effectivePeriod ?? 'latest'}`, '_blank');
   };
 
   const mismatches = (reconcile.data ?? []).filter((r) => !r.ok);

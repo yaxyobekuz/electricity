@@ -10,6 +10,7 @@
 import type { Passport } from '@beap/shared';
 import { num } from '@beap/shared';
 import { Chip, cn } from '@heroui/react';
+import { Fragment } from 'react';
 
 import { currentScript } from '../../i18n/index.ts';
 
@@ -34,9 +35,14 @@ export function PassportTable({ passport, compact }: { passport: Passport; compa
         </tr>
       </thead>
       <tbody>
+        {/*
+          Har bir pasport qatori BIR NECHTA <tr> beradi (asosiy qator +
+          "shundan ..." kichik qatorlari). Ro'yxat elementi — Fragment,
+          shuning uchun `key` AYNAN unga qo'yiladi, ichkaridagi <tr> ga emas.
+        */}
         {passport.rows.map((row) => (
-          <>
-            <tr key={row.no} className="font-medium">
+          <Fragment key={row.no}>
+            <tr className="font-medium">
               <td className="text-center tabular text-muted">{row.no}</td>
               <td>{cyr ? row.labelUzCyr : row.labelUz}</td>
               <td className="num font-semibold">{formatValue(row.value, row.unit)}</td>
@@ -64,7 +70,7 @@ export function PassportTable({ passport, compact }: { passport: Passport; compa
                 <td className="no-print" />
               </tr>
             ))}
-          </>
+          </Fragment>
         ))}
       </tbody>
     </table>

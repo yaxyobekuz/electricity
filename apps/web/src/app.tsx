@@ -4,7 +4,13 @@ import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 
 import { AppShell, LoadingState } from './components/layout/AppShell.tsx';
-import { ApiRequestError, api, setAccessToken, setUnauthorizedHandler } from './lib/api.ts';
+import {
+  ApiRequestError,
+  api,
+  apiUrl,
+  setAccessToken,
+  setUnauthorizedHandler,
+} from './lib/api.ts';
 import { useUi } from './lib/ui-store.ts';
 import type { AuthUser } from '@beap/shared';
 
@@ -19,6 +25,10 @@ const EntryForm = lazy(() => import('./features/entry/EntryForm.tsx'));
 const ReviewQueue = lazy(() => import('./features/review/ReviewQueue.tsx'));
 const TpListPage = lazy(() => import('./features/tp/TpListPage.tsx'));
 const WorksPage = lazy(() => import('./features/works/WorksPage.tsx'));
+const EnergyBalancePage = lazy(() => import('./features/energy/EnergyBalancePage.tsx'));
+const LossesPage = lazy(() => import('./features/losses/LossesPage.tsx'));
+const DebtPage = lazy(() => import('./features/debt/DebtPage.tsx'));
+const ReportsPage = lazy(() => import('./features/reports/ReportsPage.tsx'));
 const LoginPage = lazy(() => import('./features/auth/LoginPage.tsx'));
 
 const queryClient = new QueryClient({
@@ -48,9 +58,9 @@ function useSessionRestore(): { ready: boolean } {
 
     void (async () => {
       try {
-        const res = await fetch('/api/auth/refresh', {
+        const res = await fetch(apiUrl('/auth/refresh'), {
           method: 'POST',
-          credentials: 'same-origin',
+          credentials: 'include',
         });
         if (!res.ok) return;
         const data = (await res.json()) as { accessToken: string; user: AuthUser };
@@ -113,11 +123,11 @@ export function App() {
                       <Route path="/dashboard/mfy/:mfyId" element={<MfyDashboard />} />
                       <Route path="/mahallalar" element={<MfyList />} />
                       <Route path="/transformers" element={<TpListPage />} />
-                      <Route path="/energy-balance" element={<DistrictDashboard />} />
-                      <Route path="/losses" element={<DistrictDashboard />} />
-                      <Route path="/debt" element={<DistrictDashboard />} />
+                      <Route path="/energy-balance" element={<EnergyBalancePage />} />
+                      <Route path="/losses" element={<LossesPage />} />
+                      <Route path="/debt" element={<DebtPage />} />
                       <Route path="/works" element={<WorksPage />} />
-                      <Route path="/reports" element={<DistrictDashboard />} />
+                      <Route path="/reports" element={<ReportsPage />} />
                       <Route path="/passport" element={<PassportPage />} />
                       <Route path="/passport/:scope/:id/:period" element={<PassportPage />} />
                       <Route path="/entry" element={<EntryPage />} />

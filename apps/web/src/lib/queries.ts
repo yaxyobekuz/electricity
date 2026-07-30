@@ -271,18 +271,24 @@ export function useTumanPassport(period?: string) {
   });
 }
 
-export function useMfyPassport(id: number, period?: string) {
+export function useMfyPassport(id: number | null, period?: string) {
   return useQuery({
     queryKey: keys.passport('mfy', id, period ?? 'latest'),
-    queryFn: ({ signal }) => api.get<Passport>(`/passport/mfy/${id}${qs({ period })}`, signal),
+    queryFn: ({ signal }) => api.get<Passport>(`/passport/mfy/${id!}${qs({ period })}`, signal),
+    // MFY tanlanmaguncha so'rov yubormaymiz — aks holda `/passport/mfy/0`
+    // ketadi va server 400 qaytaradi.
+    enabled: typeof id === 'number' && id > 0,
     ...DASH_OPTIONS,
   });
 }
 
-export function useReconcile(period: string) {
+export function useReconcile(period: string | null | undefined) {
   return useQuery({
-    queryKey: ['passport', 'reconcile', period],
-    queryFn: ({ signal }) => api.get<PassportReconcileRow[]>(`/passport/tuman/${period}/reconcile`, signal),
+    queryKey: ['passport', 'reconcile', period ?? 'none'],
+    queryFn: ({ signal }) =>
+      api.get<PassportReconcileRow[]>(`/passport/tuman/${period!}/reconcile`, signal),
+    // Davr aniqlanmaguncha kutamiz — bo'sh davr `/tuman//reconcile` beradi.
+    enabled: Boolean(period),
     ...DASH_OPTIONS,
   });
 }

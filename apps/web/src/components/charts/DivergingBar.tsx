@@ -74,7 +74,7 @@ export function DivergingBar({ rows, height = 300, onSelect }: DivergingBarProps
           tickPadding: 6,
           format: (v: number) => `${v > 0 ? '+' : ''}${v}`,
         }}
-        axisLeft={{ tickSize: 0, tickPadding: 6 }}
+        axisLeft={{ tickSize: 0, tickPadding: 8 }}
         borderRadius={3}
         colors={(d: { data: { color: string } }) => d.data.color}
         data={data}
@@ -84,7 +84,7 @@ export function DivergingBar({ rows, height = 300, onSelect }: DivergingBarProps
         keys={['gap']}
         labelSkipWidth={9999}
         layout="horizontal"
-        margin={{ top: 4, right: 20, bottom: 28, left: 92 }}
+        margin={{ top: 4, right: 16, bottom: 26, left: 104 }}
         markers={[
           {
             axis: 'x',
@@ -95,7 +95,16 @@ export function DivergingBar({ rows, height = 300, onSelect }: DivergingBarProps
         ]}
         padding={0.28}
         theme={nivoTheme(t)}
-        valueScale={{ type: 'linear' }}
+        /*
+         * min/max — MAJBURIY.
+         *
+         * Nivo'da `valueScale` ning `min` i belgilanmasa 0 deb olinadi.
+         * Bu diagrammada qiymatlarning yarmi MANFIY (standartdan yaxshi),
+         * shuning uchun ular nol nuqtasidan chapga — diagramma maydonidan
+         * TASHQARIGA chiziladi va chapdagi mahalla nomlarini bosib ketadi.
+         * Aynan shu "hamma narsa birlashib ketgan" ko'rinishning sababi edi.
+         */
+        valueScale={{ type: 'linear', min: 'auto', max: 'auto' }}
         onClick={(d: { data: { mfyId: number } }) => onSelect?.(d.data.mfyId)}
         tooltip={({ data }: { data: { mfy: string; gap: number } }) => {
           const row = rows.find((r) => r.nameUz.replace(/ MFY$/, '') === data.mfy);

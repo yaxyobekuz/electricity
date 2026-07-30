@@ -1,0 +1,1273 @@
+file:///c:/Users/i7/Desktop/electricity/apps/api/src/services/reports.ts:30
+const printer = new PdfPrinter(FONTS);
+                ^
+
+TypeError: PdfPrinter is not a constructor
+    at file:///c:/Users/i7/Desktop/electricity/apps/api/src/services/reports.ts:30:17
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.18.0
+Failed running 'src/server.ts'. Waiting for file changes before restarting...
+Restarting 'src/server.ts'
+file:///c:/Users/i7/Desktop/electricity/apps/api/src/services/reports.ts:30
+const printer = new PdfPrinter(FONTS);
+                ^
+
+TypeError: PdfPrinter is not a constructor
+    at file:///c:/Users/i7/Desktop/electricity/apps/api/src/services/reports.ts:30:17
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.18.0
+Failed running 'src/server.ts'. Waiting for file changes before restarting...
+Restarting 'src/server.ts'
+Restarting 'src/server.ts'
+Restarting 'src/server.ts'
+[21:49:27] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
+[21:49:27] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
+[21:49:27] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+Restarting 'src/server.ts'
+[21:49:28] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
+[21:49:28] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
+[21:49:28] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:49:28] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "a5gksmkyym"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50231
+    }
+[21:49:29] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "a5gksmkyym"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5.235899999999901
+Restarting 'src/server.ts'
+[21:49:32] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
+[21:49:32] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
+[21:49:32] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:49:32] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "bzkivx2jqv"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50234
+    }
+[21:49:32] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "bzkivx2jqv"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 3.8760999999999513
+[21:49:36] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "xgj684198r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50238
+    }
+[21:49:36] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "xgj684198r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.4555999999993219
+[21:49:39] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "n722ndlq27"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50241
+    }
+[21:49:39] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "n722ndlq27"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.38650000000052387
+[21:49:43] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "ye8db2qrco"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50245
+    }
+[21:49:43] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "ye8db2qrco"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.41520000000127766
+[21:49:46] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "jm1q7z5upz"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50248
+    }
+[21:49:46] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "jm1q7z5upz"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.3646000000007916
+Restarting 'src/server.ts'
+[21:49:48] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
+[21:49:48] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
+[21:49:48] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:49:49] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "lzgye97pjc"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50251
+    }
+[21:49:49] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "lzgye97pjc"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 3.925299999999879
+[21:49:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "cnupld4cqr"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50254
+    }
+[21:49:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "cnupld4cqr"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.42779999999947904
+[21:49:56] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "gqgmdgn6cz"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50257
+    }
+[21:49:56] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "gqgmdgn6cz"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.44629999999961
+[21:49:59] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "pp20i2tb3m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50260
+    }
+[21:49:59] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "pp20i2tb3m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.38149999999950523
+[21:50:01] [32mINFO[39m: [36mAgregatlar yangilandi[39m
+    [35mms[39m: 1267
+[21:50:03] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "8jo9a86y9c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61148
+    }
+[21:50:03] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "8jo9a86y9c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.3694999999988795
+[21:50:06] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "dl4l1wdw7k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61151
+    }
+[21:50:06] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "dl4l1wdw7k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.4158999999999651
+Restarting 'src/server.ts'
+[21:50:09] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
+[21:50:09] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
+[21:50:09] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:50:10] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "w4bd1wcif"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63174
+    }
+[21:50:10] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "w4bd1wcif"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 3.935399999999845
+[21:50:13] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "wtbbwho573"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63177
+    }
+[21:50:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "wtbbwho573"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.4297000000005937
+Restarting 'src/server.ts'
+[21:50:15] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
+[21:50:15] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
+[21:50:15] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:50:16] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "end43t28vk"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63180
+    }
+[21:50:16] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "end43t28vk"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 4.650900000000092
+[21:50:20] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "4k29fokzkq"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63183
+    }
+[21:50:20] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "4k29fokzkq"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.4677000000001499
+[21:50:23] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "yfk91u8e31"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63188
+    }
+[21:50:23] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "yfk91u8e31"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.3863999999994121
+[21:50:29] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "5bk36zx9bk"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63191
+    }
+[21:50:29] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "5bk36zx9bk"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.37850000000071304
+[21:50:35] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "ceg7wa1uam"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/report/passport/tuman.xlsx",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63192
+    }
+[21:50:36] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "ceg7wa1uam"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 208.2039999999979
+[21:50:36] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "8v4642ea3w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/report/passport/tuman.pdf",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63194
+    }
+[21:50:36] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "8v4642ea3w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 94.15580000000045
+[21:50:36] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "gz5d5pg1c7"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/report/passport/mfy/1.xlsx",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63195
+    }
+[21:50:36] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "gz5d5pg1c7"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 9.797699999999168
+[21:50:36] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "ao5bbujdm4"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/report/passport/mfy/1.pdf",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63196
+    }
+[21:50:36] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "ao5bbujdm4"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 51.16440000000148
+[21:50:37] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "snblb218kf"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/report/period/monthly.xlsx",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63197
+    }
+[21:50:37] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "snblb218kf"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 157.08740000000034
+[21:50:37] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "g8kuop4ehl"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/report/period/monthly.pdf",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63204
+    }
+[21:50:37] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "g8kuop4ehl"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 49.107599999999366
+[21:50:51] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "7275vmgii9"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/auth/refresh",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49928
+    }
+[21:50:51] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "5eky3tx0a2"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/auth/refresh",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51524
+    }
+[21:50:51] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "a98o7a85cd"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/ref/bootstrap",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54290
+    }
+[21:50:51] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "hjtbr7cyi9"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/efficiency",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54117
+    }
+[21:50:51] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "7275vmgii9"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 21.417499999995925
+[21:50:51] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "5eky3tx0a2"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 22.571499999998196
+[21:50:51] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "a98o7a85cd"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 37.3405999999959
+[21:50:51] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "hjtbr7cyi9"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 144.01200000000244
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "iygiibrsdh"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/overview",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60864
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "iygiibrsdh"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.6203000000023167
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "k0tnjf38xq"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/energy-balance",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57903
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "k0tnjf38xq"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.24279999999998836
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "ygvbm2q21s"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/tp-monitoring?limit=40",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61168
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "ygvbm2q21s"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.19430000000284053
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "d70zshvd9w"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/mfy-ranking",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 64734
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "d70zshvd9w"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.16900000000168802
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "zl8kw0ujhv"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/technical-loss",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59615
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "zl8kw0ujhv"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.1401999999943655
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "l02tf84fo7"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/distance",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53089
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "l02tf84fo7"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.1782999999995809
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "0s2figo74j"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/debt",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60864
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "0s2figo74j"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.22389999999722932
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "jh9fvioatt"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/loss-map",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57903
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "jh9fvioatt"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.14609999999811407
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "s2htbq4ruz"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/works",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61168
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "s2htbq4ruz"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.14870000000519212
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "009q96t9ii"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/alerts",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 64734
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "009q96t9ii"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.23359999999956926
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "7t8ivnoi0r"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/series?bucket=day",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59615
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "7t8ivnoi0r"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.1687000000019907
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "4exfxy1hpm"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/overview",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53089
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "4exfxy1hpm"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.14899999999761349
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "q3n17mjqzv"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/energy-balance",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60864
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "q3n17mjqzv"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.11929999999847496
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "7xgzt1afuw"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/tp-monitoring?limit=40",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57903
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "7xgzt1afuw"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.15580000000045402
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "5bhjfi02m0"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/mfy-ranking",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61168
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "5bhjfi02m0"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.14150000000518048
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "6oza343z7j"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/technical-loss",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 64734
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "6oza343z7j"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.13269999999465654
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "b71bdudgp4"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/distance",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59615
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "b71bdudgp4"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.16479999999864958
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "isaj4vfuvw"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/debt",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53089
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "isaj4vfuvw"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.14640000000508735
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "mpjwxacxxw"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/loss-map",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60864
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "mpjwxacxxw"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.1169000000008964
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "oe85op7a5j"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/works",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57903
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "oe85op7a5j"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.13940000000002328
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "h383gwtcvy"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/alerts",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61168
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "h383gwtcvy"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.13109999999869615
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "nlzojnst7z"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/dash/district/series?bucket=day",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 64734
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "nlzojnst7z"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.13620000000082655
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "vas38wq76k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/overview",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54117
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "vbh06ti9lu"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/energy-balance",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54290
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "wfnusaappq"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/tp-monitoring?limit=40",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51524
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "0r0ej42w35"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/mfy-ranking",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49928
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "gjxrtexx5h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/technical-loss",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58164
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "259g1b29ik"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/distance",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53448
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "wfnusaappq"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11.045600000004924
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "0r0ej42w35"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 12.819700000000012
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "sbib6nsddo"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/debt",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51524
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "92ntzvagwu"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/loss-map",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49928
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "vas38wq76k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.22950000000128
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "gjxrtexx5h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.64940000000206
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "4xpupj6b67"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/works",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54117
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "0tlxrdypvm"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/alerts",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58164
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "vbh06ti9lu"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.950699999993958
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "nub8qbvqn4"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/series?bucket=day",
+      "host": "localhost:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54290
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "92ntzvagwu"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 10.667099999998754
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "4xpupj6b67"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11.16070000000036
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "sbib6nsddo"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 15.662599999996019
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "259g1b29ik"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 29.306100000001607
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "nub8qbvqn4"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 12.507599999997183
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "0tlxrdypvm"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23.226999999998952
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "vqw5gk1dvv"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/ref/bootstrap",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 61966
+    }
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "jfaabfr7md"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/auth/refresh",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 52007
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "jfaabfr7md"
+    [35mres[39m: {
+      "statusCode": 401
+    }
+    [35mresponseTime[39m: 0.4026999999987311
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "mgo1ududma"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/auth/refresh",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 49787
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "mgo1ududma"
+    [35mres[39m: {
+      "statusCode": 401
+    }
+    [35mresponseTime[39m: 0.30139999999664724
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "81jc9ckp8h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/efficiency",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 52007
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "vqw5gk1dvv"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 4.7189999999973224
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "oc72kj2tib"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/ref/bootstrap",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 49787
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "oc72kj2tib"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 3.681400000001304
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "81jc9ckp8h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5.9782000000050175
+[21:50:52] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "kx9vhe57us"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/efficiency",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 49787
+    }
+[21:50:52] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "kx9vhe57us"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 6.120999999999185
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "xmtgut4i02"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/overview",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 49787
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "m6wqd935pu"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/tp-monitoring?limit=40",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 52007
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "ywea0op627"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/overview",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 61966
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "0x054c4mml"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/energy-balance",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 55850
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "1kdw7nsa8e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/mfy-ranking",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 56865
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "o4homm0pw8"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/technical-loss",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 65482
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "28xygcexz8"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/tp-monitoring?limit=40",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 53146
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "30wrqi8bnu"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/distance",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 59384
+    }
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "0x054c4mml"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5.962700000003679
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "ywea0op627"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 6.5899999999965075
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "o4homm0pw8"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5.054599999995844
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "sn57tfrxyp"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/debt",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 55850
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "1j75ngv9v6"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/loss-map",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 61966
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "yr43mq3j45"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/works",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 65482
+    }
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "28xygcexz8"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 8.170499999992899
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "1kdw7nsa8e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 9.298399999999674
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "6zxpme5vd0"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/alerts",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 56865
+    }
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "ydknmwlsjl"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/dash/district/series?bucket=day",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 53146
+    }
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "1j75ngv9v6"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5.587100000004284
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "yr43mq3j45"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5.878000000004249
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "sn57tfrxyp"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 7.860599999999977
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "30wrqi8bnu"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.675199999997858
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "ydknmwlsjl"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 8.394099999997707
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "6zxpme5vd0"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 14.801299999999173
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "8t0z7c5qts"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "192.168.1.132:3001",
+      "remoteAddress": "192.168.1.132",
+      "remotePort": 59385
+    }
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "8t0z7c5qts"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.3360000000029686
+[21:50:53] [32mINFO[39m: [36mincoming request[39m
+    [35mreqId[39m: "tnfcpflwq1"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/health",
+      "host": "127.0.0.1:3001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59386
+    }
+[21:50:53] [32mINFO[39m: [36mrequest completed[39m
+    [35mreqId[39m: "tnfcpflwq1"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 0.230199999998149
