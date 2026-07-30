@@ -59,13 +59,13 @@ export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]
       <table className="dt dt--compact min-w-md table-fixed">
         <thead>
           <tr>
-            <th className="w-[7%] text-center">№</th>
+            <th className="w-[5%] text-center">№</th>
             <th className="w-[19%]">Transformator</th>
             <th className="w-[15%] text-right">Quvvat (kVA)</th>
             <th className="w-[14%] text-right">Yuklama (%)</th>
             <th className="w-[19%]">Holat</th>
-            <th className="w-[13%] text-right">Masofa (m)</th>
-            <th className="w-[13%]">Standart</th>
+            <th className="w-[14%] text-right">Masofa (m)</th>
+            <th className="w-[14%]">Standart</th>
           </tr>
         </thead>
         <tbody>
@@ -74,11 +74,11 @@ export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]
             const color = t.status[status];
             return (
               <tr key={r.tpId}>
-                <td className="num text-center! text-[12px] text-muted">{i + 1}</td>
+                <td className="num text-center! text-[10.5px] text-muted">{i + 1}</td>
                 <td className="truncate">
                   <Link
                     to={`/dashboard/mfy/${r.mfyId}`}
-                    className="block truncate text-[12.5px] font-semibold text-accent hover:underline"
+                    className="block truncate font-semibold text-accent hover:underline"
                   >
                     {r.code}
                   </Link>
@@ -88,13 +88,13 @@ export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]
                     </span>
                   )}
                 </td>
-                <td className="num whitespace-nowrap text-[12.5px]">{num(r.ratedKva)}</td>
+                <td className="num whitespace-nowrap">{num(r.ratedKva)}</td>
                 {/*
                   Foiz rangi holat rangi bilan BIR XIL manbadan olinadi —
                   chip bilan raqam hech qachon boshqa-boshqa signal bermaydi.
                 */}
                 <td
-                  className="num whitespace-nowrap text-[12.5px] font-semibold"
+                  className="num whitespace-nowrap font-semibold"
                   style={{ color }}
                   title={`Optimal: ${num(r.optimalPct)}%`}
                 >
@@ -108,13 +108,15 @@ export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]
                     title={CONDITION_HINT[r.condition] ?? r.condition}
                     variant="soft"
                   >
-                    <Chip.Label>{CONDITION_LABEL[r.condition] ?? r.condition}</Chip.Label>
+                    <Chip.Label className="text-[9.5px]">
+                      {CONDITION_LABEL[r.condition] ?? r.condition}
+                    </Chip.Label>
                   </Chip>
                 </td>
-                <td className="num whitespace-nowrap text-[12.5px]">{num(r.avgDistanceM)}</td>
+                <td className="num whitespace-nowrap">{num(r.avgDistanceM)}</td>
                 <td>
                   {r.distanceCompliant == null ? (
-                    <span className="text-[12px] text-muted">—</span>
+                    <span className="text-muted">—</span>
                   ) : (
                     <Chip
                       className="whitespace-nowrap"
@@ -127,7 +129,9 @@ export function TpMonitorPanel({ rows, showMfy = false }: { rows: TpMonitorRow[]
                       }
                       variant="soft"
                     >
-                      <Chip.Label>{r.distanceCompliant ? 'Mos' : 'Mos emas'}</Chip.Label>
+                      <Chip.Label className="text-[9.5px]">
+                        {r.distanceCompliant ? 'Mos' : 'Mos emas'}
+                      </Chip.Label>
                     </Chip>
                   )}
                 </td>

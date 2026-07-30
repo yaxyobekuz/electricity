@@ -231,12 +231,17 @@
  * sig'sin va past bo'lsin: chetlash ikki yo'nalishda ham kichrayadi.
  * Katakda bir qatorli mazmun bo'lgani uchun `py` ni kamaytirish xavfsiz.
  */
+/*
+ * Sarlavha BOSH HARFSIZ va tor: "Quvvat (kVA)" bitta qatorga sig'ishi kerak.
+ * Uppercase + tracking-wide bir yarim baravar keng joy egallaydi va tor
+ * ustunda birlikni ikkinchi qatorga uloqtiradi.
+ */
 .dt--compact thead th {
-  @apply px-2.5 py-2;
+  @apply whitespace-nowrap px-2.5 py-2 text-[10px] font-semibold normal-case tracking-normal;
 }
 
 .dt--compact tbody td {
-  @apply px-2.5 py-1.5;
+  @apply px-2.5 py-1.5 text-[11.5px];
 }
 
 /* ── Status nuqtasi — DOIM matn bilan birga ─────────────────────────────── */

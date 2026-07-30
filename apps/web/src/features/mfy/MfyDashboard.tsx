@@ -6,17 +6,18 @@
  *   yuqori chiziq │ sarlavha + yo'l ····· davr tanlagich · hisobot · global
  *   1-qator       │ 8 ta KPI kartasi (bir xil o'lchamda, rangli fon bilan)
  *   2-qator       │ Dinamika (4) │ Quvvat (3) │ Abonentlar (3) │ 4 ko'rsatkich (2)
- *   3-qator       │ Transformatorlar (6) │ Yo'qotish (3) │ Qarzdorlik (3)
- *   4-qator       │ Ishlar (8) │ Natijadorlik (4)
+ *   3-qator       │ Transformatorlar (4) │ Yo'qotish (3) │ Qarzdorlik (3) │ Tezkor (2)
+ *   4-qator       │ Bajarilgan (3) │ Reja (3) │ Natijadorlik (3) │ Hisobotlar (3)
  *
  * ZICHLIK QOIDASI: har bir panel o'z mazmuniga yetadigan balandlikda —
  * bo'sh joyni to'ldirish uchun cho'zilmaydi. Shu sababli panellar soni ko'p,
  * balandligi past.
  */
-import { energy, kva, money, num, pct } from '@beap/shared';
+import { energy, kva, kw, money, num, pct, pieces, volts } from '@beap/shared';
 import { Chip, ListBox, Select } from '@heroui/react';
 import {
-  Activity, Building2, CircleDollarSign, Leaf, TrendingDown, Users, Zap, ZapOff,
+  Activity, Building2, CircleDollarSign, Gauge as GaugeIcon, Leaf, PowerOff,
+  TrendingDown, Users, Zap, ZapOff,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,14 +30,15 @@ import { ErrorState, LoadingState, PageHeader } from '../../components/layout/Ap
 import { CountUp } from '../../components/ui/CountUp.tsx';
 import { EmptyPanel, Panel } from '../../components/ui/Panel.tsx';
 import { ReportMenu } from '../../components/ui/ReportMenu.tsx';
+import { ReportShortcuts } from '../../components/ui/ReportShortcuts.tsx';
 import {
-  MiniStat, StatTile, type Tone,
+  MiniStat, QuickMetric, StatTile, type Tone,
 } from '../../components/ui/StatTile.tsx';
 import { PeriodPicker } from '../district/panels/PeriodPicker.tsx';
 import { TpMonitorPanel } from '../district/panels/TpMonitorPanel.tsx';
 import {
   useMfyCapacity, useMfyConsumers, useMfyDebt, useMfyDynamics,
-  useMfyLossStructure, useMfyOverview, useMfyResults, useMfyTp,
+  useMfyLossStructure, useMfyOperational, useMfyOverview, useMfyResults, useMfyTp,
   useMfyWorks,
 } from '../../lib/queries.ts';
 import { useUi } from '../../lib/ui-store.ts';
@@ -81,6 +83,7 @@ export default function MfyDashboard() {
   const debt = useMfyDebt(mfyId, period ?? undefined);
   const works = useMfyWorks(mfyId);
   const results = useMfyResults(mfyId, period ?? undefined);
+  const operational = useMfyOperational(mfyId, period ?? undefined);
 
   if (!Number.isFinite(mfyId)) return <ErrorState message="MFY identifikatori noto‘g‘ri" />;
   if (overview.isLoading) return <LoadingState rows={6} />;
@@ -112,6 +115,22 @@ export default function MfyDashboard() {
 
   const completed = (works.data ?? []).filter((w) => w.status === 'COMPLETED');
   const planned = (works.data ?? []).filter((w) => w.status !== 'COMPLETED');
+
+  /*
+   * Kuchlanish rangi NOMINALDAN chetlanishga qarab beriladi: 220 V ning
+   * o'zi "yaxshi" ham, "yomon" ham emas — me'yor MFY bo'yicha boshqacha
+   * bo'lishi mumkin, shuning uchun normativ qiymat serverdan keladi.
+   */
+  const voltageDeviation =
+    operational.data && operational.data.avgVoltageV !== null && operational.data.nominalVoltageV > 0
+      ? Math.abs(operational.data.avgVoltageV - operational.data.nominalVoltageV) /
+        operational.data.nominalVoltageV
+      : null;
+  const voltageTone =
+    voltageDeviation === null ? 'accent'
+      : voltageDeviation > 0.1 ? 'critical'
+        : voltageDeviation > 0.05 ? 'warning'
+          : 'good';
 
   return (
     <div className={overview.isFetching ? 'opacity-70 transition-opacity' : ''}>
@@ -328,7 +347,7 @@ export default function MfyDashboard() {
               Barchasi ({num(tp.data?.length ?? 0)})
             </Link>
           }
-          className="md:col-span-2 xl:col-span-6"
+          className="md:col-span-2 xl:col-span-4"
           flush
           footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
           title="Transformatorlar holati"
@@ -337,7 +356,11 @@ export default function MfyDashboard() {
           <TpMonitorPanel rows={(tp.data ?? []).slice(0, 4)} />
         </Panel>
 
-        <Panel className="xl:col-span-3" title="Yo‘qotishlar tuzilmasi">
+        <Panel
+          className="xl:col-span-3"
+          footerAction={{ label: 'Batafsil tahlil', to: '/losses' }}
+          title="Yo‘qotishlar tuzilmasi"
+        >
           {lossStructure.data ? (
             <Donut
               centerLabel="jami"
@@ -384,91 +407,159 @@ export default function MfyDashboard() {
             <EmptyPanel message={t('common.noData')} />
           )}
         </Panel>
+
+        <Panel
+          className="xl:col-span-2"
+          footerAction={{
+            label: 'Batafsil texnik ma’lumot',
+            to: `/passport/mfy/${mfyId}/${period ?? 'latest'}`,
+          }}
+          title="Tezkor ko‘rsatkichlar"
+        >
+          {operational.data ? (
+            /* Bitta ustun — karta tor (2/12), yorliqlar to'liq ko'rinadi. */
+            <div className="flex flex-col gap-3.5">
+              <QuickMetric
+                icon={<Zap className="size-3.5" />}
+                label="Maksimal yuklama"
+                tone="warning"
+                value={kw(operational.data.maxLoadKw)}
+              />
+              <QuickMetric
+                icon={<TrendingDown className="size-3.5" />}
+                label="Minimal yuklama"
+                value={kw(operational.data.minLoadKw)}
+              />
+              <QuickMetric
+                icon={<GaugeIcon className="size-3.5" />}
+                label="O‘rtacha kuchlanish"
+                tone={voltageTone}
+                value={volts(operational.data.avgVoltageV)}
+              />
+              <QuickMetric
+                icon={<PowerOff className="size-3.5" />}
+                label="O‘chirishlar soni"
+                tone={(operational.data.outageCount ?? 0) > 0 ? 'critical' : 'good'}
+                value={pieces(operational.data.outageCount)}
+              />
+            </div>
+          ) : (
+            <EmptyPanel message={t('common.noData')} />
+          )}
+        </Panel>
       </div>
 
-      {/* ═══ 4-QATOR: ishlar · natijadorlik ══════════════════════════════ */}
+      {/* ═══ 4-QATOR: ishlar · natijadorlik · hisobotlar ═════════════════ */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+        {/*
+          Bajarilgan va rejadagi ishlar ALOHIDA kartalarda: ilgari ular bitta
+          panelning ikki ustuni edi va qaysi ro'yxat qayerda tugashi
+          ko'rinmasdi.
+        */}
         <Panel
           actions={
-            <Chip size="sm" variant="soft">
-              <Chip.Label>{completed.length} / {completed.length + planned.length}</Chip.Label>
-            </Chip>
+            <Link className="text-[11.5px] font-semibold text-accent hover:underline" to="/works">
+              Barchasi ({completed.length})
+            </Link>
           }
-          className="md:col-span-2 xl:col-span-8"
+          className="xl:col-span-3"
           flush
-          footerAction={{ label: 'Barcha ishlar', to: '/works' }}
-          title="Ishlar"
+          title="Amalga oshirilgan ishlar"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-separator">
-            <div>
-              <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted">
-                Amalga oshirilgan
-              </p>
-              <WorkTimeline limit={3} rows={completed} />
-            </div>
-            <div className="border-t border-separator md:border-t-0">
-              <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted">
-                Rejalashtirilgan
-              </p>
-              <WorkTimeline limit={3} planned rows={planned} />
-            </div>
-          </div>
+          <WorkTimeline limit={4} rows={completed} />
         </Panel>
 
-        <Panel className="xl:col-span-4" title="Natijadorlik">
+        <Panel
+          actions={
+            <Link className="text-[11.5px] font-semibold text-accent hover:underline" to="/works">
+              Barchasi ({planned.length})
+            </Link>
+          }
+          className="xl:col-span-3"
+          flush
+          title="Rejalashtirilgan ishlar"
+        >
+          <WorkTimeline limit={4} planned rows={planned} />
+        </Panel>
+
+        <Panel className="xl:col-span-3" title="Natijadorlik ko‘rsatkichlari">
           {results.data ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[19px] font-bold leading-none"
-                  style={{ fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {pct(results.data.lossPctStart ?? 0, 1)}
-                </span>
-                <TrendingDown aria-hidden="true" className="size-4 text-muted" />
-                <span
-                  className="text-[19px] font-bold leading-none"
-                  style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--viz-good)' }}
-                >
-                  {pct(results.data.lossPctEnd ?? 0, 1)}
-                </span>
-              </div>
-              <p className="text-[10.5px] leading-tight text-muted">
-                {results.data.periodFrom} → {results.data.periodTo} · yo‘qotish darajasi
-              </p>
-
-              {results.data.improvementPp !== null && (
-                <p
-                  className="text-[11.5px] font-semibold"
-                  style={{
-                    color:
-                      results.data.improvementPp > 0
-                        ? 'var(--viz-delta-good)'
-                        : 'var(--viz-delta-bad)',
-                  }}
-                >
-                  Yaxshilanish: {Math.abs(results.data.improvementPp).toFixed(1)} p.p.
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Chap ustun — yo'qotish darajasining davr boshi va oxiri */}
+              <div className="min-w-0">
+                <p className="text-[10.5px] font-medium leading-tight text-muted">
+                  Yo‘qotish darajasi
                 </p>
-              )}
 
-              <div className="flex items-start gap-2 border-t border-separator pt-2.5">
-                <Zap className="mt-0.5 size-4 shrink-0" style={{ color: 'var(--viz-good)' }} />
-                <span className="min-w-0">
+                <p className="mt-2 flex items-baseline gap-1.5">
+                  <span className="tabular text-[17px] font-bold leading-none">
+                    {pct(results.data.lossPctStart ?? 0, 1)}
+                  </span>
+                  <span className="text-[10.5px] text-muted">({results.data.periodFrom})</span>
+                </p>
+
+                <p className="mt-1.5 flex items-baseline gap-1.5">
+                  <TrendingDown
+                    aria-hidden="true"
+                    className="size-3.5 shrink-0 self-center"
+                    style={{ color: 'var(--viz-good)' }}
+                  />
                   <span
-                    className="block text-[15px] font-bold leading-tight"
-                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                    className="tabular text-[17px] font-bold leading-none"
+                    style={{ color: 'var(--viz-good)' }}
                   >
+                    {pct(results.data.lossPctEnd ?? 0, 1)}
+                  </span>
+                  <span className="text-[10.5px] text-muted">({results.data.periodTo})</span>
+                </p>
+
+                {results.data.improvementPp !== null && (
+                  <Chip
+                    className="mt-2.5"
+                    color={results.data.improvementPp > 0 ? 'success' : 'danger'}
+                    size="sm"
+                    variant="soft"
+                  >
+                    <Chip.Label>
+                      Yaxshilanish: {Math.abs(results.data.improvementPp).toFixed(1)} p.p.
+                    </Chip.Label>
+                  </Chip>
+                )}
+              </div>
+
+              {/* O'ng ustun — o'sha ishlarning natijasi: tejalgan energiya */}
+              <div className="min-w-0">
+                <p className="text-[10.5px] font-medium leading-tight text-muted">
+                  Iqtisod qilingan energiya
+                </p>
+
+                <div className="mt-2 flex items-center gap-2">
+                  <span
+                    className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+                    style={{
+                      background: 'color-mix(in oklab, var(--viz-good) 12%, transparent)',
+                      color: 'var(--viz-good)',
+                    }}
+                  >
+                    <Zap className="size-4" />
+                  </span>
+                  <span className="tabular min-w-0 truncate text-[15px] font-bold leading-tight">
                     {energy(results.data.savedKwh).text}
                   </span>
-                  <span className="block text-[10px] leading-tight text-muted">
-                    bajarilgan ishlar hisobiga tejalgan
-                  </span>
-                </span>
+                </div>
+
+                <p className="mt-1.5 text-[10px] leading-tight text-muted">
+                  bajarilgan ishlar hisobiga (davr boshidan buyon)
+                </p>
               </div>
             </div>
           ) : (
             <EmptyPanel message={t('common.noData')} />
           )}
+        </Panel>
+
+        <Panel className="xl:col-span-3" title="Hisobotlar">
+          <ReportShortcuts />
         </Panel>
       </div>
 
