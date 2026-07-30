@@ -17,7 +17,7 @@
   [data-theme="gov"] {
     color-scheme: light;
 
-    --radius: 1rem;
+    --radius: 0.5rem;
 
     /* Fon — sof oq emas, yumshoq ko'k-kulrang. Oq kartalar shunda "suzadi". */
     --background: #f2f6fc;
@@ -114,7 +114,7 @@
   [data-theme="gov-dark"] {
     color-scheme: dark;
 
-    --radius: 1rem;
+    --radius: 0.5rem;
 
     --background: #0b1120;
     --foreground: #f1f5f9;

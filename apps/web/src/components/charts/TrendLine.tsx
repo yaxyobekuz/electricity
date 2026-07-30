@@ -8,7 +8,7 @@
  *   • panjara faqat gorizontal, yupqa, TUTASH
  */
 import type { TimeSeriesPoint } from '@beap/shared';
-import { dateShort, energy, num, pct } from '@beap/shared';
+import { dateLabel, dateShort, energy, num, pct } from '@beap/shared';
 import { ResponsiveLine } from '@nivo/line';
 import { useMemo } from 'react';
 
@@ -120,19 +120,25 @@ export function TrendLine({
         yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false }}
         sliceTooltip={({ slice }) => (
           <div className="chart-tooltip">
-            <p className="mb-1 font-semibold">{String(slice.points[0]?.data.x ?? '')}</p>
-            {slice.points.map((p) => (
-              <p key={p.id} className="flex items-center gap-2">
-                <span
-                  className="inline-block size-2 rounded-[2px]"
-                  style={{ background: p.seriesColor }}
-                />
-                <span className="text-muted">{p.seriesId}:</span>
-                <span className="tabular font-medium">
-                  {isPct ? pct(Number(p.data.y), 2) : energy(Number(p.data.y)).text}
-                </span>
-              </p>
-            ))}
+            <span className="chart-tooltip__title">
+              {dateLabel(String(slice.points[0]?.data.x ?? ''))}
+            </span>
+            <div className="flex flex-col gap-0.5">
+              {slice.points.map((p) => (
+                <div key={p.id} className="chart-tooltip__row">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="inline-block size-2 shrink-0 rounded-full"
+                      style={{ background: p.seriesColor }}
+                    />
+                    <span className="chart-tooltip__label">{p.seriesId}</span>
+                  </span>
+                  <span className="chart-tooltip__value">
+                    {isPct ? pct(Number(p.data.y), 2) : energy(Number(p.data.y)).text}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       />

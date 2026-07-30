@@ -7,7 +7,7 @@
 
 @layer components {
   .card {
-    @apply rounded-2xl border-0;
+    @apply rounded-xl border-0;
     box-shadow: var(--surface-shadow);
   }
 
@@ -28,7 +28,7 @@
 /* ── Panel primitivi ────────────────────────────────────────────────────── */
 
 .panel {
-  @apply flex flex-col rounded-2xl bg-surface;
+  @apply flex flex-col rounded-xl bg-surface;
   box-shadow: var(--surface-shadow);
 }
 
@@ -54,7 +54,7 @@
 
 /* Panel pastidagi harakat havolasi — mockupdagi "Batafsil" / "Barchasi" */
 .panel__action {
-  @apply block w-full rounded-b-2xl border-t border-separator px-5 py-3
+  @apply block w-full rounded-b-xl border-t border-separator px-5 py-3
          text-center text-xs font-semibold text-accent transition-colors;
 }
 .panel__action:hover {
@@ -64,7 +64,7 @@
 /* ── KPI kartasi ────────────────────────────────────────────────────────── */
 
 .kpi {
-  @apply relative flex flex-col gap-2.5 overflow-hidden rounded-2xl p-4;
+  @apply relative flex flex-col gap-2.5 overflow-hidden rounded-xl p-4;
   background: var(--tone-bg, var(--surface));
 }
 
@@ -152,7 +152,7 @@
 /* ── Yon panel ──────────────────────────────────────────────────────────── */
 
 .nav-item {
-  @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-medium
+  @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium
          text-muted transition-colors;
 }
 
@@ -182,9 +182,47 @@
   @apply inline-block size-2.5 shrink-0 rounded-full;
 }
 
+/*
+ * Diagramma tooltip'i.
+ *
+ * MUAMMO EDI: matn tor ustunga siqilib, har bir so'z alohida qatorga
+ * tushardi ("Sotilgan / energiya / 10.6 mln / kWh").
+ *
+ * SABAB: Nivo tooltip'ni o'z konteyneri ichida joylashtiradi va uning
+ * kengligi mazmunga qarab emas, joylashuvga qarab cheklanadi. Ustiga
+ * `white-space` belgilanmagani uchun brauzer matnni ixtiyoriy joydan
+ * o'rardi.
+ *
+ * YECHIM: Nivo konteyneri faqat POZITSIYALASH uchun qoladi (fon, chekka
+ * va soyasiz — `nivoTheme` da), butun ko'rinishni shu sinf beradi va
+ * `white-space: nowrap` bilan qator o'ramaydi. Ko'p qatorli tooltip'lar
+ * qatorlarni O'ZI aniq belgilaydi (`.chart-tooltip__row`).
+ */
 .chart-tooltip {
-  @apply rounded-xl bg-overlay px-3 py-2 text-xs;
+  @apply rounded-lg bg-overlay px-3 py-2 text-xs leading-relaxed text-foreground;
   box-shadow: var(--overlay-shadow);
+  white-space: nowrap;
+  width: max-content;
+  max-width: 320px;
+}
+
+.chart-tooltip__title {
+  @apply mb-1 block text-[12.5px] font-semibold;
+}
+
+.chart-tooltip__row {
+  @apply flex items-center justify-between gap-4 text-[11.5px];
+}
+
+.chart-tooltip__row dt,
+.chart-tooltip__label {
+  @apply text-muted;
+}
+
+.chart-tooltip__row dd,
+.chart-tooltip__value {
+  @apply font-semibold;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */

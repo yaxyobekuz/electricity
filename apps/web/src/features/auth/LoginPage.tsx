@@ -71,7 +71,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <span
-            className="flex size-14 items-center justify-center rounded-2xl text-accent-foreground"
+            className="flex size-14 items-center justify-center rounded-xl text-accent-foreground"
             style={{ background: 'var(--accent)' }}
           >
             <Zap className="size-7" />
@@ -82,7 +82,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border/70 bg-surface p-6">
+        <div className="rounded-xl border border-border/70 bg-surface p-6">
           <h2 className="mb-4 text-sm font-semibold">{t('auth.title')}</h2>
 
           <Form

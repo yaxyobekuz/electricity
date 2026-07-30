@@ -138,14 +138,19 @@ export function nivoTheme(t: VizTokens) {
     },
     labels: { text: { fontSize: 11, fill: t.ink, fontWeight: 500 } },
     tooltip: {
+      /*
+       * Nivo konteyneri FAQAT pozitsiyalash uchun — ko'rinishni
+       * `.chart-tooltip` sinfi beradi. Aks holda ikki qavat quti hosil
+       * bo'ladi va ichkidagi matn tor ustunga siqiladi.
+       */
       container: {
-        background: t.surface,
+        background: 'transparent',
+        padding: 0,
+        boxShadow: 'none',
+        borderRadius: 0,
         color: t.ink,
-        fontSize: 12,
-        borderRadius: 8,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
-        padding: '6px 10px',
       },
+      basic: { whiteSpace: 'nowrap' },
     },
     crosshair: { line: { stroke: t.muted, strokeWidth: 1, strokeOpacity: 0.6 } },
     annotations: {

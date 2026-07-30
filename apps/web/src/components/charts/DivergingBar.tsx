@@ -101,16 +101,24 @@ export function DivergingBar({ rows, height = 300, onSelect }: DivergingBarProps
           const row = rows.find((r) => r.nameUz.replace(/ MFY$/, '') === data.mfy);
           return (
             <div className="chart-tooltip">
-              <strong>{data.mfy}</strong>
-              <br />
-              Standart: {pct(row?.standardPct ?? 0, 1)}
-              <br />
-              Amaldagi: {pct(row?.actualPct ?? 0, 2)}
-              <br />
-              <span style={{ color: data.gap > 0 ? t.status.critical : t.status.good }}>
-                Farq: {data.gap > 0 ? '+' : ''}
-                {data.gap.toFixed(2)} p.p.
-              </span>
+              <span className="chart-tooltip__title">{data.mfy}</span>
+              <dl className="flex flex-col gap-0.5">
+                <div className="chart-tooltip__row">
+                  <dt>Standart</dt>
+                  <dd>{pct(row?.standardPct ?? 0, 1)}</dd>
+                </div>
+                <div className="chart-tooltip__row">
+                  <dt>Amaldagi</dt>
+                  <dd>{pct(row?.actualPct ?? 0, 2)}</dd>
+                </div>
+                <div className="chart-tooltip__row">
+                  <dt>Farq</dt>
+                  <dd style={{ color: data.gap > 0 ? t.status.critical : t.status.good }}>
+                    {data.gap > 0 ? '+' : ''}
+                    {data.gap.toFixed(2)} p.p.
+                  </dd>
+                </div>
+              </dl>
             </div>
           );
         }}

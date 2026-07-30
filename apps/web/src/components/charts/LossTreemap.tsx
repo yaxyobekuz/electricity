@@ -116,17 +116,28 @@ export function LossTreemap({ cells, height = 300, onSelect }: LossTreemapProps)
           const gap = node.data.gapPp ?? 0;
           return (
             <div className="chart-tooltip">
-              <strong>{node.data.name}</strong>
-              <br />
-              Energiya: {energy(node.data.value ?? 0).text}
-              <br />
-              Yo‘qotish: {pct(node.data.lossPct ?? 0, 2)}{' '}
-              <span className="text-muted">(norma {pct(node.data.normPct ?? 0, 1)})</span>
-              <br />
-              <span style={{ color: gap > 0 ? t.status.critical : t.status.good }}>
-                {gap > 0 ? '+' : ''}
-                {gap.toFixed(2)} p.p.
-              </span>
+              <span className="chart-tooltip__title">{node.data.name}</span>
+              <dl className="flex flex-col gap-0.5">
+                <div className="chart-tooltip__row">
+                  <dt>Energiya</dt>
+                  <dd>{energy(node.data.value ?? 0).text}</dd>
+                </div>
+                <div className="chart-tooltip__row">
+                  <dt>Yo‘qotish</dt>
+                  <dd>{pct(node.data.lossPct ?? 0, 2)}</dd>
+                </div>
+                <div className="chart-tooltip__row">
+                  <dt>Norma</dt>
+                  <dd>{pct(node.data.normPct ?? 0, 1)}</dd>
+                </div>
+                <div className="chart-tooltip__row">
+                  <dt>Normadan farq</dt>
+                  <dd style={{ color: gap > 0 ? t.status.critical : t.status.good }}>
+                    {gap > 0 ? '+' : ''}
+                    {gap.toFixed(2)} p.p.
+                  </dd>
+                </div>
+              </dl>
             </div>
           );
         }}

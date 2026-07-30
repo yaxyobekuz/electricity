@@ -110,16 +110,20 @@ export function EnergyFlow({ nodes, height = 260 }: EnergyFlowProps) {
         theme={nivoTheme(t)}
         nodeTooltip={({ node }: { node: { id: string | number; value: number } }) => (
           <div className="chart-tooltip">
-            <strong>{node.id}</strong>
-            <br />
-            {energy(node.value).text}
+            <span className="chart-tooltip__title">{node.id}</span>
+            <div className="chart-tooltip__row">
+              <span className="chart-tooltip__label">Miqdor</span>
+              <span className="chart-tooltip__value">{energy(node.value).text}</span>
+            </div>
           </div>
         )}
         linkTooltip={({ link }: { link: { target: { id: string | number }; value: number } }) => (
           <div className="chart-tooltip">
-            <strong>{link.target.id}</strong>
-            <br />
-            {energy(link.value).text}
+            <span className="chart-tooltip__title">{link.target.id}</span>
+            <div className="chart-tooltip__row">
+              <span className="chart-tooltip__label">Miqdor</span>
+              <span className="chart-tooltip__value">{energy(link.value).text}</span>
+            </div>
           </div>
         )}
       />

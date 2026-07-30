@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Brend bloki */}
         <div className={cn('flex items-center gap-3 px-4 py-5', !sidebarOpen && 'justify-center px-0')}>
           <span
-            className="flex size-11 shrink-0 items-center justify-center rounded-2xl text-white"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl text-white"
             style={{
               background: 'linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent) 70%, #7c3aed))',
               boxShadow: '0 6px 16px color-mix(in oklab, var(--accent) 38%, transparent)',
@@ -283,7 +283,7 @@ function EfficiencyMiniCard({ score }: { score: number }) {
 
   return (
     <div
-      className="rounded-2xl px-4 py-3.5 text-white"
+      className="rounded-xl px-4 py-3.5 text-white"
       style={{
         background: 'linear-gradient(150deg, var(--accent), color-mix(in oklab, var(--accent) 62%, #7c3aed))',
         boxShadow: '0 8px 22px color-mix(in oklab, var(--accent) 32%, transparent)',
@@ -380,7 +380,7 @@ export function LoadingState({ rows = 4 }: { rows?: number }) {
   return (
     <div aria-busy="true" aria-live="polite" className="flex flex-col gap-3">
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="h-20 animate-pulse rounded-2xl bg-surface" />
+        <div key={i} className="h-20 animate-pulse rounded-xl bg-surface" />
       ))}
     </div>
   );

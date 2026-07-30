@@ -111,11 +111,20 @@ export function Donut({
           theme={nivoTheme(t)}
           tooltip={({ datum }) => (
             <div className="chart-tooltip">
-              <strong>{datum.label}</strong>
-              <br />
-              {prepared.find((s) => s.id === datum.id)?.display ?? fmt(datum.value)}
+              <span className="chart-tooltip__title">{datum.label}</span>
+              <div className="chart-tooltip__row">
+                <span className="chart-tooltip__label">Qiymat</span>
+                <span className="chart-tooltip__value">
+                  {prepared.find((s) => s.id === datum.id)?.display ?? fmt(datum.value)}
+                </span>
+              </div>
               {total > 0 && (
-                <span className="text-muted"> · {((datum.value / total) * 100).toFixed(1)}%</span>
+                <div className="chart-tooltip__row">
+                  <span className="chart-tooltip__label">Ulushi</span>
+                  <span className="chart-tooltip__value">
+                    {((datum.value / total) * 100).toFixed(1)}%
+                  </span>
+                </div>
               )}
             </div>
           )}
