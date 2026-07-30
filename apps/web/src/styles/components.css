@@ -228,11 +228,15 @@
 
 /*
  * Ustuni ko'p jadval (transformatorlar holati — 7 ustun) tor kartada ham
- * gorizontal siljishsiz sig'sin: yon chetlash kichrayadi, tik chetlash emas.
+ * sig'sin va past bo'lsin: chetlash ikki yo'nalishda ham kichrayadi.
+ * Katakda bir qatorli mazmun bo'lgani uchun `py` ni kamaytirish xavfsiz.
  */
-.dt--compact thead th,
+.dt--compact thead th {
+  @apply px-2.5 py-2;
+}
+
 .dt--compact tbody td {
-  @apply px-2.5;
+  @apply px-2.5 py-1.5;
 }
 
 /* ── Status nuqtasi — DOIM matn bilan birga ─────────────────────────────── */

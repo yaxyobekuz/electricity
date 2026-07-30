@@ -72,8 +72,8 @@ export default function DistrictDashboard() {
   const overview = useDistrictOverview(period ?? undefined);
   const balance = useEnergyBalance(period ?? undefined);
   const efficiency = useEfficiency(period ?? undefined);
-  // Kartada 5 qator ko'rinadi — ortiqchasini so'rashning hojati yo'q.
-  const tp = useTpMonitoring(period ?? undefined, 5);
+  // Kartada 4 qator ko'rinadi — ortiqchasini so'rashning hojati yo'q.
+  const tp = useTpMonitoring(period ?? undefined, 4);
   const ranking = useMfyRanking();
   const technical = useTechnicalLoss(period ?? undefined);
   const distance = useDistance(period ?? undefined);
@@ -284,8 +284,8 @@ export default function DistrictDashboard() {
           footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
           title={t('panel.tpMonitoring')}
         >
-          {/* 5 qator — qolgani "Barcha transformatorlar" sahifasida. */}
-          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 5)} />
+          {/* 4 qator — qolgani "Barcha transformatorlar" sahifasida. */}
+          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 4)} />
         </Panel>
 
         <Panel

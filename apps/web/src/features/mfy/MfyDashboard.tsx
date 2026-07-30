@@ -333,8 +333,8 @@ export default function MfyDashboard() {
           footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
           title="Transformatorlar holati"
         >
-          {/* 5 qator — qatordagi qo'shni kartalar bilan bir xil balandlik. */}
-          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 5)} />
+          {/* 4 qator — qatordagi qo'shni kartalar bilan bir xil balandlik. */}
+          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 4)} />
         </Panel>
 
         <Panel className="xl:col-span-3" title="Yo‘qotishlar tuzilmasi">
