@@ -73,10 +73,12 @@ export default function MfyDashboard() {
   const params = useParams();
   const mfyId = Number(params['mfyId']);
   const period = useUi((s) => s.period);
+  // Tanlangan sana — kunlik grafik AYNAN shu kunda tugaydi.
+  const asOfDate = useUi((s) => s.asOfDate);
   const [bucket, setBucket] = useState<TrendBucket>('day');
 
   const overview = useMfyOverview(mfyId, period ?? undefined);
-  const dynamics = useMfyDynamics(mfyId, { bucket, last: 7 });
+  const dynamics = useMfyDynamics(mfyId, { bucket, last: 7, ...(asOfDate ? { to: asOfDate } : {}) });
   const capacity = useMfyCapacity(mfyId, period ?? undefined);
   const consumers = useMfyConsumers(mfyId, period ?? undefined);
   const tp = useMfyTp(mfyId, period ?? undefined);

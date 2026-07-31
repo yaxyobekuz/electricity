@@ -6,7 +6,8 @@
  * Kontent maydoni yumshoq ko'k fonda, kartalar soya bilan "suzadi".
  */
 import { dateLabel, dateTimeLabel, pct } from '@beap/shared';
-import { Button, Chip, Dropdown, Tooltip, cn } from '@heroui/react';
+import { Button, Calendar, Chip, Dropdown, Popover, Tooltip, cn } from '@heroui/react';
+import { parseDate } from '@internationalized/date';
 import {
   Activity, ArrowDown, ArrowUp, BarChart3, Bell, Building2, CalendarDays,
   CircleDollarSign, ClipboardCheck, ClipboardList, FileSpreadsheet, Home, Languages,
@@ -193,12 +194,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div ref={setHeaderSlot} className="flex min-w-0 flex-1 items-center" />
 
           <div className="flex shrink-0 items-center gap-1.5">
-            {/* Sana */}
-            {boot?.dataRange.maxDate && (
-              <span className="hidden items-center gap-1.5 rounded-lg bg-surface px-2.5 py-1.5 text-[11px] font-medium shadow-surface lg:inline-flex">
-                <CalendarDays className="size-3.5 text-muted" />
-                {dateLabel(boot.dataRange.maxDate)}
-              </span>
+            {/* Hisobot sanasi — bosiladi, kalendar ochiladi */}
+            {boot?.dataRange.maxDate && boot.dataRange.minDate && (
+              <AsOfDatePicker maxDate={boot.dataRange.maxDate} minDate={boot.dataRange.minDate} />
             )}
 
             {/* Til */}
@@ -310,6 +308,87 @@ export function AppShell({ children }: { children: ReactNode }) {
         </footer>
       </div>
     </div>
+  );
+}
+
+/**
+ * Hisobot sanasi tanlagich — yuqori chiziqdagi ixcham "tabletka".
+ *
+ * Kalendar FAQAT ma'lumot mavjud oraliqni ochadi (`minDate…maxDate`):
+ * bo'sh kunni tanlash mumkin bo'lsa, hokim bo'sh dashboard ko'rib
+ * "tizim ishlamayapti" degan xulosaga kelardi.
+ *
+ * Sana tanlanganda `setAsOfDate` davrni ham o'sha oyga ko'chiradi, ya'ni
+ * oylik kartalar ham, kunlik grafiklar ham bir vaqtga tegishli bo'ladi.
+ */
+function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string }) {
+  const asOfDate = useUi((s) => s.asOfDate);
+  const setAsOfDate = useUi((s) => s.setAsOfDate);
+  const [open, setOpen] = useState(false);
+
+  const current = asOfDate ?? maxDate;
+
+  return (
+    <Popover isOpen={open} onOpenChange={setOpen}>
+      {/*
+        Tugma `Popover` ning BEVOSITA farzandi — HeroUI uni tetik deb oladi.
+        Shu sababli ko'rinish to'liq shu yerda boshqariladi va yuqori
+        chiziqdagi boshqa "tabletka" lar bilan bir xil bo'ladi.
+      */}
+      <Button
+        aria-label="Hisobot sanasi"
+        className="hidden rounded-lg bg-surface px-2.5 text-[11px] font-medium shadow-surface lg:inline-flex"
+        size="sm"
+        variant="ghost"
+      >
+        <CalendarDays className="size-3.5 text-muted" />
+        {dateLabel(current)}
+        {asOfDate && <span className="text-[10px] font-semibold text-accent">holatiga</span>}
+      </Button>
+
+      <Popover.Content className="w-auto">
+        <Popover.Dialog className="p-2">
+          <Calendar
+            aria-label="Hisobot sanasi"
+            maxValue={parseDate(maxDate)}
+            minValue={parseDate(minDate)}
+            value={parseDate(current)}
+            onChange={(d) => {
+              if (!d) return;
+              setAsOfDate(d.toString());
+              setOpen(false);
+            }}
+          >
+            <Calendar.Header>
+              <Calendar.Heading />
+              <Calendar.NavButton slot="previous" />
+              <Calendar.NavButton slot="next" />
+            </Calendar.Header>
+            <Calendar.Grid>
+              <Calendar.GridHeader>
+                {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+              </Calendar.GridHeader>
+              <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+            </Calendar.Grid>
+          </Calendar>
+
+          {/* Oxirgi kunga qaytish — "eng so'nggi holat" odatiy ko'rinish */}
+          {asOfDate && (
+            <Button
+              className="mt-1 w-full"
+              size="sm"
+              variant="ghost"
+              onPress={() => {
+                setAsOfDate(null);
+                setOpen(false);
+              }}
+            >
+              Eng so‘nggi kun ({dateLabel(maxDate)})
+            </Button>
+          )}
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
   );
 }
 

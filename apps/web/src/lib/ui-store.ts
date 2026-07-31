@@ -13,6 +13,13 @@ interface UiState {
   theme: ThemeName;
   /** Tanlangan davr (`YYYY-MM`). `null` = eng so'nggi mavjud. */
   period: string | null;
+  /**
+   * Hisobot sanasi (`YYYY-MM-DD`). `null` = davrning oxirgi mavjud kuni.
+   *
+   * Oylik panellar DAVRGA, kunlik grafiklar esa shu SANAGA bo'ysunadi:
+   * "15-may holatiga" degan ko'rinish shundan hosil bo'ladi.
+   */
+  asOfDate: string | null;
   sidebarOpen: boolean;
   user: AuthUser | null;
   script: 'latn' | 'cyrl';
@@ -20,6 +27,7 @@ interface UiState {
   setTheme: (t: ThemeName) => void;
   toggleTheme: () => void;
   setPeriod: (p: string | null) => void;
+  setAsOfDate: (d: string | null) => void;
   toggleSidebar: () => void;
   setUser: (u: AuthUser | null) => void;
   setScript: (s: 'latn' | 'cyrl') => void;
@@ -52,6 +60,7 @@ export function applyTheme(theme: ThemeName): void {
 export const useUi = create<UiState>((set, get) => ({
   theme: readTheme(),
   period: null,
+  asOfDate: null,
   sidebarOpen: true,
   user: null,
   script: currentScript(),
@@ -65,7 +74,15 @@ export const useUi = create<UiState>((set, get) => ({
     applyTheme(next);
     set({ theme: next });
   },
-  setPeriod: (period) => set({ period }),
+  /*
+   * Oy o'zgarsa sana TOZALANADI: aks holda "iyul oyi · 15-may holatiga"
+   * degan mos kelmaydigan holat qolib ketardi.
+   */
+  setPeriod: (period) => set({ period, asOfDate: null }),
+
+  /** Sana tanlansa davr ham o'sha oyga ko'chadi — ikkalasi doim mos. */
+  setAsOfDate: (asOfDate) =>
+    set(asOfDate === null ? { asOfDate: null } : { asOfDate, period: asOfDate.slice(0, 7) }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setUser: (user) => set({ user }),
   setScript: (script) => set({ script }),

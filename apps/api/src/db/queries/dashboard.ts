@@ -269,7 +269,7 @@ export async function districtOverview(
       goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
     }),
     tile({
-      key: 'naturalPct', metric: 'naturalLossPct', labelUz: 'Tabiiy yo’qotish', unit: '%',
+      key: 'naturalPct', metric: 'naturalLossPct', labelUz: 'Texnologik yo‘qotish', unit: '%',
       value: cur.natural_pct, prev: p.natural_pct,
       goodDirection: 'down', spark: spark.naturalPct, sparkBucket: 'day',
     }),

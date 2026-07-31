@@ -69,6 +69,8 @@ export default function DistrictDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const period = useUi((s) => s.period);
+  // Tanlangan sana — reyting va kunlik grafik shu kunga qaraydi.
+  const asOfDate = useUi((s) => s.asOfDate);
   const [bucket, setBucket] = useState<TrendBucket>('day');
 
   const overview = useDistrictOverview(period ?? undefined);
@@ -76,14 +78,14 @@ export default function DistrictDashboard() {
   const efficiency = useEfficiency(period ?? undefined);
   // Kartada 5 qator ko'rinadi — ortiqchasini so'rashning hojati yo'q.
   const tp = useTpMonitoring(period ?? undefined, 5);
-  const ranking = useMfyRanking();
+  const ranking = useMfyRanking(asOfDate ?? undefined);
   const technical = useTechnicalLoss(period ?? undefined);
   const distance = useDistance(period ?? undefined);
   const debt = useDebt(period ?? undefined);
   const lossMap = useLossMap(period ?? undefined);
   const works = useWorks();
   const alerts = useAlerts(period ?? undefined);
-  const series = useDistrictSeries({ bucket, last: 7 });
+  const series = useDistrictSeries({ bucket, last: 7, ...(asOfDate ? { to: asOfDate } : {}) });
 
   const goMfy = (id: number): void => {
     void navigate(`/dashboard/mfy/${id}`);
