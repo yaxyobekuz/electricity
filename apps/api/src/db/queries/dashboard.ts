@@ -873,12 +873,22 @@ export async function lossStructure(
 
   const total = row?.total ?? 0;
   const pct = (v: number): number => (total > 0 ? Number(((v / total) * 100).toFixed(1)) : 0);
+
+  /*
+   * Tabiiy va texnik — ikkalasi ham TARMOQDAGI fizik yo'qotish, ular
+   * bitta "texnologik" toifaga yig'iladi. Noqonuniy foydalanish esa
+   * hisobga olinmagan iste'mol, ya'ni TIJORIY yo'qotish.
+   *
+   * Bazadagi uchta ustun o'z holicha qoladi — bu faqat ko'rsatish toifasi.
+   */
+  const technological = (row?.nat ?? 0) + (row?.tech ?? 0);
+  const commercial = row?.ill ?? 0;
+
   return {
     totalKwh: total,
     parts: [
-      { key: 'natural',   labelUz: 'Tabiiy yo‘qotish',      kwh: row?.nat ?? 0,  pct: pct(row?.nat ?? 0) },
-      { key: 'technical', labelUz: 'Texnik yo‘qotish',      kwh: row?.tech ?? 0, pct: pct(row?.tech ?? 0) },
-      { key: 'illegal',   labelUz: 'Noqonuniy foydalanish', kwh: row?.ill ?? 0,  pct: pct(row?.ill ?? 0) },
+      { key: 'technological', labelUz: 'Texnologik yo‘qotish', kwh: technological, pct: pct(technological) },
+      { key: 'commercial',    labelUz: 'Tijoriy yo‘qotish',    kwh: commercial,    pct: pct(commercial) },
     ],
   };
 }

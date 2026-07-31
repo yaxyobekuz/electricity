@@ -8,7 +8,7 @@
 import { dateLabel, dateTimeLabel, pct } from '@beap/shared';
 import { Button, Chip, Dropdown, Tooltip, cn } from '@heroui/react';
 import {
-  Activity, ArrowDown, ArrowUp, BarChart3, Bell, Bot, Building2, CalendarDays,
+  Activity, ArrowDown, ArrowUp, BarChart3, Bell, Building2, CalendarDays,
   CircleDollarSign, ClipboardCheck, ClipboardList, FileSpreadsheet, Home, Languages,
   LogOut, Menu, Moon, Ruler, ScrollText, Sun, TriangleAlert, Zap,
 } from 'lucide-react';
@@ -17,6 +17,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 
+import robotUrl from '../../assets/robot.png';
 import { LANGUAGES, setLanguage, type LanguageCode } from '../../i18n/index.ts';
 import { apiUrl } from '../../lib/api.ts';
 import { useBootstrap, useEfficiency } from '../../lib/queries.ts';
@@ -114,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* Menyu */}
-        <nav aria-label="Asosiy menyu" className="scroll-y flex-1 px-3 pb-3">
+        <nav aria-label="Asosiy menyu" className="scroll-y px-3 pb-3">
           <ul className="flex flex-col gap-1">
             {visibleNav.map((item) => {
               const active =
@@ -147,7 +148,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Samaradorlik indeksi va tavsiya kartalari */}
         {sidebarOpen && efficiency.data && (
-          <div className="flex flex-col gap-3 px-3 pb-3">
+          <div className="flex flex-col flex-1 gap-3 px-3 pb-10">
             <EfficiencyMiniCard
               prevScore={efficiency.data.prevScore}
               score={efficiency.data.score}
@@ -415,26 +416,36 @@ function AdviceCard({
         boxShadow: '0 8px 22px color-mix(in oklab, var(--accent) 28%, transparent)',
       }}
     >
-      <p className="flex items-center gap-1.5 text-[10.5px] font-semibold leading-tight opacity-90">
-        <Bot className="size-3.5 shrink-0" />
-        AI tavsiya (bugun)
-      </p>
+      <p className="text-[11px] font-semibold leading-tight opacity-90">AI tavsiya (bugun)</p>
 
-      <p className="mt-2 text-[11.5px] font-medium leading-snug">
-        {advice.count > 0 ? (
-          <>
-            Yo‘qotishlarni <span className="font-bold">{pct(advice.targetLossPct, 1)}</span> gacha
-            tushirish uchun <span className="font-bold">{advice.count} ta</span> asosiy tavsiya
-            mavjud.
-          </>
-        ) : (
-          <>
-            Barcha mahallalar normativ darajada
-            (<span className="font-bold">{pct(advice.targetLossPct, 1)}</span>) — qo‘shimcha
-            tavsiya yo‘q.
-          </>
-        )}
-      </p>
+      <div className="mt-1.5 flex items-end gap-2">
+        {/*
+          Robot — bezak, ma'no tashimaydi: `alt=""` va `aria-hidden`,
+          shuning uchun skrinrider uni o'qimaydi va matn takrorlanmaydi.
+        */}
+        <img
+          alt=""
+          aria-hidden="true"
+          className="-mb-1 w-15 shrink-0 select-none"
+          src={robotUrl}
+        />
+
+        <p className="min-w-0 flex-1 text-[11px] font-medium leading-snug">
+          {advice.count > 0 ? (
+            <>
+              Yo‘qotishlarni <span className="font-bold">{pct(advice.targetLossPct, 1)}</span> gacha
+              tushirish uchun <span className="font-bold">{advice.count} ta</span> asosiy tavsiya
+              mavjud.
+            </>
+          ) : (
+            <>
+              Barcha mahallalar normativ darajada
+              (<span className="font-bold">{pct(advice.targetLossPct, 1)}</span>) — qo‘shimcha
+              tavsiya yo‘q.
+            </>
+          )}
+        </p>
+      </div>
 
       <Button
         className="mt-2.5 w-full bg-white text-accent hover:bg-white/90"

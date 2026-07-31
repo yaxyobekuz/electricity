@@ -11,7 +11,7 @@
  */
 import { energy, num, pct } from '@beap/shared';
 import { Chip } from '@heroui/react';
-import { Activity, Leaf, ShieldAlert, TrendingDown } from 'lucide-react';
+import { Activity, ShieldAlert, TrendingDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
@@ -77,7 +77,7 @@ export default function LossesPage() {
       />
 
       {/* ── 4 ta xulosa ──────────────────────────────────────────────── */}
-      <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <MiniStat
           hint={`Tarmoqqa kirgan: ${energy(totals?.kwhIn ?? 0).text}`}
           icon={<TrendingDown className="size-4.5" />}
@@ -87,25 +87,18 @@ export default function LossesPage() {
           value={energy(totals?.kwhLossTotal ?? 0).text}
         />
         <MiniStat
-          hint={`Ulushi: ${pct(part('natural')?.pct ?? 0, 1)}`}
-          icon={<Leaf className="size-4.5" />}
-          label="Tabiiy yo‘qotish"
-          tone="good"
-          value={energy(part('natural')?.kwh ?? 0).text}
-        />
-        <MiniStat
-          hint={`Ulushi: ${pct(part('technical')?.pct ?? 0, 1)}`}
+          hint={`Ulushi: ${pct(part('technological')?.pct ?? 0, 1)}`}
           icon={<Activity className="size-4.5" />}
-          label="Texnik yo‘qotish"
+          label="Texnologik yo‘qotish"
           tone="warning"
-          value={energy(part('technical')?.kwh ?? 0).text}
+          value={energy(part('technological')?.kwh ?? 0).text}
         />
         <MiniStat
-          hint={`Ulushi: ${pct(part('illegal')?.pct ?? 0, 1)}`}
+          hint={`Ulushi: ${pct(part('commercial')?.pct ?? 0, 1)}`}
           icon={<ShieldAlert className="size-4.5" />}
-          label="Noqonuniy foydalanish"
+          label="Tijoriy yo‘qotish"
           tone="critical"
-          value={energy(part('illegal')?.kwh ?? 0).text}
+          value={energy(part('commercial')?.kwh ?? 0).text}
         />
       </div>
 

@@ -114,7 +114,7 @@ export default function MfyDashboard() {
     totals.consumersActive > 0 ? totals.kwhSold / totals.consumersActive / daysInMonth : 0;
   // Taxminiy tarif — hisob-kitob markazidan aniq tarif kelguncha.
   const avgBillSum = avgPerConsumer * daysInMonth * 450;
-  const naturalKwh = lossStructure.data?.parts.find((p) => p.key === 'natural')?.kwh ?? 0;
+  const technological = lossStructure.data?.parts.find((p) => p.key === 'technological');
 
   const completed = (works.data ?? []).filter((w) => w.status === 'COMPLETED');
   /*
@@ -338,12 +338,12 @@ export default function MfyDashboard() {
           <MiniStat
             className="flex-1"
             compact
-            hint={`Ulushi: ${pct(lossStructure.data?.parts[0]?.pct ?? 0, 1)}`}
-            icon={<Leaf className="size-4" />}
-            label="Tabiiy yo‘qotish"
-            tone="good"
-            unit={energy(naturalKwh).unit}
-            value={num(energy(naturalKwh).value, 1)}
+            hint={`Ulushi: ${pct(technological?.pct ?? 0, 1)}`}
+            icon={<Activity className="size-4" />}
+            label="Texnologik yo‘qotish"
+            tone="warning"
+            unit={energy(technological?.kwh ?? 0).unit}
+            value={num(energy(technological?.kwh ?? 0).value, 1)}
           />
         </div>
       </div>

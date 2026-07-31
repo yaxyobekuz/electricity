@@ -301,9 +301,15 @@ export interface ConsumerBreakdown {
   legal: number;
 }
 
+/**
+ * Yo'qotish tuzilmasi IKKI toifada — sohaning standart bo'linishi:
+ *   texnologik — tarmoqda fizik yo'qoladigan qism (tabiiy + texnik),
+ *   tijoriy    — hisobga olinmagan iste'mol (noqonuniy ulanish, hisoblagich).
+ * Bazada uch xil ustun saqlanadi, ular shu ikki toifaga yig'iladi.
+ */
 export interface LossStructure {
   totalKwh: number;
-  parts: { key: 'natural' | 'technical' | 'illegal'; labelUz: string; kwh: number; pct: number }[];
+  parts: { key: 'technological' | 'commercial'; labelUz: string; kwh: number; pct: number }[];
 }
 
 export interface OperationalMetrics {
