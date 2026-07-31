@@ -142,9 +142,16 @@ export interface EnergyBalanceNode {
 
 export interface EfficiencyBreakdown {
   score: number;
+  /** O'tgan davr bahosi — o'zgarishni ko'rsatish uchun. */
+  prevScore: number | null;
   components: { key: string; labelUz: string; weight: number; score: number }[];
   /** Statistik prognoz (Holt-Winters) — mavjud bo'lsa. */
   forecast: { period: string; lossPct: number }[] | null;
+  /**
+   * Tavsiya xulosasi — DETERMINISTIK: normadan oshgan mahallalar soni va
+   * yo'qotishning normativ darajasi. Hech qanday model yoki LLM yo'q.
+   */
+  advice: { count: number; targetLossPct: number; currentLossPct: number } | null;
 }
 
 export interface MfyRankRow {

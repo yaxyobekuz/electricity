@@ -5,17 +5,17 @@
  * ko'rinishidagi faol menyu bandi. Pastda samaradorlik indeksi kartasi.
  * Kontent maydoni yumshoq ko'k fonda, kartalar soya bilan "suzadi".
  */
-import { dateLabel, dateTimeLabel } from '@beap/shared';
+import { dateLabel, dateTimeLabel, pct } from '@beap/shared';
 import { Button, Chip, Dropdown, Tooltip, cn } from '@heroui/react';
 import {
-  Activity, BarChart3, Bell, Building2, CalendarDays, CircleDollarSign,
-  ClipboardCheck, ClipboardList, FileSpreadsheet, Home, Languages, LogOut,
-  Menu, Moon, Ruler, ScrollText, Sun, TriangleAlert, Zap,
+  Activity, ArrowDown, ArrowUp, BarChart3, Bell, Bot, Building2, CalendarDays,
+  CircleDollarSign, ClipboardCheck, ClipboardList, FileSpreadsheet, Home, Languages,
+  LogOut, Menu, Moon, Ruler, ScrollText, Sun, TriangleAlert, Zap,
 } from 'lucide-react';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { NavLink, useLocation } from 'react-router';
+import { NavLink, useLocation, useNavigate } from 'react-router';
 
 import { LANGUAGES, setLanguage, type LanguageCode } from '../../i18n/index.ts';
 import { apiUrl } from '../../lib/api.ts';
@@ -73,6 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: boot } = useBootstrap();
   const efficiency = useEfficiency(period ?? undefined);
   const location = useLocation();
+  const navigate = useNavigate();
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | null>(null);
   const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
 
@@ -144,10 +145,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           </ul>
         </nav>
 
-        {/* Samaradorlik indeksi kartasi */}
+        {/* Samaradorlik indeksi va tavsiya kartalari */}
         {sidebarOpen && efficiency.data && (
-          <div className="px-3 pb-3">
-            <EfficiencyMiniCard score={efficiency.data.score} />
+          <div className="flex flex-col gap-3 px-3 pb-3">
+            <EfficiencyMiniCard
+              prevScore={efficiency.data.prevScore}
+              score={efficiency.data.score}
+            />
+            {efficiency.data.advice && (
+              <AdviceCard
+                advice={efficiency.data.advice}
+                onOpen={() => void navigate('/losses')}
+              />
+            )}
           </div>
         )}
 
@@ -302,40 +312,138 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-/** Yon paneldagi samaradorlik indeksi — gradient ko'k karta. */
-function EfficiencyMiniCard({ score }: { score: number }) {
+/**
+ * Yon paneldagi samaradorlik indeksi — gradient ko'k karta.
+ *
+ * Baho YARIM DOIRADA: chiziqli "progress" bandidan farqli o'laroq, yarim
+ * doira 0–100 shkalani bir qarashda ko'rsatadi va markazda katta raqamga
+ * joy qoldiradi — yon panel tor bo'lgani uchun bu muhim.
+ */
+function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: number | null }) {
   const label =
     score >= 85 ? 'Yaxshi' : score >= 70 ? 'Qoniqarli' : score >= 50 ? 'Past' : 'Tanqidiy';
-  const pctOfArc = Math.max(0, Math.min(100, score));
+  const face = score >= 85 ? '🙂' : score >= 70 ? '😐' : '☹️';
+
+  // Yoy uzunligi: r = 46, yarim doira ⇒ π·r ≈ 144.5
+  const ARC = Math.PI * 46;
+  const filled = (Math.max(0, Math.min(100, score)) / 100) * ARC;
+
+  const deltaPct =
+    prevScore === null || prevScore === 0 ? null : ((score - prevScore) / prevScore) * 100;
 
   return (
     <div
-      className="rounded-xl px-4 py-3.5 text-white"
+      className="rounded-xl px-4 pb-3.5 pt-3 text-white"
       style={{
         background: 'linear-gradient(150deg, var(--accent), color-mix(in oklab, var(--accent) 62%, #7c3aed))',
         boxShadow: '0 8px 22px color-mix(in oklab, var(--accent) 32%, transparent)',
       }}
     >
-      <p className="text-[10.5px] font-semibold uppercase leading-tight tracking-wide opacity-85">
+      <p className="text-[10.5px] font-semibold leading-tight opacity-85">
         Energiya samaradorlik indeksi
       </p>
 
-      <div className="mt-2 flex items-baseline gap-1">
-        <span className="text-[28px] font-extrabold leading-none" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          {score.toFixed(0)}
+      <div className="relative mx-auto mt-1 w-29">
+        <svg className="block w-full" viewBox="0 0 116 62" aria-hidden="true">
+          <path
+            d="M 12 56 A 46 46 0 0 1 104 56"
+            fill="none"
+            stroke="rgba(255,255,255,0.25)"
+            strokeLinecap="round"
+            strokeWidth="9"
+          />
+          <path
+            d="M 12 56 A 46 46 0 0 1 104 56"
+            fill="none"
+            stroke="#ffffff"
+            strokeDasharray={`${filled} ${ARC}`}
+            strokeLinecap="round"
+            strokeWidth="9"
+            style={{ transition: 'stroke-dasharray 0.7s ease' }}
+          />
+        </svg>
+
+        <div className="absolute inset-x-0 bottom-1 text-center">
+          <span className="tabular text-[26px] font-extrabold leading-none">
+            {score.toFixed(0)}
+          </span>
+          <span className="text-[11px] font-medium opacity-80">/100</span>
+        </div>
+      </div>
+
+      <p className="mt-1 flex items-center justify-center gap-1 text-[11.5px] font-semibold">
+        <span aria-hidden="true">{face}</span> {label}
+      </p>
+
+      {/* O'tgan davr bilan solishtirish — baho yolg'iz o'zi trendni aytmaydi */}
+      <div className="mt-2.5 flex items-center justify-between gap-2 text-[10.5px]">
+        <span className="opacity-85">
+          O‘tgan oy: <span className="tabular font-semibold">{prevScore?.toFixed(0) ?? '—'}</span>
         </span>
-        <span className="text-xs font-medium opacity-80">/100</span>
-        <span className="ml-auto text-[11px] font-semibold">{label}</span>
+        {deltaPct !== null && (
+          <span className="tabular flex items-center gap-0.5 font-semibold">
+            {deltaPct >= 0 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+            {Math.abs(deltaPct).toFixed(1)}%
+          </span>
+        )}
       </div>
 
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/25">
-        <div
-          className="h-full rounded-full bg-white transition-[width] duration-700"
-          style={{ width: `${pctOfArc}%` }}
-        />
-      </div>
+      <p className="mt-1.5 text-[10px] opacity-80">Maqsad: 90+</p>
+    </div>
+  );
+}
 
-      <p className="mt-2 text-[10px] opacity-80">Maqsad: 90+</p>
+/**
+ * Tavsiya kartasi.
+ *
+ * DIQQAT: "AI" — bu yerda faqat KO'RINISH nomi. Tagida hech qanday model
+ * yo'q: mahallalar normadan oshgani SQL qoidasi bilan aniqlanadi va
+ * normativ daraja `TOTAL_LOSS_TARGET_PCT` me'yoridan olinadi. Shu sababli
+ * raqamni har doim izohlab berish mumkin.
+ */
+function AdviceCard({
+  advice, onOpen,
+}: {
+  advice: { count: number; targetLossPct: number; currentLossPct: number };
+  onOpen: () => void;
+}) {
+  return (
+    <div
+      className="rounded-xl px-4 py-3.5 text-white"
+      style={{
+        background: 'linear-gradient(150deg, color-mix(in oklab, var(--accent) 88%, #0ea5e9), var(--accent))',
+        boxShadow: '0 8px 22px color-mix(in oklab, var(--accent) 28%, transparent)',
+      }}
+    >
+      <p className="flex items-center gap-1.5 text-[10.5px] font-semibold leading-tight opacity-90">
+        <Bot className="size-3.5 shrink-0" />
+        AI tavsiya (bugun)
+      </p>
+
+      <p className="mt-2 text-[11.5px] font-medium leading-snug">
+        {advice.count > 0 ? (
+          <>
+            Yo‘qotishlarni <span className="font-bold">{pct(advice.targetLossPct, 1)}</span> gacha
+            tushirish uchun <span className="font-bold">{advice.count} ta</span> asosiy tavsiya
+            mavjud.
+          </>
+        ) : (
+          <>
+            Barcha mahallalar normativ darajada
+            (<span className="font-bold">{pct(advice.targetLossPct, 1)}</span>) — qo‘shimcha
+            tavsiya yo‘q.
+          </>
+        )}
+      </p>
+
+      <Button
+        className="mt-2.5 w-full bg-white text-accent hover:bg-white/90"
+        size="sm"
+        variant="secondary"
+        onPress={onOpen}
+      >
+        Batafsil
+      </Button>
     </div>
   );
 }

@@ -372,7 +372,41 @@ export async function efficiency(
 
   const forecast = linearForecast(hist.map((h) => Number(h.loss_pct)), period, 6);
 
-  return { score: Number(row['score'] ?? 0), components, forecast };
+  // O'tgan oyning bahosi — AYNAN shu funksiya, faqat bir oy orqada.
+  const prev = await queryOne<{ score: number | null }>(
+    `SELECT score FROM agg.efficiency_index($1, $2, (($3 || '-01')::date - INTERVAL '1 month')::date)`,
+    [scope, mfyId, period], ctx,
+  );
+
+  /*
+   * Tavsiya xulosasi: normadan oshgan mahallalar soni va yo'qotishning
+   * NORMATIV darajasi (energiya bo'yicha o'rtachalangan). Bu qoida —
+   * SQL, model emas: "qaysi mahalla normadan oshdi" savoli aniq javobga ega.
+   */
+  const adv = await queryOne<{ cnt: number; target_pct: number | null; cur_pct: number | null }>(
+    `SELECT count(*) FILTER (
+              WHERE a.loss_pct > coalesce(a.total_loss_target_pct, 8.0)
+            )::int AS cnt,
+            round(sum(a.kwh_in * coalesce(a.total_loss_target_pct, 8.0))
+                  / nullif(sum(a.kwh_in), 0), 1) AS target_pct,
+            round(100 * sum(a.kwh_loss_total) / nullif(sum(a.kwh_in), 0), 1) AS cur_pct
+       FROM agg.mfy_monthly a
+      WHERE a.period_month = ($1 || '-01')::date
+        AND ($2::int IS NULL OR a.mfy_id = $2)`,
+    [period, mfyId], ctx,
+  );
+
+  return {
+    score: Number(row['score'] ?? 0),
+    prevScore: prev?.score === null || prev?.score === undefined ? null : Number(prev.score),
+    components,
+    forecast,
+    advice: adv?.target_pct == null ? null : {
+      count: Number(adv.cnt ?? 0),
+      targetLossPct: Number(adv.target_pct),
+      currentLossPct: Number(adv.cur_pct ?? 0),
+    },
+  };
 }
 
 /** Eng kichik kvadratlar usuli bilan chiziqli trend ekstrapolyatsiyasi. */
