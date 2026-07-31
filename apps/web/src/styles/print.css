@@ -19,11 +19,24 @@
     --separator: #cccccc !important;
   }
 
+  /*
+   * «Jonli oqim» bandi — faqat ekran uchun. Qog'ozda u qora to'rtburchakka
+   * aylanadi va hech qanday yangi ma'lumot bermaydi (raqamlari pastdagi
+   * KPI kartalarida bor), shuning uchun butunlay olib tashlanadi.
+   */
+  .hero,
   .no-print,
   nav,
   aside,
   button:not(.print-keep) {
     display: none !important;
+  }
+
+  /* Chop etishda kartalar DOIM ko'rinadi — skroll animatsiyasi ishlamaydi. */
+  [data-stage] .panel,
+  [data-stage] .kpi {
+    opacity: 1 !important;
+    animation: none !important;
   }
 
   .panel,

@@ -510,7 +510,27 @@ export async function tpMonitoring(
       FROM agg.tp_monthly
       WHERE period_month = ($1 || '-01')::date
         AND ($2::int IS NULL OR mfy_id = $2)
-      ORDER BY load_pct DESC
+      /*
+        HOLAT bo'yicha, keyin yuklama bo'yicha.
+
+        Ilgari faqat "ORDER BY load_pct DESC" edi va bu panelni yolg'onchi
+        qilardi: mahallada nosoz transformator bo'lsa-yu, uning yuklamasi
+        past bo'lsa (masalan 65%), u ro'yxatning pastiga tushib, kartaning
+        birinchi 5 qatoriga KIRMASDI — "Transformatorlar HOLATI" kartasi
+        aynan buzilgan transformatorni yashirardi.
+
+        Tartib UI dagi rang og'irligiga mos: ortiqcha yuklama (qizil) →
+        nosozlik (to'q sariq) → diqqat (sariq) → yaxshi. Normadan uzoq
+        TP lar teng holatda oldinroq turadi.
+      */
+      ORDER BY CASE condition
+                 WHEN 'OVERLOAD'  THEN 0
+                 WHEN 'FAULT'     THEN 1
+                 WHEN 'ATTENTION' THEN 2
+                 ELSE 3
+               END,
+               (NOT coalesce(distance_compliant, true)) DESC,
+               load_pct DESC
       LIMIT $3`, [period, mfyId, limit], ctx);
 
   return rows.map((r) => ({

@@ -22,7 +22,9 @@ import { EnergyFlow } from '../../components/charts/EnergyFlow.tsx';
 import { LossTreemap } from '../../components/charts/LossTreemap.tsx';
 import { TrendLine, type TrendBucket } from '../../components/charts/TrendLine.tsx';
 import { ErrorState, LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
+import { MotionStage } from '../../components/ui/MotionStage.tsx';
 import { EmptyPanel, Panel } from '../../components/ui/Panel.tsx';
+import { PulseHero } from '../../components/ui/PulseHero.tsx';
 import { ReportMenu } from '../../components/ui/ReportMenu.tsx';
 import { MiniStat, StatTile, type Tone } from '../../components/ui/StatTile.tsx';
 import { BucketPicker } from '../mfy/MfyDashboard.tsx';
@@ -123,8 +125,33 @@ export default function DistrictDashboard() {
   const plannedWorks = (works.data ?? []).filter((w) => w.status !== 'COMPLETED');
   const completedWorks = (works.data ?? []).filter((w) => w.status === 'COMPLETED');
 
+  /*
+   * Tepadagi bandda aylanib turadigan xulosalar.
+   *
+   * Har biri O'ZI bir gap: hokim bandga qarab turib ham, tashlab ketib
+   * qaytganda ham to'liq fikrni oladi. Ma'lumoti yo'q xulosa qatorga
+   * umuman tushmaydi — "—" ko'rsatib turgandan ko'ra chiqmagani yaxshi.
+   */
+  const heroNotes = [
+    worst
+      ? `Eng yuqori yo‘qotish — ${worst.nameUz.replace(/ MFY$/, '')}: ${pct(worst.lossPct, 2)}`
+      : null,
+    urgent > 0
+      ? `${num(urgent)} ta holat shoshilinch chora talab qiladi`
+      : 'Shoshilinch chora talab qiladigan holat yo‘q',
+    overNorm.length > 0
+      ? `${num(overNorm.length)} ta mahallada texnik yo‘qotish standartdan yuqori`
+      : null,
+    tpOverDistance > 0 ? `${num(tpOverDistance)} ta transformator 300 m normadan uzoqda` : null,
+    plannedWorks.length > 0
+      ? `Rejadagi ${num(plannedWorks.length)} ta ish bajarilmoqda · ${num(completedWorks.length)} tasi yakunlangan`
+      : null,
+  ].filter((s): s is string => s !== null);
+
   return (
-    <div className={overview.isFetching ? 'opacity-70 transition-opacity' : 'transition-opacity'}>
+    <MotionStage
+      className={overview.isFetching ? 'opacity-70 transition-opacity' : 'transition-opacity'}
+    >
       <PageHeader
         actions={
           <>
@@ -135,6 +162,18 @@ export default function DistrictDashboard() {
         subtitle={t('app.subtitle')}
         title={t('nav.dashboard')}
       />
+
+      {/* ═══ JONLI OQIM: tarmoq pulsi · balans · samaradorlik indeksi ════ */}
+      {data && (
+        <PulseHero
+          kwhIn={data.totals.kwhIn}
+          kwhLoss={data.totals.kwhLossTotal}
+          kwhSold={data.totals.kwhSold}
+          lossPct={data.totals.lossPct}
+          notes={heroNotes}
+          score={efficiency.data?.score ?? null}
+        />
+      )}
 
       {/* ═══ 1-QATOR: 8 ta KPI kartasi ═══════════════════════════════════ */}
       <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
@@ -347,7 +386,7 @@ export default function DistrictDashboard() {
           <WorksPanel mode="planned" rows={plannedWorks} />
         </Panel>
       </div>
-    </div>
+    </MotionStage>
   );
 }
 

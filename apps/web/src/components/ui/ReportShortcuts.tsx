@@ -39,12 +39,13 @@ export function ReportShortcuts() {
   return (
     <div className="flex flex-col gap-3">
       <RadioGroup aria-label="Hisobot davri" value={kind} onChange={setKind}>
-        <div className="grid grid-cols-2 gap-2">
+        {/* Bitta qatorda 4 ta — maketdagidek; tor ekranda 2×2 ga tushadi. */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {KINDS.map((k) => (
             <Radio key={k.id} value={k.id}>
               <Radio.Content
-                className="flex w-full flex-col items-start gap-2 rounded-xl border border-separator
-                           bg-surface px-3 py-2.5 transition-colors
+                className="flex h-full w-full flex-col items-start gap-1.5 rounded-xl
+                           border border-separator bg-surface px-2.5 py-2.5 transition-colors
                            data-[selected=true]:border-accent data-[selected=true]:bg-accent/8
                            data-[focus-visible=true]:border-accent"
               >

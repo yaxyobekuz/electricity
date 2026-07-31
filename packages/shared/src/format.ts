@@ -149,6 +149,24 @@ export function dateLabel(iso: string, script: Script = 'latn'): string {
   return name && y ? `${Number(d)}-${name}, ${y}` : iso;
 }
 
+/**
+ * `2026-06-23` → `23.06.2026` — TOR ustunlar uchun raqamli ko'rinish.
+ *
+ * Ro'yxatlarda ("Amalga oshirilgan ishlar") sana ustuni ensiz bo'ladi va
+ * "23-iyun, 2026" ikki qatorga bo'linib ketadi. Matnli ko'rinish esa asosiy
+ * bo'lib qoladi — bu faqat jadval/ro'yxat kataklari uchun.
+ */
+export function dateShort(iso: string): string {
+  const [y, m, d] = String(iso).slice(0, 10).split('-');
+  return y && m && d ? `${d}.${m}.${y}` : iso;
+}
+
+/** `2026-06` → `06.2026` — tor kartalarda davr belgisi. */
+export function monthShort(period: string): string {
+  const [y, m] = String(period).slice(0, 7).split('-');
+  return y && m ? `${m}.${y}` : period;
+}
+
 /** `2026-06` → `iyun, 2026` — kunsiz davr (oylik hisobotlar). */
 export function periodLabel(period: string, script: Script = 'latn'): string {
   const [y, m] = String(period).split('-');

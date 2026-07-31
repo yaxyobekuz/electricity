@@ -10,6 +10,7 @@
     "migrate": "node --experimental-strip-types scripts/migrate.ts",
     "migrate:reset": "node --experimental-strip-types scripts/migrate.ts --reset",
     "seed": "node --experimental-strip-types scripts/seed.ts",
+    "demo:sarnaul": "node --experimental-strip-types scripts/demo-sarnaul.ts",
     "verify:passport": "node --experimental-strip-types scripts/verify-passport.ts",
     "test": "vitest run"
   },

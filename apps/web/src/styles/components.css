@@ -25,60 +25,177 @@
   }
 }
 
+/* ── Animatsiya o'zgaruvchilari ─────────────────────────────────────────── */
+
+/*
+ * `@property` — brauzerga bu o'zgaruvchi BURCHAK ekanini aytadi.
+ *
+ * Ro'yxatdan o'tmagan `--x` o'zgaruvchi animatsiyada SAKRAB o'zgaradi
+ * (brauzer uni oddiy matn deb biladi). Ro'yxatdan o'tgani silliq oraliq
+ * qiymatlarni hisoblaydi — aylanuvchi ramka va to'ladigan halqa shu
+ * tufayli ishlaydi.
+ */
+@property --angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --deg {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 /* ── Kirish animatsiyasi ────────────────────────────────────────────────── */
 
 /*
- * Panellar va KPI kartalari pastdan yumshoq suzib chiqadi.
+ * Panellar va KPI kartalari pastdan suzib, biroz kattalashib chiqadi.
  *
- * Kechikish `nth-child` orqali beriladi — JS kerak emas va har bir
- * dashboard uchun alohida sozlash shart emas. To'rdagi tartib bo'yicha
- * "to'lqin" hosil bo'ladi.
- *
- * `prefers-reduced-motion` da `globals.css` dagi umumiy qoida barcha
- * animatsiyani 0.01ms ga tushiradi, ya'ni bu effekt o'z-o'zidan o'chadi.
+ * `animation-fill-mode` DOIM `backwards`, HECH QACHON `both`:
+ * `both` da tugaganidan keyin ham oxirgi kadr (`transform: none`) kuchda
+ * qoladi va hover'dagi ko'tarilish/egilish ISHLAMAY qo'yadi. `backwards`
+ * esa faqat kechikish vaqtida boshlang'ich kadrni ushlab turadi.
+ */
+/*
+ * Yakuniy kadr YOZILMAGAN: brauzer uni elementning o'z qiymatlaridan
+ * oladi. Shu sababli bitta keyframe har xil boshlang'ich holatdagi
+ * elementlarga to'g'ri keladi.
  */
 @keyframes beap-rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translateY(22px) scale(0.97);
   }
 }
 
-.panel,
+/*
+ * Xiralashib chiqadigan variant — FAQAT KPI kartalari uchun.
+ *
+ * `filter: blur()` butun elementni qayta chizishga majbur qiladi.
+ * Kichik kartada bu arzon, lekin ichida ECharts/Nivo turgan panelda
+ * qimmat — panellar shu sababli oddiy variantda qoladi.
+ */
+@keyframes beap-rise-soft {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+    filter: blur(5px);
+  }
+  55% {
+    filter: blur(0);
+  }
+}
+
+/* Oddiy sahifalar — mount paytida bir marta. */
+.panel {
+  animation: beap-rise 0.42s cubic-bezier(0.22, 0.68, 0.32, 1) backwards;
+}
+
 .kpi {
-  animation: beap-rise 0.42s cubic-bezier(0.22, 0.68, 0.32, 1) both;
+  animation: beap-rise-soft 0.42s cubic-bezier(0.22, 0.68, 0.32, 1) backwards;
 }
 
-/* To'rdagi o'rniga qarab navbat — 8 tagacha, keyin takrorlanadi. */
-.grid > *:nth-child(1)  .panel, .grid > .panel:nth-child(1),  .grid > .kpi:nth-child(1)  { animation-delay: 0.00s; }
-.grid > *:nth-child(2)  .panel, .grid > .panel:nth-child(2),  .grid > .kpi:nth-child(2)  { animation-delay: 0.05s; }
-.grid > *:nth-child(3)  .panel, .grid > .panel:nth-child(3),  .grid > .kpi:nth-child(3)  { animation-delay: 0.10s; }
-.grid > *:nth-child(4)  .panel, .grid > .panel:nth-child(4),  .grid > .kpi:nth-child(4)  { animation-delay: 0.15s; }
-.grid > *:nth-child(5)  .panel, .grid > .panel:nth-child(5),  .grid > .kpi:nth-child(5)  { animation-delay: 0.20s; }
-.grid > *:nth-child(6)  .panel, .grid > .panel:nth-child(6),  .grid > .kpi:nth-child(6)  { animation-delay: 0.25s; }
-.grid > *:nth-child(7)  .panel, .grid > .panel:nth-child(7),  .grid > .kpi:nth-child(7)  { animation-delay: 0.30s; }
-.grid > *:nth-child(8)  .panel, .grid > .panel:nth-child(8),  .grid > .kpi:nth-child(8)  { animation-delay: 0.35s; }
+/*
+ * `MotionStage` ichida — chiqish SKROLL bilan boshqariladi.
+ *
+ * Karta ekranga kirmaguncha ko'rinmaydi (`opacity: 0`), kuzatuvchi
+ * `is-in` sinfini qo'shganda jonlanadi. Navbat kechikishini JS
+ * `--reveal-delay` orqali beradi — u ekranga BIRGA kirgan kartalar
+ * bo'yicha hisoblanadi, to'rdagi qat'iy tartib bo'yicha emas.
+ */
+[data-stage] .panel,
+[data-stage] .kpi {
+  animation: none;
+  opacity: 0;
+}
+
+[data-stage] .panel.is-in {
+  opacity: 1;
+  animation: beap-rise 0.62s cubic-bezier(0.22, 0.68, 0.32, 1) var(--reveal-delay, 0ms) backwards;
+}
+
+[data-stage] .kpi.is-in {
+  opacity: 1;
+  animation: beap-rise-soft 0.62s cubic-bezier(0.22, 0.68, 0.32, 1) var(--reveal-delay, 0ms) backwards;
+}
+
+/*
+ * Harakat kamaytirilganda `globals.css` animatsiyani 0.01ms ga tushiradi,
+ * lekin yuqoridagi `opacity: 0` CSS xossasi — u o'z-o'zidan yo'qolmaydi.
+ * Shu sababli bu yerda ochiq bekor qilinadi, aks holda kuzatuvchi
+ * ishlamagan holatda kartalar butunlay ko'rinmay qolishi mumkin.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-stage] .panel,
+  [data-stage] .kpi {
+    opacity: 1;
+  }
+}
 
 /* ── Panel primitivi ────────────────────────────────────────────────────── */
 
 .panel {
-  @apply flex flex-col rounded-xl bg-surface;
+  @apply relative flex flex-col rounded-xl bg-surface;
   box-shadow: var(--surface-shadow);
   transition:
-    box-shadow 0.22s ease,
-    transform 0.22s ease;
+    box-shadow 0.28s ease,
+    transform 0.28s cubic-bezier(0.22, 0.68, 0.32, 1);
 }
 
 /* Sichqoncha ostida panel bir oz "ko'tariladi" — interaktivlik belgisi. */
 .panel:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow:
     var(--surface-shadow),
-    0 10px 26px color-mix(in oklab, var(--accent) 14%, transparent);
+    0 14px 32px color-mix(in oklab, var(--accent) 16%, transparent);
+}
+
+/*
+ * Aylanuvchi yorug' ramka — faqat hover'da.
+ *
+ * USUL: 1px "padding" li pseudo-element ikkita niqob bilan kesiladi
+ * (`content-box` va butun quti), natijada FAQAT chekka chizig'i qoladi.
+ * Konus gradient `--angle` bo'ylab aylanadi, ya'ni yorug'lik nuqtasi
+ * panel chetini aylanib chiqadi. Chin `border` bilan buni qilib bo'lmaydi.
+ */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--angle),
+    transparent 0deg,
+    transparent 200deg,
+    color-mix(in oklab, var(--accent) 85%, transparent) 300deg,
+    color-mix(in oklab, var(--accent) 25%, transparent) 340deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.panel:hover::before {
+  opacity: 1;
+  animation: beap-angle 2.6s linear infinite;
+}
+
+@keyframes beap-angle {
+  to {
+    --angle: 360deg;
+  }
 }
 
 /*
@@ -110,23 +227,100 @@
   @apply px-0 pb-0;
 }
 
-/* Panel pastidagi harakat havolasi — mockupdagi "Batafsil" / "Barchasi" */
+/*
+ * Panel pastidagi harakat havolasi — mockupdagi "Batafsil" / "Barchasi".
+ *
+ * Fon chapdan o'ngga "quyiladi". Buni pseudo-element bilan qilib
+ * bo'lmaydi: havola matni ORAM ELEMENTSIZ turibdi, ya'ni uni fon
+ * ustiga chiqarib bo'lmaydi va pseudo-element matnni bosib qolardi.
+ * `background-size` esa asl fon qatlamida qoladi — matn doim tepada.
+ */
 .panel__action {
   @apply block w-full rounded-b-xl border-t border-separator px-4 py-2
-         text-center text-[11px] font-semibold text-accent transition-colors;
+         text-center text-[11px] font-semibold text-accent;
+  background-image: linear-gradient(
+    color-mix(in oklab, var(--accent) 9%, transparent) 0 0
+  );
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  transition:
+    background-size 0.34s cubic-bezier(0.22, 0.68, 0.32, 1),
+    color 0.2s ease;
 }
+
 .panel__action:hover {
-  background: color-mix(in oklab, var(--accent) 6%, transparent);
+  background-size: 100% 100%;
+}
+
+/*
+ * O'q DOIM joy egallaydi (shaffof holda ham) — hover'da paydo bo'lganda
+ * yorliq siljib ketmaydi.
+ */
+.panel__action::after {
+  content: ' →';
+  display: inline-block;
+  transform: translateX(-4px);
+  opacity: 0;
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.22s ease;
+}
+
+.panel__action:hover::after {
+  transform: translateX(2px);
+  opacity: 1;
 }
 
 /* ── KPI kartasi ────────────────────────────────────────────────────────── */
 
+/*
+ * KPI kartasi — sahifadagi eng "sezgir" element.
+ *
+ * Uch qatlam ustma-ust turadi va tartibi MUHIM:
+ *   ::before (z 0) — kursor ortidan yuradigan yorug'lik dog'i
+ *   mazmun  (z 1)  — matn va raqamlar
+ *   ::after (z 2)  — hover'da bir marta o'tuvchi yaltirash
+ *
+ * `--rx/--ry` (egilish) va `--mx/--my` (dog' markazi) ni `MotionStage`
+ * yozadi. Ular berilmasa karta oddiy tekis holatda qoladi.
+ */
+/*
+ * Tinch holatda `transform` YOZILMAYDI. Doimiy `perspective(...)` matnni
+ * alohida qatlamga chiqarib, ba'zi brauzerlarda uni xiralashtiradi —
+ * egilish esa faqat kursor ustida turganda kerak, ya'ni `:hover` yetarli.
+ */
 .kpi {
   @apply relative flex flex-col gap-1.5 overflow-hidden rounded-xl px-3.5 py-3;
   background: var(--tone-bg, var(--surface));
   transition:
-    transform 0.22s ease,
-    box-shadow 0.22s ease;
+    transform 0.24s cubic-bezier(0.22, 0.68, 0.32, 1),
+    box-shadow 0.24s ease;
+}
+
+/* Mazmun yorug'lik dog'idan YUQORIDA turadi — aks holda matn xiralashadi. */
+.kpi > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Kursor ostidagi yumshoq yorug'lik — kartaning "hajmi" shundan seziladi. */
+.kpi::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in oklab, var(--tone-solid, var(--accent)) 26%, transparent),
+    transparent 62%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.kpi:hover::before {
+  opacity: 1;
 }
 
 /*
@@ -137,19 +331,27 @@
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 2;
   transform: translateX(-120%);
   background: linear-gradient(
     100deg,
     transparent 35%,
-    color-mix(in oklab, var(--tone-solid, var(--accent)) 12%, transparent) 50%,
+    color-mix(in oklab, var(--tone-solid, var(--accent)) 16%, transparent) 50%,
     transparent 65%
   );
   pointer-events: none;
 }
 
+/*
+ * Egilish, ko'tarilish va kattalashish — hammasi BITTA `transform` da:
+ * xossa butunicha qayta yoziladi, qismini meros qilib olib bo'lmaydi.
+ * `--rx/--ry` berilmagan bo'lsa (sensorli ekran) 0deg qoladi va faqat
+ * ko'tarilish ishlaydi.
+ */
 .kpi:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 26px color-mix(in oklab, var(--tone-solid, var(--accent)) 22%, transparent);
+  transform: perspective(760px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
+    translateY(-5px) scale(1.02);
+  box-shadow: 0 16px 34px color-mix(in oklab, var(--tone-solid, var(--accent)) 26%, transparent);
 }
 
 .kpi:hover::after {
@@ -163,23 +365,63 @@
 }
 
 .kpi__badge {
-  @apply flex size-8 shrink-0 items-center justify-center rounded-lg text-white;
+  @apply relative flex size-8 shrink-0 items-center justify-center rounded-lg text-white;
   background: var(--tone-solid, var(--accent));
   box-shadow: 0 4px 10px color-mix(in oklab, var(--tone-solid, var(--accent)) 35%, transparent);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease;
 }
 
 .kpi:hover .kpi__badge {
-  transform: scale(1.12) rotate(-6deg);
+  transform: scale(1.14) rotate(-8deg);
+  box-shadow: 0 8px 18px color-mix(in oklab, var(--tone-solid, var(--accent)) 55%, transparent);
+}
+
+/* Nishondan tarqaladigan halqa — hover'da "signal" berilayotgandek. */
+.kpi__badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid var(--tone-solid, var(--accent));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.kpi:hover .kpi__badge::after {
+  animation: beap-ping 1.4s cubic-bezier(0.22, 0.68, 0.32, 1) infinite;
+}
+
+@keyframes beap-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
 }
 
 .kpi__label {
   @apply text-[11.5px] font-medium leading-tight text-muted;
 }
 
+/*
+ * `inline-block` — SHART: `span` odatda satr ichidagi element bo'lib,
+ * unga `transform` UMUMAN ta'sir qilmaydi. Hover'dagi kattalashish
+ * shusiz jimgina ishlamay turadi.
+ */
 .kpi__value {
-  @apply text-[23px] font-bold leading-none tracking-tight text-foreground;
+  @apply inline-block text-[23px] font-bold leading-none tracking-tight text-foreground;
   font-variant-numeric: tabular-nums;
+  transform-origin: left bottom;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.kpi:hover .kpi__value {
+  transform: scale(1.07);
 }
 
 .kpi__unit {
@@ -217,8 +459,72 @@
   border-top: 1px solid var(--separator);
 }
 
+/*
+ * Qatorlar yuqoridan pastga navbat bilan "to'kiladi".
+ *
+ * Kechikish `nth-child` bilan — jadval qatorlari JS kuzatuviga qo'shilmaydi
+ * (ular juda ko'p va tez almashadi). 12 tadan keyin kechikish oshmaydi:
+ * uzun jadvalda oxirgi qator soniyalab kutib turmasligi kerak.
+ */
+.dt tbody tr {
+  animation: beap-row-in 0.38s cubic-bezier(0.22, 0.68, 0.32, 1) backwards;
+  transition: background 0.18s ease;
+}
+
+@keyframes beap-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.dt tbody tr:nth-child(1)  { animation-delay: 0.02s; }
+.dt tbody tr:nth-child(2)  { animation-delay: 0.05s; }
+.dt tbody tr:nth-child(3)  { animation-delay: 0.08s; }
+.dt tbody tr:nth-child(4)  { animation-delay: 0.11s; }
+.dt tbody tr:nth-child(5)  { animation-delay: 0.14s; }
+.dt tbody tr:nth-child(6)  { animation-delay: 0.17s; }
+.dt tbody tr:nth-child(7)  { animation-delay: 0.20s; }
+.dt tbody tr:nth-child(8)  { animation-delay: 0.23s; }
+.dt tbody tr:nth-child(9)  { animation-delay: 0.26s; }
+.dt tbody tr:nth-child(10) { animation-delay: 0.29s; }
+.dt tbody tr:nth-child(11) { animation-delay: 0.32s; }
+.dt tbody tr:nth-child(n + 12) { animation-delay: 0.35s; }
+
 .dt tbody tr:hover {
   background: var(--surface-secondary);
+}
+
+/*
+ * Hover'dagi chap chiziqcha KATAKKA qo'yiladi, qatorga emas:
+ * `border-collapse` da `tr` ustidagi `box-shadow` brauzerlarda
+ * ishonchsiz chiziladi.
+ */
+.dt tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Hover'da yuklama chizig'i bo'ylab yugurik chiziqlar — "oqim" belgisi. */
+.dt tbody tr:hover .loadbar__fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.4) 0 5px,
+    transparent 5px 11px
+  );
+  animation: beap-stripes 0.6s linear infinite;
+}
+
+@keyframes beap-stripes {
+  to {
+    background-position: 12px 0;
+  }
 }
 
 .dt .num {
@@ -244,16 +550,42 @@
   @apply px-2.5 py-1.5 text-[11.5px];
 }
 
+/*
+ * Hamma qiymat MARKAZDA.
+ *
+ * `td.num` ham ochiq sanab o'tilgan: `.dt .num` dagi `text-right` ni
+ * yengish uchun tanlagich undan kuchliroq bo'lishi shart.
+ */
+.dt--center thead th,
+.dt--center tbody td,
+.dt--center tbody td.num {
+  @apply text-center;
+}
+
 /* ── Status nuqtasi — DOIM matn bilan birga ─────────────────────────────── */
 
 .dot {
-  @apply inline-block size-1.5 shrink-0 rounded-full;
+  @apply relative inline-block size-1.5 shrink-0 rounded-full;
 }
 
 .dot--good     { background: var(--viz-good); }
 .dot--warning  { background: var(--viz-warning); }
 .dot--serious  { background: var(--viz-serious); }
 .dot--critical { background: var(--viz-critical); }
+
+/*
+ * Tanqidiy holat nuqtasi TO'XTOVSIZ pulslaydi — ro'yxatda ko'z birinchi
+ * shunga tushadi. Faqat `critical`: agar hamma nuqta pulslasa, hech biri
+ * ajralib turmaydi va sahifa shovqinga aylanadi.
+ */
+.dot--critical::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: beap-ping 1.9s cubic-bezier(0.22, 0.68, 0.32, 1) infinite;
+}
 
 /* ── Yuklama chizig'i ───────────────────────────────────────────────────── */
 
@@ -296,13 +628,25 @@
 /* ── Yon panel ──────────────────────────────────────────────────────────── */
 
 .nav-item {
-  @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium
-         text-muted transition-colors;
+  @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium text-muted;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.24s cubic-bezier(0.22, 0.68, 0.32, 1);
+}
+
+.nav-item svg {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .nav-item:hover {
   background: var(--surface-secondary);
   color: var(--foreground);
+  transform: translateX(3px);
+}
+
+.nav-item:hover svg {
+  transform: scale(1.16);
 }
 
 .nav-item--active {
@@ -391,4 +735,328 @@
 .scroll-y::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: color-mix(in oklab, var(--muted) 30%, transparent);
+}
+
+/* ═══ «JONLI OQIM» bandi ═══════════════════════════════════════════════════
+ *
+ * Dashboard tepasidagi ko'rgazma element. Ikkala temada ham QORONG'I —
+ * bu ataylab: sahifaning qolgani och, shu sababli band "ekran" kabi
+ * ajralib turadi va ko'z birinchi shunga tushadi.
+ *
+ * Barcha harakat CSS bilan. `prefers-reduced-motion` da `globals.css`
+ * animatsiyalarni 0.01ms ga tushiradi va band jim turadi.
+ */
+
+.hero {
+  @apply relative overflow-hidden rounded-2xl px-5 py-4 text-white;
+  background:
+    radial-gradient(120% 150% at 6% 0%, #1d3f8f 0%, transparent 55%),
+    radial-gradient(90% 130% at 100% 100%, #6d28d9 0%, transparent 55%),
+    linear-gradient(115deg, #0a1730 0%, #101f45 48%, #171338 100%);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.14),
+    0 18px 42px color-mix(in oklab, var(--accent) 26%, transparent);
+  animation: beap-hero-in 0.75s cubic-bezier(0.22, 0.68, 0.32, 1) backwards;
+}
+
+@keyframes beap-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.985);
+  }
+}
+
+/* ── Fon qatlamlari ── */
+
+/*
+ * Aurora — uchta xira rangli dog'. `-inset-24` shart: dog'lar chetdan
+ * tashqarida boshlanadi, shunda surilganda bo'sh burchak ochilib qolmaydi.
+ */
+.hero__aurora {
+  @apply pointer-events-none absolute -inset-24;
+  background:
+    radial-gradient(26% 40% at 20% 32%, rgba(56, 189, 248, 0.5), transparent 62%),
+    radial-gradient(24% 38% at 68% 62%, rgba(167, 139, 250, 0.45), transparent 62%),
+    radial-gradient(20% 32% at 46% 92%, rgba(244, 63, 94, 0.32), transparent 62%);
+  filter: blur(24px);
+  animation: beap-aurora 24s ease-in-out infinite alternate;
+}
+
+@keyframes beap-aurora {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.14);
+  }
+  100% {
+    transform: translate3d(-2%, 4%, 0) scale(1.04);
+  }
+}
+
+/*
+ * Sekin suriladigan texnik panjara — "tarmoq" tuyg'usi.
+ *
+ * Surilish `background-position` bilan emas, `transform` bilan: birinchisi
+ * har kadrda butun maydonni QAYTA CHIZADI, ikkinchisi tayyor qatlamni
+ * shunchaki siljitadi. Element har tomondan 34px kattaroq (`-inset-8.5`),
+ * shu sababli aynan bitta katak surilganda chekkada bo'shliq ochilmaydi
+ * va naqsh takrorlanib, ulanish joyi ko'rinmaydi.
+ */
+.hero__grid {
+  @apply pointer-events-none absolute -inset-8.5;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.42) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.42) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.14;
+  -webkit-mask-image: radial-gradient(80% 110% at 50% 18%, #000 15%, transparent 100%);
+  mask-image: radial-gradient(80% 110% at 50% 18%, #000 15%, transparent 100%);
+  animation: beap-grid-pan 16s linear infinite;
+}
+
+@keyframes beap-grid-pan {
+  to {
+    transform: translate3d(34px, 34px, 0);
+  }
+}
+
+/* Vaqti-vaqti bilan o'tuvchi yorug'lik — "skaner". */
+.hero__sweep {
+  @apply pointer-events-none absolute inset-y-0 left-0 w-1/4;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.13), transparent);
+  transform: translateX(-140%);
+  animation: beap-sweep 7s ease-in-out infinite;
+}
+
+@keyframes beap-sweep {
+  0% {
+    transform: translateX(-140%);
+  }
+  55%,
+  100% {
+    transform: translateX(440%);
+  }
+}
+
+/* Suzib yuruvchi uchqunlar. */
+.hero__spark {
+  @apply pointer-events-none absolute rounded-full bg-white;
+  animation: beap-float 9s ease-in-out infinite;
+}
+
+@keyframes beap-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-15px) scale(1.6);
+    opacity: 0.85;
+  }
+}
+
+/* ── Chap ustun ── */
+
+.hero__live {
+  @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5
+         text-[9.5px] font-bold uppercase tracking-widest;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.hero__live-dot {
+  @apply relative size-1.5 rounded-full;
+  background: #4ade80;
+}
+
+.hero__live-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: beap-ping 1.7s cubic-bezier(0.22, 0.68, 0.32, 1) infinite;
+}
+
+.hero__cap {
+  @apply mt-2 text-[10.5px] font-medium uppercase tracking-wide;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.hero__big {
+  @apply mt-0.5 flex items-baseline gap-1.5 text-[30px] font-extrabold leading-none tracking-tight;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 18px rgba(56, 189, 248, 0.45);
+}
+
+.hero__big-unit {
+  @apply text-[12px] font-semibold;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Puls chizig'i ── */
+
+/*
+ * Chekkalar niqob bilan so'ndiriladi — chiziq "boshlanmaydi va tugamaydi",
+ * xuddi kesib olingan lenta kabi cheksiz oqib turadi.
+ */
+.hero__ekg {
+  @apply h-14 w-full;
+  filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.75));
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+/* Surilish AYNAN bitta bo'g'in kengligiga (120) — ulanish joyi sezilmaydi. */
+.hero__ekg-track {
+  animation: beap-ekg 3.2s linear infinite;
+}
+
+@keyframes beap-ekg {
+  to {
+    transform: translateX(-120px);
+  }
+}
+
+/* ── Oqim chiplari ── */
+
+.hero__chip {
+  @apply inline-flex items-center gap-1.5 rounded-lg px-2 py-1;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.hero__chip:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.hero__chip-dot {
+  @apply size-1.5 shrink-0 rounded-full;
+}
+
+.hero__chip-value {
+  @apply text-[12.5px] font-bold leading-none;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero__chip-label {
+  @apply text-[10px] leading-none;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* O'q oqim yo'nalishini takrorlab siljib turadi. */
+.hero__arrow {
+  @apply size-3.5 shrink-0;
+  color: rgba(255, 255, 255, 0.55);
+  animation: beap-arrow 1.6s ease-in-out infinite;
+}
+
+@keyframes beap-arrow {
+  0%,
+  100% {
+    transform: translateX(-2px);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateX(2px);
+    opacity: 1;
+  }
+}
+
+.hero__loss {
+  @apply inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-bold leading-none;
+  background: rgba(251, 113, 133, 0.18);
+  color: #fda4af;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Samaradorlik halqasi ── */
+
+.hero__ring-wrap {
+  @apply flex shrink-0 items-center gap-2.5;
+}
+
+/*
+ * Halqa — konus gradient. To'lish `--deg` bo'yicha va u `@property`
+ * bilan burchak deb belgilangani uchun 0 dan qiymatgacha SILLIQ o'sadi.
+ */
+.hero__ring {
+  @apply relative grid size-21 place-items-center rounded-full;
+  background: conic-gradient(
+    from -90deg,
+    #38bdf8 0deg,
+    #a78bfa var(--deg, 0deg),
+    rgba(255, 255, 255, 0.13) var(--deg, 0deg)
+  );
+  animation: beap-ring-fill 1.5s cubic-bezier(0.22, 0.68, 0.32, 1) 0.3s backwards;
+}
+
+/* `to` kadri yozilmagan: brauzer uni elementdagi joriy qiymatdan oladi. */
+@keyframes beap-ring-fill {
+  from {
+    --deg: 0deg;
+  }
+}
+
+/* Halqa atrofida aylanuvchi xira yaltirash. */
+.hero__ring::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--angle),
+    transparent 55%,
+    rgba(255, 255, 255, 0.5),
+    transparent 88%
+  );
+  filter: blur(6px);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: beap-angle 4.5s linear infinite;
+}
+
+.hero__ring-core {
+  @apply relative z-1 flex size-17 flex-col items-center justify-center rounded-full;
+  background: #101c39;
+}
+
+.hero__ring-value {
+  @apply text-[22px] font-extrabold leading-none;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero__ring-max {
+  @apply text-[9px] leading-none;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.hero__ring-cap {
+  @apply hidden text-[10px] font-semibold uppercase leading-tight tracking-wide sm:block;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Aylanuvchi xulosa qatori ── */
+
+.hero__ticker {
+  @apply relative mt-3 flex items-center gap-2 overflow-hidden rounded-lg px-2.5 py-1.5
+         text-[11.5px] font-medium;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Yangi xabar pastdan ko'tarilib, biroz "burilib" keladi. */
+.hero__ticker-item {
+  @apply block truncate;
+  animation: beap-ticker-in 0.55s cubic-bezier(0.22, 0.68, 0.32, 1) backwards;
+}
+
+@keyframes beap-ticker-in {
+  from {
+    opacity: 0;
+    transform: translateY(120%) rotateX(-55deg);
+    filter: blur(2px);
+  }
 }

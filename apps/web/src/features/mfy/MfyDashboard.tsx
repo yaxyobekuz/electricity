@@ -13,10 +13,10 @@
  * bo'sh joyni to'ldirish uchun cho'zilmaydi. Shu sababli panellar soni ko'p,
  * balandligi past.
  */
-import { energy, kva, kw, money, num, pct, pieces, volts } from '@beap/shared';
+import { energy, kva, kw, money, monthShort, num, pct, pieces, volts } from '@beap/shared';
 import { Chip, ListBox, Select } from '@heroui/react';
 import {
-  Activity, Building2, CircleDollarSign, Gauge as GaugeIcon, Leaf, PowerOff,
+  Activity, ArrowRight, Building2, CircleDollarSign, Gauge as GaugeIcon, Leaf, PowerOff,
   TrendingDown, Users, Zap, ZapOff,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -26,8 +26,9 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { Donut } from '../../components/charts/Donut.tsx';
 import { Gauge } from '../../components/charts/Gauge.tsx';
 import { TrendLine, type TrendBucket } from '../../components/charts/TrendLine.tsx';
-import { ErrorState, LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
+import { ErrorState, FooterNote, LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
 import { CountUp } from '../../components/ui/CountUp.tsx';
+import { MotionStage } from '../../components/ui/MotionStage.tsx';
 import { EmptyPanel, Panel } from '../../components/ui/Panel.tsx';
 import { ReportMenu } from '../../components/ui/ReportMenu.tsx';
 import { ReportShortcuts } from '../../components/ui/ReportShortcuts.tsx';
@@ -107,6 +108,8 @@ export default function MfyDashboard() {
   const prevWord = bucket === 'day' ? 'Kecha' : bucket === 'week' ? 'O‘tgan hafta' : 'O‘tgan oy';
 
   const daysInMonth = 30;
+  // Taxminiy tarif — "tejalgan energiya" ni so'mga o'girish uchun.
+  const TARIFF_SUM_PER_KWH = 1000;
   const avgPerConsumer =
     totals.consumersActive > 0 ? totals.kwhSold / totals.consumersActive / daysInMonth : 0;
   // Taxminiy tarif — hisob-kitob markazidan aniq tarif kelguncha.
@@ -114,7 +117,16 @@ export default function MfyDashboard() {
   const naturalKwh = lossStructure.data?.parts.find((p) => p.key === 'natural')?.kwh ?? 0;
 
   const completed = (works.data ?? []).filter((w) => w.status === 'COMPLETED');
-  const planned = (works.data ?? []).filter((w) => w.status !== 'COMPLETED');
+  /*
+   * Reja ro'yxati YAQIN sanadan boshlanadi.
+   *
+   * Server javobi eng yangi sanadan beradi — bajarilgan ishlar uchun to'g'ri
+   * ("oxirgi nima qilindi"), reja uchun teskari: birinchi navbatda eng uzoq
+   * muddat ko'rinib qolardi.
+   */
+  const planned = (works.data ?? [])
+    .filter((w) => w.status !== 'COMPLETED')
+    .sort((a, b) => (a.plannedEnd ?? '9999').localeCompare(b.plannedEnd ?? '9999'));
 
   /*
    * Kuchlanish rangi NOMINALDAN chetlanishga qarab beriladi: 220 V ning
@@ -133,7 +145,7 @@ export default function MfyDashboard() {
           : 'good';
 
   return (
-    <div className={overview.isFetching ? 'opacity-70 transition-opacity' : ''}>
+    <MotionStage className={overview.isFetching ? 'opacity-70 transition-opacity' : ''}>
       <PageHeader
         actions={
           <>
@@ -352,8 +364,8 @@ export default function MfyDashboard() {
           footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
           title="Transformatorlar holati"
         >
-          {/* 4 qator — qatordagi qo'shni kartalar bilan bir xil balandlik. */}
-          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 4)} />
+          {/* 5 qator — qatordagi qo'shni kartalar bilan bir xil balandlik. */}
+          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 5)} />
         </Panel>
 
         <Panel
@@ -484,72 +496,103 @@ export default function MfyDashboard() {
 
         <Panel className="xl:col-span-3" title="Natijadorlik ko‘rsatkichlari">
           {results.data ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:divide-x sm:divide-separator">
               {/* Chap ustun — yo'qotish darajasining davr boshi va oxiri */}
-              <div className="min-w-0">
-                <p className="text-[10.5px] font-medium leading-tight text-muted">
+              <div className="min-w-0 sm:pr-4">
+                <p className="text-[11px] font-medium leading-tight text-muted">
                   Yo‘qotish darajasi
                 </p>
 
-                <p className="mt-2 flex items-baseline gap-1.5">
+                {/*
+                  Davr belgisi qiymatdan AJRATIB, o'ng chekkaga qo'yiladi:
+                  ikki qatorda ham bir vertikalda turadi va katta raqamlarni
+                  o'qishga xalaqit bermaydi.
+                */}
+                <p className="mt-2.5 flex items-baseline justify-between gap-2">
                   <span className="tabular text-[17px] font-bold leading-none">
                     {pct(results.data.lossPctStart ?? 0, 1)}
                   </span>
-                  <span className="text-[10.5px] text-muted">({results.data.periodFrom})</span>
+                  <span className="text-[11px] font-medium text-accent">
+                    ({monthShort(results.data.periodFrom)})
+                  </span>
                 </p>
 
-                <p className="mt-1.5 flex items-baseline gap-1.5">
-                  <TrendingDown
-                    aria-hidden="true"
-                    className="size-3.5 shrink-0 self-center"
-                    style={{ color: 'var(--viz-good)' }}
-                  />
-                  <span
-                    className="tabular text-[17px] font-bold leading-none"
-                    style={{ color: 'var(--viz-good)' }}
-                  >
-                    {pct(results.data.lossPctEnd ?? 0, 1)}
+                <p className="mt-2 flex items-baseline justify-between gap-2">
+                  <span className="flex items-baseline gap-1.5">
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="size-3.5 shrink-0 self-center"
+                      style={{ color: 'var(--viz-good)' }}
+                    />
+                    <span
+                      className="tabular text-[19px] font-bold leading-none"
+                      style={{ color: 'var(--viz-good)' }}
+                    >
+                      {pct(results.data.lossPctEnd ?? 0, 1)}
+                    </span>
                   </span>
-                  <span className="text-[10.5px] text-muted">({results.data.periodTo})</span>
+                  <span className="text-[11px] font-medium text-accent">
+                    ({monthShort(results.data.periodTo)})
+                  </span>
                 </p>
 
                 {results.data.improvementPp !== null && (
-                  <Chip
-                    className="mt-2.5"
-                    color={results.data.improvementPp > 0 ? 'success' : 'danger'}
-                    size="sm"
-                    variant="soft"
+                  /*
+                    "p.p." — FOIZ PUNKTI. 11.2% dan 5.0% ga tushish "6.2%"
+                    emas: foizda o'lchansa bu 55% bo'lardi. Maketda "%" yozilgan,
+                    lekin raqamning ma'nosi p.p.
+                  */
+                  <p
+                    className="mt-3 rounded-lg px-2.5 py-1.5 text-center text-[11.5px] font-semibold"
+                    style={{
+                      background: `color-mix(in oklab, var(--viz-${
+                        results.data.improvementPp > 0 ? 'good' : 'critical'
+                      }) 10%, transparent)`,
+                      color: `var(--viz-${results.data.improvementPp > 0 ? 'good' : 'critical'})`,
+                    }}
                   >
-                    <Chip.Label>
-                      Yaxshilanish: {Math.abs(results.data.improvementPp).toFixed(1)} p.p.
-                    </Chip.Label>
-                  </Chip>
+                    Yaxshilanish: {Math.abs(results.data.improvementPp).toFixed(1)} p.p.
+                  </p>
                 )}
               </div>
 
               {/* O'ng ustun — o'sha ishlarning natijasi: tejalgan energiya */}
-              <div className="min-w-0">
-                <p className="text-[10.5px] font-medium leading-tight text-muted">
+              <div className="min-w-0 sm:pl-4">
+                <p className="text-[11px] font-medium leading-tight text-muted">
                   Iqtisod qilingan energiya
                 </p>
 
-                <div className="mt-2 flex items-center gap-2">
-                  <span
-                    className="flex size-8 shrink-0 items-center justify-center rounded-lg"
-                    style={{
-                      background: 'color-mix(in oklab, var(--viz-good) 12%, transparent)',
-                      color: 'var(--viz-good)',
-                    }}
-                  >
-                    <Zap className="size-4" />
-                  </span>
+                <div className="mt-3.5 flex items-center gap-2.5">
+                  <Zap
+                    aria-hidden="true"
+                    className="size-6 shrink-0"
+                    style={{ color: 'var(--viz-good)', fill: 'currentColor' }}
+                  />
+                  {/*
+                    To'liq raqam — `energy()` uni "128.6 ming kWh" ga
+                    yaxlitlardi, bu yerda esa aniq qiymat muhim.
+                  */}
                   <span className="tabular min-w-0 truncate text-[15px] font-bold leading-tight">
-                    {energy(results.data.savedKwh).text}
+                    {num(results.data.savedKwh)}
+                    <span className="ml-1 text-[10.5px] font-medium text-muted">kWh</span>
                   </span>
                 </div>
 
-                <p className="mt-1.5 text-[10px] leading-tight text-muted">
-                  bajarilgan ishlar hisobiga (davr boshidan buyon)
+                {/*
+                  Pul ekvivalenti — TAXMINIY: 1 kWh = 1000 so'm.
+                  Aniq tarif toifaga qarab farq qiladi, shuning uchun raqam
+                  "≈" bilan beriladi va tarif ochiq yoziladi: hokim "bu qayerdan
+                  chiqdi?" deb so'raganda javob kartaning o'zida turadi.
+                */}
+                <p className="mt-1.5 pl-8.5 text-[12.5px] font-semibold leading-tight">
+                  ≈ {money((results.data.savedKwh * TARIFF_SUM_PER_KWH) / 1e6).text}
+                </p>
+
+                <p
+                  className="mt-1.5 pl-8.5 text-[10.5px] leading-tight"
+                  style={{ color: 'var(--viz-good)' }}
+                >
+                  (so‘nggi 12 oy · {num(TARIFF_SUM_PER_KWH)} so‘m/kWh)
                 </p>
               </div>
             </div>
@@ -563,8 +606,9 @@ export default function MfyDashboard() {
         </Panel>
       </div>
 
-      <p className="mt-2.5 flex items-center gap-1.5 text-[10.5px] text-muted">
-        <Activity className="size-3.5" />
+      {/* Izoh sahifa oxirida emas, PASTKI CHIZIQDA — bitta qatorda. */}
+      <FooterNote>
+        <Activity className="size-3.5 shrink-0" />
         Ma’lumotlar har 10 daqiqada avtomatik yangilanadi ·{' '}
         <button
           className="font-semibold text-accent hover:underline"
@@ -573,8 +617,8 @@ export default function MfyDashboard() {
         >
           Pasportni ochish
         </button>
-      </p>
-    </div>
+      </FooterNote>
+    </MotionStage>
   );
 }
 

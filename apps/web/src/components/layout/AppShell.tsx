@@ -39,6 +39,14 @@ interface NavItem {
  */
 const HeaderSlot = createContext<HTMLElement | null>(null);
 
+/**
+ * Pastki chiziqdagi bo'sh joy — sahifaga oid izoh shu yerga tushadi.
+ *
+ * Aks holda izoh kontentning oxirida ALOHIDA qator bo'lib, uning ostida
+ * yana footer turadi: ekranning pastida ikkita deyarli bo'sh qator.
+ */
+const FooterSlot = createContext<HTMLElement | null>(null);
+
 const NAV: NavItem[] = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: <Home className="size-4.5" /> },
   { to: '/mahallalar', labelKey: 'nav.mahallalar', icon: <Building2 className="size-4.5" /> },
@@ -66,6 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const efficiency = useEfficiency(period ?? undefined);
   const location = useLocation();
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | null>(null);
+  const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
 
   const visibleNav = NAV.filter((n) => !n.roles || (user && n.roles.includes(user.role)));
 
@@ -272,11 +281,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <HeaderSlot.Provider value={headerSlot}>
-          <main className="min-w-0 flex-1 px-4 pb-4">{children}</main>
+          <FooterSlot.Provider value={footerSlot}>
+            <main className="min-w-0 flex-1 px-4 pb-4">{children}</main>
+          </FooterSlot.Provider>
         </HeaderSlot.Provider>
 
-        <footer className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-[10.5px] text-muted">
+        <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-4 pb-3 text-[10.5px] text-muted">
           <span>© {new Date().getFullYear()} {t('app.footer')}</span>
+          {/* `contents` — o'ram quti hosil qilmaydi, izoh footer qatorining bandi bo'ladi. */}
+          <div ref={setFooterSlot} className="contents" />
           <span className="flex items-center gap-3">
             <Chip size="sm" variant="soft">
               <Chip.Label>Offline rejim</Chip.Label>
@@ -324,6 +337,20 @@ function EfficiencyMiniCard({ score }: { score: number }) {
 
       <p className="mt-2 text-[10px] opacity-80">Maqsad: 90+</p>
     </div>
+  );
+}
+
+/**
+ * Sahifaga oid izoh — PASTKI CHIZIQ ichida ko'rsatiladi (portal orqali).
+ *
+ * Qobiq tashqarisida (masalan chop etish sahifasida) hech narsa chizmaydi.
+ */
+export function FooterNote({ children }: { children: ReactNode }) {
+  const slot = useContext(FooterSlot);
+  if (!slot) return null;
+  return createPortal(
+    <span className="flex min-w-0 items-center gap-1.5">{children}</span>,
+    slot,
   );
 }
 

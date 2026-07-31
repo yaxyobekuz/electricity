@@ -3,7 +3,7 @@
  * Mockupdagi "Amalga oshirilgan ishlar" / "Rejalashtirilgan ishlar" panellari.
  */
 import type { WorkRow } from '@beap/shared';
-import { dateLabel } from '@beap/shared';
+import { dateShort } from '@beap/shared';
 import { Chip } from '@heroui/react';
 
 import { EmptyPanel } from '../../components/ui/Panel.tsx';
@@ -37,10 +37,10 @@ export function WorkTimeline({
           className="flex items-center gap-3 px-5 py-2.5 [&+&]:border-t [&+&]:border-separator"
         >
           <span
-            className="w-23 shrink-0 text-[11px] font-medium text-muted"
+            className="w-17 shrink-0 text-[11px] font-medium text-muted"
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
-            {((d) => (d ? dateLabel(d) : '—'))(planned ? w.plannedEnd : w.actualEnd)}
+            {((d) => (d ? dateShort(d) : '—'))(planned ? w.plannedEnd : w.actualEnd)}
           </span>
 
           <span className="min-w-0 flex-1 truncate text-[12px]" title={w.titleUz}>
