@@ -8,8 +8,9 @@ import type {
   AlertItem, CapacityInfo, ConsumerBreakdown, DebtBreakdown, DistanceRow,
   EfficiencyBreakdown, EnergyBalanceNode, KpiTile, LossMapCell, LossStructure,
   MfyRankRow, OperationalMetrics, RagStatus, ResultsSummary, TechnicalLossRow,
-  TimeSeriesPoint, TpMonitorRow, WorkRow,
+  TimeSeriesPoint, TpMonitorRow, ViolationActRow, ViolationSummary, WorkDetail, WorkRow,
 } from '@beap/shared';
+import { VIOLATION_CASE_LABEL_UZ, VIOLATION_CASE_TYPES } from '@beap/shared';
 
 import { type AppContext, query, queryOne } from '../pool.ts';
 
@@ -279,13 +280,13 @@ export async function districtOverview(
       goodDirection: 'down', spark: spark.debt, sparkBucket: 'month',
     }),
     tile({
-      key: 'consumersActive', metric: 'consumersActive', labelUz: 'Faol abonentlar', unit: 'ta',
+      key: 'consumersActive', metric: 'consumersActive', labelUz: 'Aloqaga chiqayotgan istemolchilar', unit: 'ta',
       value: cur.consumers_active, prev: p.consumers_active,
       goodDirection: 'up', spark: spark.consumersActive, sparkBucket: 'month',
     }),
     tile({
       key: 'consumersDisconnected', metric: 'consumersDisconnected',
-      labelUz: 'Tarmoqdan ajralgan', unit: 'ta',
+      labelUz: 'Aloqaga chiqmayotgan istemolchilar', unit: 'ta',
       value: cur.consumers_disconnected, prev: p.consumers_disconnected,
       goodDirection: 'down', spark: spark.consumersDisconnected, sparkBucket: 'month',
     }),
@@ -682,6 +683,122 @@ export async function works(
     effectLossPctAfter: r['effect_loss_pct_after'] === null ? null : Number(r['effect_loss_pct_after']),
     effectSavingKwhMonth: Number(r['effect_saving_kwh_month']),
   }));
+}
+
+/**
+ * Aniqlangan qoidabuzarliklar — toifa bo'yicha soni va summasi.
+ *
+ * DAVR: tanlangan oy bilan tugaydigan 12 oy. Bitta oy olinsa karta ko'pincha
+ * bo'sh chiqadi (bir mahallada oyiga bitta dalolatnoma ham bo'lmasligi
+ * mumkin), holbuki savol "qancha aniqlandi?" — bu yig'ma ko'rsatkich.
+ *
+ * Har bir toifa bilan birga DALOLATNOMALAR RO'YXATI qaytadi: foydalanuvchi
+ * raqam ustiga bosganda "bu qayerdan chiqdi?" degan savolga javob shu yerda,
+ * qo'shimcha so'rovsiz turadi.
+ */
+export async function violations(
+  ctx: AppContext, period: string, mfyId: number | null = null, months = 12,
+): Promise<ViolationSummary> {
+  const rows = await query<{
+    id: number; act_no: string; act_date: string; mfy_id: number; mfy_name: string;
+    tp_code: string | null; consumer_ref: string | null; kwh_identified: number;
+    fine_mln: number; status: string; case_type: string;
+  }>(
+    `SELECT v.id, v.act_no, v.act_date::text AS act_date, v.mfy_id, m.name_uz AS mfy_name,
+            t.code AS tp_code, v.consumer_ref, v.kwh_identified, v.fine_mln,
+            v.status, v.case_type
+       FROM fact.violation_act v
+       JOIN ref.mfy m ON m.id = v.mfy_id
+       LEFT JOIN ref.tp t ON t.id = v.tp_id
+      WHERE v.act_date <  (($1 || '-01')::date + INTERVAL '1 month')
+        AND v.act_date >= (($1 || '-01')::date - (($2 - 1) || ' months')::interval)
+        AND ($3::int IS NULL OR v.mfy_id = $3)
+      ORDER BY v.act_date DESC`,
+    [period, months, mfyId], ctx,
+  );
+
+  const acts = rows.map((r) => ({
+    id: Number(r.id), actNo: r.act_no, actDate: r.act_date,
+    mfyId: Number(r.mfy_id), mfyName: r.mfy_name, tpCode: r.tp_code,
+    consumerRef: r.consumer_ref,
+    kwhIdentified: Number(r.kwh_identified), fineMln: Number(r.fine_mln),
+    status: r.status as ViolationActRow['status'],
+    caseType: r.case_type as ViolationActRow['caseType'],
+  }));
+
+  // Toifalar DOIM uchtasi ham qaytadi — nol ham javob, bo'sh qator emas.
+  const summary = VIOLATION_CASE_TYPES.map((caseType) => {
+    const mine = acts.filter((a) => a.caseType === caseType);
+    return {
+      caseType,
+      labelUz: VIOLATION_CASE_LABEL_UZ[caseType],
+      count: mine.length,
+      fineMln: Number(mine.reduce((s, a) => s + a.fineMln, 0).toFixed(2)),
+      kwhIdentified: mine.reduce((s, a) => s + a.kwhIdentified, 0),
+      acts: mine.slice(0, 30),
+    };
+  });
+
+  const start = new Date(`${period}-01T00:00:00Z`);
+  start.setUTCMonth(start.getUTCMonth() - (months - 1));
+
+  return { from: start.toISOString().slice(0, 7), to: period, rows: summary };
+}
+
+/** Bitta ish — dalolatnoma ko'rinishi uchun to'liq, rasmlari bilan. */
+export async function workDetail(ctx: AppContext, id: number): Promise<WorkDetail | null> {
+  const row = await queryOne<Record<string, unknown>>(
+    `SELECT w.id, w.mfy_id, m.name_uz AS mfy_name, m.code AS mfy_code, t.code AS tp_code,
+            w.work_type, w.title_uz, w.description, w.status,
+            w.planned_start, w.planned_end, w.actual_end,
+            w.progress_pct, w.quantity, w.unit, w.cost_mln,
+            w.effect_loss_pct_before, w.effect_loss_pct_after, w.effect_saving_kwh_month
+       FROM fact.work w
+       JOIN ref.mfy m ON m.id = w.mfy_id
+       LEFT JOIN ref.tp t ON t.id = w.tp_id
+      WHERE w.id = $1`,
+    [id], ctx,
+  );
+  if (!row) return null;
+
+  /*
+   * Tartib: avval "ishgacha", keyin "keyin", oxirida hujjatlar — dalolatnoma
+   * qog'ozda ham shu ketma-ketlikda o'qiladi.
+   */
+  const photos = await query<Record<string, unknown>>(
+    `SELECT id, kind, caption, original_name, size_bytes, created_at
+       FROM fact.work_photo
+      WHERE work_id = $1
+      ORDER BY CASE kind WHEN 'BEFORE' THEN 0 WHEN 'AFTER' THEN 1 ELSE 2 END, created_at`,
+    [id], ctx,
+  );
+
+  return {
+    id: Number(row['id']), mfyId: Number(row['mfy_id']), mfyName: String(row['mfy_name']),
+    mfyCode: String(row['mfy_code']),
+    tpCode: (row['tp_code'] as string | null) ?? null,
+    workType: row['work_type'] as WorkDetail['workType'],
+    titleUz: String(row['title_uz']),
+    description: (row['description'] as string | null) ?? null,
+    status: row['status'] as WorkDetail['status'],
+    plannedStart: (row['planned_start'] as string | null) ?? null,
+    plannedEnd: (row['planned_end'] as string | null) ?? null,
+    actualEnd: (row['actual_end'] as string | null) ?? null,
+    progressPct: Number(row['progress_pct']), quantity: Number(row['quantity']),
+    unit: String(row['unit']), costMln: Number(row['cost_mln']),
+    effectLossPctBefore: row['effect_loss_pct_before'] === null ? null : Number(row['effect_loss_pct_before']),
+    effectLossPctAfter: row['effect_loss_pct_after'] === null ? null : Number(row['effect_loss_pct_after']),
+    effectSavingKwhMonth: Number(row['effect_saving_kwh_month']),
+    photos: photos.map((p) => ({
+      id: Number(p['id']),
+      url: `/api/files/work-photo/${String(p['id'])}`,
+      kind: p['kind'] as 'BEFORE' | 'AFTER' | 'DOC',
+      caption: (p['caption'] as string | null) ?? null,
+      originalName: (p['original_name'] as string | null) ?? null,
+      sizeBytes: Number(p['size_bytes']),
+      createdAt: String(p['created_at']),
+    })),
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

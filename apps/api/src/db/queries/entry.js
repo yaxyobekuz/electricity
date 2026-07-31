@@ -280,7 +280,7 @@ export async function validateSubmission(ctx, submissionId) {
         else {
             const total = data.consumersPopulation + data.consumersLegal;
             if (data.consumersActive > total) {
-                issues.push({ path: 'consumersActive', severity: 'error', message: 'Faol abonentlar jamidan ko‘p' });
+                issues.push({ path: 'consumersActive', severity: 'error', message: 'Aloqaga chiqayotgan istemolchilar jamidan ko‘p' });
             }
             if (data.metersReplacedCnt > data.metersReplaceNeedCnt) {
                 issues.push({ path: 'metersReplacedCnt', severity: 'error', message: 'Almashtirilgan soni kerakli sondan ko‘p' });
@@ -313,7 +313,7 @@ export async function validateSubmission(ctx, submissionId) {
 const FIELD_LABELS = {
     consumers_population: 'Aholi iste’molchilari',
     consumers_legal: 'Yuridik iste’molchilar',
-    consumers_active: 'Faol abonentlar',
+    consumers_active: 'Aloqaga chiqayotgan istemolchilar',
     consumers_disconnected: 'Uzilgan abonentlar',
     consumers_new: 'Yangi ulangan',
     debt_population_mln: 'Aholi qarzdorligi',

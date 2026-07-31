@@ -594,7 +594,7 @@ function MonthlyReturnForm({
           <ComputedField label="Jami" unit="ta" value={consumersTotal} />
           <NumInput
             error={fieldErrors['consumersActive']}
-            label="Faol abonentlar"
+            label="Aloqaga chiqayotgan istemolchilar"
             readOnly={readOnly}
             unit="ta"
             value={data.consumersActive}

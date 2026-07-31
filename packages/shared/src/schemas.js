@@ -92,7 +92,7 @@ export const monthlyReturnSchema = z
         ctx.addIssue({
             code: 'custom',
             path: ['consumersActive'],
-            message: `Faol abonentlar jamidan (${totalConsumers}) ko‘p bo‘lishi mumkin emas`,
+            message: `Aloqaga chiqayotgan istemolchilar jamidan (${totalConsumers}) ko‘p bo‘lishi mumkin emas`,
         });
     }
     if (v.consumersDisconnected > totalConsumers) {

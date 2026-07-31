@@ -14,6 +14,8 @@ dist/
 
 # generated artifacts
 artifacts/
+# yuklangan fayllar (dalolatnoma rasmlari)
+var/
 backups/
 coverage/
 playwright-report/

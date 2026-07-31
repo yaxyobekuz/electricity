@@ -119,7 +119,7 @@ const CASES: Case[] = [
       ),
   },
   {
-    name: 'Faol abonentlar jamidan ko‘p bo‘la olmaydi',
+    name: 'Aloqaga chiqayotgan istemolchilar jamidan ko‘p bo‘la olmaydi',
     expect: 'mr_active_le_total',
     run: (c, x) =>
       c.query(

@@ -8,6 +8,7 @@
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance } from 'fastify';
 
@@ -17,6 +18,7 @@ import errorsPlugin from './plugins/errors.ts';
 import authRoutes from './routes/auth.ts';
 import dashRoutes from './routes/dash.ts';
 import entryRoutes from './routes/entry.ts';
+import filesRoutes from './routes/files.ts';
 import passportRoutes from './routes/passport.ts';
 import refRoutes from './routes/ref.ts';
 import reportRoutes from './routes/report.ts';
@@ -89,6 +91,11 @@ export async function buildApp(): Promise<FastifyInstance> {
     timeWindow: '1 minute',
   });
 
+  // Dalolatnoma rasmlari — bitta so'rovda bitta fayl, 8 MB gacha.
+  await app.register(multipart, {
+    limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+  });
+
   await app.register(authPlugin);
 
   // ── Sog'liq ────────────────────────────────────────────────────────────
@@ -114,6 +121,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(passportRoutes, { prefix: '/api/passport' });
   await app.register(entryRoutes, { prefix: '/api/entry' });
   await app.register(reportRoutes, { prefix: '/api/report' });
+  await app.register(filesRoutes, { prefix: '/api/files' });
 
   return app;
 }

@@ -170,6 +170,20 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return p ? q.lossStructure(req.ctx, p) : null;
   });
 
+  app.get('/district/violations', async (req) => {
+    const { period } = periodQ.parse(req.query);
+    const p = await resolvePeriod(req.ctx, period);
+    return p ? q.violations(req.ctx, p) : null;
+  });
+
+  /** Bitta ish — dalolatnoma oynasi va chop etish sahifasi uchun. */
+  app.get('/work/:id', async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const row = await q.workDetail(req.ctx, id);
+    if (!row) return reply.code(404).send({ error: 'not_found', message: 'Ish topilmadi' });
+    return row;
+  });
+
   // ═══════════════════════════════════════════════════════════════════════
   // MFY
   // ═══════════════════════════════════════════════════════════════════════
@@ -261,6 +275,13 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     const { period } = periodQ.parse(req.query);
     const p = await resolvePeriod(req.ctx, period);
     return p ? q.operational(req.ctx, id, p) : null;
+  });
+
+  app.get('/mfy/:id/violations', async (req) => {
+    const { id } = idParam.parse(req.params);
+    const { period } = periodQ.parse(req.query);
+    const p = await resolvePeriod(req.ctx, period);
+    return p ? q.violations(req.ctx, p, id) : null;
   });
 
   app.get('/mfy/:id/works', async (req) => {

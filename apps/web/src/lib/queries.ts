@@ -10,11 +10,11 @@ import type {
   DistanceRow, DistrictOverview, EfficiencyBreakdown, EnergyBalanceNode,
   LossMapCell, LossStructure, MfyOverview, MfyRankRow, OperationalMetrics,
   Passport, PassportReconcileRow, ResultsSummary, Submission, TechnicalLossRow,
-  TimeSeriesPoint, TpMonitorRow, WorkRow, CompletenessCell,
+  TimeSeriesPoint, TpMonitorRow, ViolationSummary, WorkDetail, WorkRow, CompletenessCell,
 } from '@beap/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { api, qs } from './api.ts';
+import { api, apiFetchRaw, qs } from './api.ts';
 
 export const keys = {
   bootstrap: ['ref', 'bootstrap'] as const,
@@ -136,6 +136,61 @@ export function useWorks(status?: string) {
     queryKey: keys.district('works', { status }),
     queryFn: ({ signal }) => api.get<WorkRow[]>(`/dash/district/works${qs({ status })}`, signal),
     ...DASH_OPTIONS,
+  });
+}
+
+export function useMfyViolations(id: number, period?: string) {
+  return useQuery({
+    queryKey: keys.mfy(id, 'violations', { period }),
+    queryFn: ({ signal }) => api.get<ViolationSummary>(`/dash/mfy/${id}/violations${qs({ period })}`, signal),
+    ...DASH_OPTIONS,
+  });
+}
+
+export function useDistrictViolations(period?: string) {
+  return useQuery({
+    queryKey: keys.district('violations', { period }),
+    queryFn: ({ signal }) => api.get<ViolationSummary>(`/dash/district/violations${qs({ period })}`, signal),
+    ...DASH_OPTIONS,
+  });
+}
+
+/** Bitta ish — dalolatnoma oynasi. `null` bo'lsa so'rov yuborilmaydi. */
+export function useWork(id: number | null) {
+  return useQuery({
+    queryKey: ['dash', 'work', id] as const,
+    queryFn: ({ signal }) => api.get<WorkDetail>(`/dash/work/${String(id)}`, signal),
+    enabled: id !== null,
+    staleTime: 30_000,
+  });
+}
+
+/** Dalolatnomaga rasm biriktirish. */
+export function useUploadWorkPhoto(workId: number | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { file: File; kind?: 'BEFORE' | 'AFTER' | 'DOC'; caption?: string }) => {
+      const form = new FormData();
+      form.append('file', input.file);
+      const res = await apiFetchRaw(
+        `/files/work-photo/${String(workId)}${qs({ kind: input.kind ?? 'AFTER', caption: input.caption })}`,
+        { method: 'POST', body: form },
+      );
+      return (await res.json()) as { id: number; url: string };
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['dash', 'work', workId] });
+    },
+  });
+}
+
+export function useDeleteWorkPhoto(workId: number | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: number) => api.delete<void>(`/files/work-photo/${String(photoId)}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['dash', 'work', workId] });
+    },
   });
 }
 

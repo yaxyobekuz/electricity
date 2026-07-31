@@ -151,6 +151,38 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   return (await res.json()) as T;
 }
 
+/**
+ * Fayl yuborish / olish — JSON emas.
+ *
+ * `apiFetch` tanani JSON qilib o'raydi, `FormData` va rasm oqimi esa xom
+ * holida ketishi kerak. Token va `credentials` bir xil qoidada qoladi.
+ */
+export async function apiFetchRaw(path: string, options: { method?: string; body?: BodyInit } = {}): Promise<Response> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+
+  let res = await fetch(`${BASE}${path}`, {
+    method: options.method ?? 'GET',
+    headers,
+    credentials: 'include',
+    ...(options.body ? { body: options.body } : {}),
+  });
+
+  if (res.status === 401 && (await refreshAccessToken())) {
+    const retry: Record<string, string> = {};
+    if (accessToken) retry['Authorization'] = `Bearer ${accessToken}`;
+    res = await fetch(`${BASE}${path}`, {
+      method: options.method ?? 'GET',
+      headers: retry,
+      credentials: 'include',
+      ...(options.body ? { body: options.body } : {}),
+    });
+  }
+
+  if (!res.ok) throw new ApiRequestError(res.status, { message: `Fayl so‘rovi xatosi (${res.status})` });
+  return res;
+}
+
 export const api = {
   get: <T>(path: string, signal?: AbortSignal): Promise<T> =>
     apiFetch<T>(path, signal ? { signal } : {}),

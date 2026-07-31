@@ -187,13 +187,13 @@ export async function districtOverview(ctx, period, mfyId = null, elektrosetId =
             goodDirection: 'down', spark: spark.debt, sparkBucket: 'month',
         }),
         tile({
-            key: 'consumersActive', metric: 'consumersActive', labelUz: 'Faol abonentlar', unit: 'ta',
+            key: 'consumersActive', metric: 'consumersActive', labelUz: 'Aloqaga chiqayotgan istemolchilar', unit: 'ta',
             value: cur.consumers_active, prev: p.consumers_active,
             goodDirection: 'up', spark: spark.consumersActive, sparkBucket: 'month',
         }),
         tile({
             key: 'consumersDisconnected', metric: 'consumersDisconnected',
-            labelUz: 'Tarmoqdan ajralgan', unit: 'ta',
+            labelUz: 'Aloqaga chiqmayotgan istemolchilar', unit: 'ta',
             value: cur.consumers_disconnected, prev: p.consumers_disconnected,
             goodDirection: 'down', spark: spark.consumersDisconnected, sparkBucket: 'month',
         }),

@@ -20,6 +20,7 @@ const MfyDashboard = lazy(() => import('./features/mfy/MfyDashboard.tsx'));
 const MfyList = lazy(() => import('./features/mfy/MfyList.tsx'));
 const PassportPage = lazy(() => import('./features/passport/PassportPage.tsx'));
 const PassportPrint = lazy(() => import('./features/passport/PassportPrint.tsx'));
+const WorkActPrint = lazy(() => import('./features/works/WorkActPrint.tsx'));
 const EntryPage = lazy(() => import('./features/entry/EntryPage.tsx'));
 const EntryForm = lazy(() => import('./features/entry/EntryForm.tsx'));
 const ReviewQueue = lazy(() => import('./features/review/ReviewQueue.tsx'));
@@ -99,6 +100,15 @@ export function App() {
               element={
                 <Suspense fallback={<LoadingState />}>
                   <PassportPrint />
+                </Suspense>
+              }
+            />
+
+            <Route
+              path="/works/act/:id/print"
+              element={
+                <Suspense fallback={<LoadingState />}>
+                  <WorkActPrint />
                 </Suspense>
               }
             />

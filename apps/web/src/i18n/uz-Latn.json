@@ -73,8 +73,8 @@
     "technicalPct": "Texnik yo‘qotish",
     "illegalPct": "Noqonuniy foydalanish",
     "debt": "Qarzdorlik",
-    "consumersActive": "Faol abonentlar",
-    "consumersDisconnected": "Tarmoqdan ajralgan",
+    "consumersActive": "Aloqaga chiqayotgan istemolchilar",
+    "consumersDisconnected": "Aloqaga chiqmayotgan istemolchilar",
     "tpCount": "Transformatorlar"
   },
   "panel": {
@@ -117,7 +117,7 @@
     "population": "Aholi",
     "legal": "Yuridik",
     "budget": "Budjet tashkilotlari",
-    "active": "Faol abonentlar",
+    "active": "Aloqaga chiqayotgan istemolchilar",
     "disconnected": "Uzilgan abonentlar",
     "new": "Yangi ulangan"
   },

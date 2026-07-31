@@ -15,7 +15,7 @@ const CONSTRAINT_MAP = {
     eb_plausible: { field: 'kwhIn', message: 'Qiymat haqiqiy bo‘lishi uchun juda katta' },
     mr_active_le_total: {
         field: 'consumersActive',
-        message: 'Faol abonentlar soni jami iste’molchilardan ko‘p bo‘lishi mumkin emas',
+        message: 'Aloqaga chiqayotgan istemolchilar soni jami iste’molchilardan ko‘p bo‘lishi mumkin emas',
     },
     mr_discon_le_total: {
         field: 'consumersDisconnected',

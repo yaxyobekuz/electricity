@@ -58,6 +58,17 @@ const PLAN = [
   { day: '2026-09-02', type: 'OTHER',             tp: null,      title: 'Yo‘qotishlarni kamaytirish bo‘yicha reyd', qty: 0, unit: 'ta' },
 ] as const;
 
+/**
+ * Dalolatnomalar — "Aniqlangan qoidabuzarliklar" kartasi uchun.
+ * Uchala toifa ham ko'rinishi uchun har biridan kamida bittadan.
+ */
+const ACTS = [
+  { no: 'DL-S-101', date: '2026-06-18', kind: 'ADMINISTRATIVE', consumer: 'Abonent №118204', kwh: 3_240, fine: 4.1, status: 'PAID' },
+  { no: 'DL-S-102', date: '2026-05-27', kind: 'ADMINISTRATIVE', consumer: 'Abonent №204517', kwh: 1_860, fine: 2.6, status: 'ISSUED' },
+  { no: 'DL-S-103', date: '2026-04-09', kind: 'CRIMINAL',       consumer: '«Oq yo‘l» MChJ',   kwh: 14_500, fine: 22.4, status: 'COURT' },
+  { no: 'DL-S-104', date: '2026-03-15', kind: 'NO_FAULT',       consumer: 'Abonent №331902', kwh: 0,      fine: 0,    status: 'CLOSED' },
+] as const;
+
 async function main(): Promise<void> {
   const pool = new pg.Pool({ ...config.db, max: 2 });
   const c = await pool.connect();
@@ -157,6 +168,20 @@ async function main(): Promise<void> {
         WHERE mfy_id = $1 AND work_type = 'TREE_CLEARING' AND actual_end IS NOT NULL`,
       [mfyId],
     );
+
+    // ── 3. Dalolatnomalar ──────────────────────────────────────────────
+    // Faqat SHU skript qo'shganlari almashtiriladi (`DL-S-` prefiksi).
+    await c.query(
+      `DELETE FROM fact.violation_act WHERE mfy_id = $1 AND act_no LIKE 'DL-S-%'`, [mfyId],
+    );
+    for (const a of ACTS) {
+      await c.query(
+        `INSERT INTO fact.violation_act
+           (mfy_id, act_no, act_date, consumer_ref, kwh_identified, fine_mln, status, case_type)
+         VALUES ($1, $2, $3::date, $4, $5, $6, $7, $8)`,
+        [mfyId, a.no, a.date, a.consumer, a.kwh, a.fine, a.status, a.kind],
+      );
+    }
 
     await c.query('COMMIT');
 

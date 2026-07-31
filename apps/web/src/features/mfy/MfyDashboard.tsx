@@ -40,8 +40,9 @@ import { TpMonitorPanel } from '../district/panels/TpMonitorPanel.tsx';
 import {
   useMfyCapacity, useMfyConsumers, useMfyDebt, useMfyDynamics,
   useMfyLossStructure, useMfyOperational, useMfyOverview, useMfyResults, useMfyTp,
-  useMfyWorks,
+  useMfyViolations, useMfyWorks,
 } from '../../lib/queries.ts';
+import { ViolationsPanel } from '../violations/ViolationsPanel.tsx';
 import { useUi } from '../../lib/ui-store.ts';
 import { WorkTimeline } from './WorkTimeline.tsx';
 
@@ -87,6 +88,7 @@ export default function MfyDashboard() {
   const works = useMfyWorks(mfyId);
   const results = useMfyResults(mfyId, period ?? undefined);
   const operational = useMfyOperational(mfyId, period ?? undefined);
+  const violations = useMfyViolations(mfyId, period ?? undefined);
 
   if (!Number.isFinite(mfyId)) return <ErrorState message="MFY identifikatori noto‘g‘ri" />;
   if (overview.isLoading) return <LoadingState rows={6} />;
@@ -266,36 +268,17 @@ export default function MfyDashboard() {
           )}
         </Panel>
 
-        <Panel className="xl:col-span-3" title="Abonentlar holati">
-          {consumers.data ? (
-            <Donut
-              centerLabel="Jami abonent"
-              centerValue={num(consumers.data.total)}
-              csvName={`${mfy.code}-abonentlar`}
-              height={214}
-              legendSide
-              slices={[
-                {
-                  id: 'active', label: 'Faol abonentlar',
-                  value: consumers.data.active, color: 'var(--viz-3)',
-                  display: `${num(consumers.data.active)} ta`,
-                },
-                {
-                  id: 'disconnected', label: 'Uzilgan abonentlar',
-                  value: consumers.data.disconnected, color: 'var(--viz-5)',
-                  display: `${num(consumers.data.disconnected)} ta`,
-                },
-                {
-                  id: 'new', label: 'Yangi ulangan (bugun)',
-                  value: consumers.data.new, color: 'var(--viz-2)',
-                  display: `${num(consumers.data.new)} ta`, noShare: true,
-                },
-                {
-                  id: 'disconnectedNew', label: 'Uzilgan (bugun)',
-                  value: consumers.data.disconnectedNew, color: 'var(--viz-1)',
-                  display: `${num(consumers.data.disconnectedNew)} ta`, noShare: true,
-                },
-              ]}
+        {/*
+          Abonentlar halqasi o'rniga qoidabuzarliklar: abonent soni KPI
+          plitkalarida allaqachon bor, tekshiruv natijasi esa hech qayerda
+          ko'rinmasdi.
+        */}
+        <Panel className="xl:col-span-3" title="Aniqlangan qoidabuzarliklar">
+          {violations.data ? (
+            <ViolationsPanel
+              from={violations.data.from}
+              rows={violations.data.rows}
+              to={violations.data.to}
             />
           ) : (
             <EmptyPanel message={t('common.noData')} />

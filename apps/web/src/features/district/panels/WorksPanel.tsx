@@ -1,10 +1,17 @@
-/** Rejalashtirilgan va bajarilgan ishlar. */
+/**
+ * Rejalashtirilgan va bajarilgan ishlar.
+ *
+ * Qator bosilsa dalolatnoma ochiladi — MFY dashboardidagi ro'yxat bilan
+ * bir xil xatti-harakat: ish haqidagi to'liq ma'lumot va rasmlar bir joyda.
+ */
 import type { WorkRow } from '@beap/shared';
 import { WORK_TYPE_LABEL_UZ, dateLabel, energy, num, pct } from '@beap/shared';
 import { Chip } from '@heroui/react';
+import { useState } from 'react';
 
 import { useVizTokens } from '../../../lib/chart-theme.ts';
 import { EmptyPanel } from '../../../components/ui/Panel.tsx';
+import { WorkActModal } from '../../works/WorkActModal.tsx';
 
 const STATUS_LABEL: Record<string, string> = {
   PLANNED: 'Reja',
@@ -15,6 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function WorksPanel({ rows, mode }: { rows: WorkRow[]; mode: 'planned' | 'completed' }) {
   const t = useVizTokens();
+  const [openId, setOpenId] = useState<number | null>(null);
 
   if (rows.length === 0) {
     return (
@@ -34,7 +42,12 @@ export function WorksPanel({ rows, mode }: { rows: WorkRow[]; mode: 'planned' | 
     <div className="flex flex-col">
       <ul className="scroll-y max-h-[248px] divide-y divide-separator/50">
         {rows.slice(0, 12).map((r) => (
-          <li key={r.id} className="px-4 py-2.5">
+          <li key={r.id}>
+            <button
+              className="w-full px-4 py-2.5 text-left transition-colors hover:bg-surface-secondary"
+              type="button"
+              onClick={() => setOpenId(r.id)}
+            >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-medium leading-snug">{r.titleUz}</p>
@@ -79,9 +92,12 @@ export function WorksPanel({ rows, mode }: { rows: WorkRow[]; mode: 'planned' | 
                 Tejalgan: {energy(r.effectSavingKwhMonth).text}/oy
               </p>
             )}
+            </button>
           </li>
         ))}
       </ul>
+
+      <WorkActModal workId={openId} onClose={() => setOpenId(null)} />
 
       {/* Umumiy natija — dumbbell ko'rinishi */}
       {mode === 'completed' && (totalSaved > 0 || withEffect) && (

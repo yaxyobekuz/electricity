@@ -218,6 +218,34 @@ export const VIOLATION_STATUS_LABEL_UZ: Record<ViolationStatus, string> = {
   CLOSED: 'Yopilgan',
 };
 
+/**
+ * Dalolatnoma TOIFASI — `status` dan farqli o'laroq, holat qanday
+ * baholanganini bildiradi (harakat holatini emas).
+ */
+export const VIOLATION_CASE_TYPES = ['ADMINISTRATIVE', 'CRIMINAL', 'NO_FAULT'] as const;
+export type ViolationCaseType = (typeof VIOLATION_CASE_TYPES)[number];
+
+export const VIOLATION_CASE_LABEL_UZ: Record<ViolationCaseType, string> = {
+  ADMINISTRATIVE: 'Ma’muriy holat',
+  CRIMINAL: 'Jinoiy holat',
+  NO_FAULT: 'Iste’molchi aybsiz',
+};
+
+/** Har bir toifaning ma'nosi — kartadagi "nima asosida?" oynasi uchun. */
+export const VIOLATION_CASE_MEANING_UZ: Record<ViolationCaseType, string> = {
+  ADMINISTRATIVE:
+    'Tekshiruvda qoidabuzarlik tasdiqlangan va ma’muriy javobgarlik qo‘llanilgan: '
+    + 'dalolatnoma rasmiylashtirilib, aniqlangan energiya qiymati va jarima hisoblangan.',
+  CRIMINAL:
+    'Qoidabuzarlikda jinoiy ish belgilari bor: materiallar sudga yoki ichki ishlar '
+    + 'organiga yuborilgan. Odatda katta hajmdagi hisobga olinmagan energiya yoki '
+    + 'takroriy holat.',
+  NO_FAULT:
+    'Reyd yoki tekshiruv o‘tkazilgan, dalolatnoma rasmiylashtirilgan, ammo '
+    + 'iste’molchining aybi tasdiqlanmagan — jarima solinmaydi. Bu holat hisobdan '
+    + 'chiqarilmaydi: tekshiruv statistikasi to‘liq bo‘lishi kerak.',
+};
+
 // ─── Iste'molchi toifalari ───────────────────────────────────────────────────
 
 export const CONSUMER_CATEGORIES = ['POPULATION', 'LEGAL', 'BUDGET'] as const;

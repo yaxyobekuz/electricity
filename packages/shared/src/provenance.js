@@ -27,8 +27,8 @@ export const METRIC_PROVENANCE = {
     // ── Abonentlar ─────────────────────────────────────────────────────────────
     consumersPopulation: input('MONTHLY_RETURN', 'fact.mfy_monthly_return', 'consumers_population', 'Aholi iste’molchilari', 'ta'),
     consumersLegal: input('MONTHLY_RETURN', 'fact.mfy_monthly_return', 'consumers_legal', 'Yuridik iste’molchilar', 'ta'),
-    consumersActive: input('MONTHLY_RETURN', 'fact.mfy_monthly_return', 'consumers_active', 'Faol abonentlar', 'ta'),
-    consumersDisconnected: input('MONTHLY_RETURN', 'fact.mfy_monthly_return', 'consumers_disconnected', 'Tarmoqdan ajralgan', 'ta'),
+    consumersActive: input('MONTHLY_RETURN', 'fact.mfy_monthly_return', 'consumers_active', 'Aloqaga chiqayotgan istemolchilar', 'ta'),
+    consumersDisconnected: input('MONTHLY_RETURN', 'fact.mfy_monthly_return', 'consumers_disconnected', 'Aloqaga chiqmayotgan istemolchilar', 'ta'),
     consumersNew: input('MONTHLY_RETURN', 'fact.mfy_monthly_return', 'consumers_new', 'Yangi ulangan', 'ta'),
     consumersTotal: derived('consumers_population + consumers_legal', ['consumersPopulation', 'consumersLegal'], 'Jami iste’molchilar', 'ta'),
     avgConsumptionPerConsumer: derived('Σ kwh_sold / consumers_active / kunlar soni', ['kwhSold', 'consumersActive'], 'O‘rtacha iste’mol (1 abonent)', 'kWh/kun'),

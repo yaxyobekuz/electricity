@@ -380,7 +380,7 @@ function MonthlyReturnForm({ submission, initial, readOnly, validation, onSaved,
           <NumInput error={fieldErrors['consumersPopulation']} label="Aholi" readOnly={readOnly} unit="ta" value={data.consumersPopulation} onChange={(v) => set({ consumersPopulation: v })}/>
           <NumInput error={fieldErrors['consumersLegal']} label="Yuridik" readOnly={readOnly} unit="ta" value={data.consumersLegal} onChange={(v) => set({ consumersLegal: v })}/>
           <ComputedField label="Jami" unit="ta" value={consumersTotal}/>
-          <NumInput error={fieldErrors['consumersActive']} label="Faol abonentlar" readOnly={readOnly} unit="ta" value={data.consumersActive} onChange={(v) => set({ consumersActive: v })}/>
+          <NumInput error={fieldErrors['consumersActive']} label="Aloqaga chiqayotgan istemolchilar" readOnly={readOnly} unit="ta" value={data.consumersActive} onChange={(v) => set({ consumersActive: v })}/>
           <NumInput error={fieldErrors['consumersDisconnected']} label="Uzilgan" readOnly={readOnly} unit="ta" value={data.consumersDisconnected} onChange={(v) => set({ consumersDisconnected: v })}/>
         </div>
       </Panel>

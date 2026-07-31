@@ -13,6 +13,7 @@ import {
   NORM_METRICS,
   ROLES,
   TP_CONDITIONS,
+  VIOLATION_CASE_TYPES,
   VIOLATION_STATUSES,
   WORK_STATUSES,
   WORK_TYPES,
@@ -123,7 +124,7 @@ export const monthlyReturnSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['consumersActive'],
-        message: `Faol abonentlar jamidan (${totalConsumers}) ko‘p bo‘lishi mumkin emas`,
+        message: `Aloqaga chiqayotgan istemolchilar jamidan (${totalConsumers}) ko‘p bo‘lishi mumkin emas`,
       });
     }
     if (v.consumersDisconnected > totalConsumers) {
@@ -305,10 +306,19 @@ export const violationActSchema = z
     kwhIdentified: qty(1_000_000),
     fineMln: qty(100_000),
     status: z.enum(VIOLATION_STATUSES).default('ISSUED'),
+    caseType: z.enum(VIOLATION_CASE_TYPES).default('ADMINISTRATIVE'),
   })
   .superRefine((v, ctx) => {
     if (isFuture(v.actDate)) {
       ctx.addIssue({ code: 'custom', path: ['actDate'], message: 'Kelajakdagi sana kiritib bo‘lmaydi' });
+    }
+    // DB dagi `va_no_fault_no_fine` cheklovining ayni nusxasi.
+    if (v.caseType === 'NO_FAULT' && v.fineMln > 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['fineMln'],
+        message: 'Iste’molchi aybsiz deb topilgan holatda jarima bo‘lishi mumkin emas',
+      });
     }
   });
 export type ViolationAct = z.infer<typeof violationActSchema>;

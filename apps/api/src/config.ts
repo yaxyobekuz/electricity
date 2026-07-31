@@ -85,6 +85,8 @@ export const config = {
     assets: resolve(API_ROOT, 'assets'),
     artifacts: resolve(REPO_ROOT, 'artifacts'),
     webDist: resolve(REPO_ROOT, 'apps/web/dist'),
+    /* Yuklangan fayllar — LOKAL diskda; tashqi saqlagich yo'q (offline talabi). */
+    uploads: resolve(REPO_ROOT, 'var/uploads'),
   },
 } as const;
 

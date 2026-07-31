@@ -77,7 +77,7 @@ const CASES = [
          VALUES ($1, $2, CURRENT_DATE - 402, -50, -50, 0, 0, 0)`, [x.submissionId, x.mfyId]),
     },
     {
-        name: 'Faol abonentlar jamidan ko‘p bo‘la olmaydi',
+        name: 'Aloqaga chiqayotgan istemolchilar jamidan ko‘p bo‘la olmaydi',
         expect: 'mr_active_le_total',
         run: (c, x) => c.query(`INSERT INTO fact.mfy_monthly_return
            (submission_id, mfy_id, period_month, consumers_population,

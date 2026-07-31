@@ -10,6 +10,7 @@ import type {
   Role,
   SubmissionStatus,
   TpCondition,
+  ViolationCaseType,
   ViolationStatus,
   WorkStatus,
   WorkType,
@@ -310,6 +311,57 @@ export interface ConsumerBreakdown {
 export interface LossStructure {
   totalKwh: number;
   parts: { key: 'technological' | 'commercial'; labelUz: string; kwh: number; pct: number }[];
+}
+
+/** Bitta dalolatnoma — "nima asosida?" oynasidagi ro'yxat qatori. */
+export interface ViolationActRow {
+  id: number;
+  actNo: string;
+  actDate: string;
+  mfyId: number;
+  mfyName: string;
+  tpCode: string | null;
+  consumerRef: string | null;
+  kwhIdentified: number;
+  fineMln: number;
+  status: ViolationStatus;
+  caseType: ViolationCaseType;
+}
+
+/** Toifa bo'yicha yig'indi — kartadagi bitta qator. */
+export interface ViolationSummaryRow {
+  caseType: ViolationCaseType;
+  labelUz: string;
+  count: number;
+  fineMln: number;
+  kwhIdentified: number;
+  /** Shu toifadagi dalolatnomalar (eng yangisidan). */
+  acts: ViolationActRow[];
+}
+
+export interface ViolationSummary {
+  /** Qaysi oraliq bo'yicha hisoblangani — kartada ochiq yoziladi. */
+  from: string;
+  to: string;
+  rows: ViolationSummaryRow[];
+}
+
+export interface WorkPhoto {
+  id: number;
+  /** API yo'li — `/api/files/work-photo/:id`. */
+  url: string;
+  kind: 'BEFORE' | 'AFTER' | 'DOC';
+  caption: string | null;
+  originalName: string | null;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+/** Ish dalolatnomasi — barcha maydonlar + rasmlar. */
+export interface WorkDetail extends WorkRow {
+  description: string | null;
+  mfyCode: string;
+  photos: WorkPhoto[];
 }
 
 export interface OperationalMetrics {
