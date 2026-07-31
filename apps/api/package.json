@@ -11,6 +11,7 @@
     "migrate:reset": "node --experimental-strip-types scripts/migrate.ts --reset",
     "seed": "node --experimental-strip-types scripts/seed.ts",
     "demo:sarnaul": "node --experimental-strip-types scripts/demo-sarnaul.ts",
+    "load:mfy": "node --experimental-strip-types scripts/load-mfy-data.ts",
     "verify:passport": "node --experimental-strip-types scripts/verify-passport.ts",
     "test": "vitest run"
   },
