@@ -15,6 +15,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { config } from './config.ts';
 import authPlugin from './plugins/auth.ts';
 import errorsPlugin from './plugins/errors.ts';
+import aiRoutes from './routes/ai.ts';
 import authRoutes from './routes/auth.ts';
 import dashRoutes from './routes/dash.ts';
 import entryRoutes from './routes/entry.ts';
@@ -122,6 +123,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(entryRoutes, { prefix: '/api/entry' });
   await app.register(reportRoutes, { prefix: '/api/report' });
   await app.register(filesRoutes, { prefix: '/api/files' });
+  await app.register(aiRoutes, { prefix: '/api/ai' });
 
   return app;
 }

@@ -51,8 +51,9 @@ export function WorksPanel({ rows, mode }: { rows: WorkRow[]; mode: 'planned' | 
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-medium leading-snug">{r.titleUz}</p>
+                {/* Fider bitta — nomini har qatorda takrorlash ma'nosiz. */}
                 <p className="mt-0.5 text-[11px] text-muted">
-                  {r.mfyName.replace(/ MFY$/, '')}
+                  {WORK_TYPE_LABEL_UZ[r.workType] ?? r.workType}
                   {r.quantity > 0 && ` · ${num(r.quantity, 1)} ${r.unit}`}
                   {r.actualEnd && ` · ${dateLabel(r.actualEnd)}`}
                 </p>

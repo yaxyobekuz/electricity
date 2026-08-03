@@ -5,10 +5,10 @@
  * Barcha SQL qo'lda yozilgan va shu yerda — grep qilinadi, EXPLAIN qilinadi.
  */
 import type {
-  AlertItem, CapacityInfo, ConsumerBreakdown, DebtBreakdown, DistanceRow,
-  EfficiencyBreakdown, EnergyBalanceNode, KpiTile, LossMapCell, LossStructure,
-  MfyRankRow, OperationalMetrics, RagStatus, ResultsSummary, TechnicalLossRow,
-  TimeSeriesPoint, TpMonitorRow, ViolationActRow, ViolationSummary, WorkDetail, WorkRow,
+  CapacityInfo, ConsumerBreakdown, DebtBreakdown, EfficiencyBreakdown,
+  EnergyBalanceNode, FeederMonthly, KpiTile, LossMapCell, LossStructure,
+  OperationalMetrics, RagStatus, ResultsSummary, TechnicalLossRow, TimeSeriesPoint,
+  TpMonitorRow, TpMonthlyRow, ViolationActRow, ViolationSummary, WorkDetail, WorkRow,
 } from '@beap/shared';
 import { VIOLATION_CASE_LABEL_UZ, VIOLATION_CASE_TYPES } from '@beap/shared';
 
@@ -87,7 +87,9 @@ function scopeFilter(mfyId: number | null, elektrosetId: number | null): { claus
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface PeriodTotals {
-  kwh_in: number; kwh_sold: number; kwh_loss_total: number; loss_pct: number | null;
+  kwh_in: number; kwh_sold: number; kwh_loss_total: number;
+  kwh_loss_natural: number; kwh_loss_technical: number; kwh_loss_illegal: number;
+  loss_pct: number | null;
   natural_pct: number | null; technical_pct: number | null; illegal_pct: number | null;
   consumers_total: number; consumers_active: number; consumers_disconnected: number;
   consumers_new: number; consumers_population: number; consumers_legal: number;
@@ -101,6 +103,9 @@ const TOTALS_SELECT = `
   coalesce(sum(a.kwh_in), 0)              AS kwh_in,
   coalesce(sum(a.kwh_sold), 0)            AS kwh_sold,
   coalesce(sum(a.kwh_loss_total), 0)      AS kwh_loss_total,
+  coalesce(sum(a.kwh_loss_natural), 0)    AS kwh_loss_natural,
+  coalesce(sum(a.kwh_loss_technical), 0)  AS kwh_loss_technical,
+  coalesce(sum(a.kwh_loss_illegal), 0)    AS kwh_loss_illegal,
   CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_total)     / sum(a.kwh_in), 2) END AS loss_pct,
   CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_natural)   / sum(a.kwh_in), 2) END AS natural_pct,
   CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_technical) / sum(a.kwh_in), 2) END AS technical_pct,
@@ -128,18 +133,45 @@ async function periodTotals(
   ctx: AppContext, period: string, mfyId: number | null, elektrosetId: number | null,
 ): Promise<PeriodTotals | null> {
   const { clause, params } = scopeFilter(mfyId, elektrosetId);
-  return queryOne<PeriodTotals>(
+  const totals = await queryOne<PeriodTotals>(
     `SELECT ${TOTALS_SELECT}
      FROM agg.mfy_monthly a
      WHERE a.period_month = ($1 || '-01')::date ${clause}`,
     [period, ...params], ctx,
   );
+  if (!totals) return null;
+
+  /*
+   * TP soni va quvvati REGISTRDAN olinadi, oylik holat hisobotidan emas.
+   *
+   * `agg.mfy_monthly` dagi `tp_total` — o'sha oyda HOLATI KIRITILGAN TP lar
+   * soni. Holat hisoboti hali kelmagan bo'lsa u 0 chiqadi va hokim "tumanda
+   * transformator yo'q" degan manzarani ko'radi. Nechta TP borligi esa
+   * registrda aniq turadi — savol "qancha bor?", "qanchasi hisobot berdi?"
+   * emas. Quvvat ham shu yerdan: u TP pasportining xossasi.
+   */
+  const reg = await queryOne<{ tp_cnt: number; kva: number | null }>(
+    `SELECT count(*)::int AS tp_cnt, sum(t.rated_kva) AS kva
+       FROM ref.tp t
+       JOIN ref.mfy m ON m.id = t.mfy_id
+      WHERE t.decommissioned_on IS NULL
+        AND ($1::int IS NULL OR m.id = $1)
+        AND ($2::int IS NULL OR m.elektroset_id = $2)`,
+    [mfyId, elektrosetId], ctx,
+  );
+
+  return {
+    ...totals,
+    tp_total: reg?.tp_cnt ?? 0,
+    capacity_kva: reg?.kva === null || reg?.kva === undefined ? 0 : Number(reg.kva),
+  };
 }
 
 /** Oxirgi 30 kunlik qiymatlar — sparkline uchun. */
 interface Sparks {
-  kwhIn: number[]; kwhSold: number[]; lossPct: number[]; naturalPct: number[];
-  debt: number[]; consumersActive: number[]; consumersDisconnected: number[]; tpCount: number[];
+  kwhIn: number[]; kwhSold: number[]; kwhLoss: number[]; kwhLossTechnical: number[];
+  consumersTotal: number[]; consumersActive: number[];
+  consumersDisconnected: number[]; tpCount: number[];
 }
 
 /**
@@ -159,15 +191,13 @@ async function sparklines(
 
   const [daily, monthly] = await Promise.all([
     query<{
-      kwh_in: number; kwh_sold: number; loss_pct: number | null; natural_pct: number | null;
+      kwh_in: number; kwh_sold: number; kwh_loss_total: number; kwh_loss_technical: number;
     }>(
       `SELECT a.biz_date,
-              sum(a.kwh_in)   AS kwh_in,
-              sum(a.kwh_sold) AS kwh_sold,
-              CASE WHEN sum(a.kwh_in) > 0
-                   THEN round(100 * sum(a.kwh_loss_total) / sum(a.kwh_in), 2) END AS loss_pct,
-              CASE WHEN sum(a.kwh_in) > 0
-                   THEN round(100 * sum(a.kwh_loss_natural) / sum(a.kwh_in), 2) END AS natural_pct
+              sum(a.kwh_in)             AS kwh_in,
+              sum(a.kwh_sold)           AS kwh_sold,
+              sum(a.kwh_loss_total)     AS kwh_loss_total,
+              sum(a.kwh_loss_technical) AS kwh_loss_technical
        FROM agg.mfy_daily a
        WHERE a.biz_date <= (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '1 day')::date
          AND a.biz_date >  (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '31 days')::date
@@ -176,11 +206,11 @@ async function sparklines(
       [period, ...params], ctx,
     ),
     query<{
-      debt_total_mln: number; consumers_active: number;
+      consumers_total: number; consumers_active: number;
       consumers_disconnected: number; tp_total: number;
     }>(
       `SELECT a.period_month,
-              sum(a.debt_total_mln)         AS debt_total_mln,
+              sum(a.consumers_total)        AS consumers_total,
               sum(a.consumers_active)       AS consumers_active,
               sum(a.consumers_disconnected) AS consumers_disconnected,
               sum(a.tp_total)               AS tp_total
@@ -196,9 +226,9 @@ async function sparklines(
   return {
     kwhIn: daily.map((r) => Number(r.kwh_in)),
     kwhSold: daily.map((r) => Number(r.kwh_sold)),
-    lossPct: daily.map((r) => Number(r.loss_pct ?? 0)),
-    naturalPct: daily.map((r) => Number(r.natural_pct ?? 0)),
-    debt: monthly.map((r) => Number(r.debt_total_mln ?? 0)),
+    kwhLoss: daily.map((r) => Number(r.kwh_loss_total ?? 0)),
+    kwhLossTechnical: daily.map((r) => Number(r.kwh_loss_technical ?? 0)),
+    consumersTotal: monthly.map((r) => Number(r.consumers_total ?? 0)),
     consumersActive: monthly.map((r) => Number(r.consumers_active ?? 0)),
     consumersDisconnected: monthly.map((r) => Number(r.consumers_disconnected ?? 0)),
     tpCount: monthly.map((r) => Number(r.tp_total ?? 0)),
@@ -264,20 +294,37 @@ export async function districtOverview(
       value: cur.kwh_sold, prev: p.kwh_sold,
       goodDirection: 'up', spark: spark.kwhSold, sparkBucket: 'day',
     }),
+    /*
+     * Yo'qotish MIQDORDA beriladi, foizda emas.
+     *
+     * "34.8%" degan plitka yonidagi "1.0 mln kWh" bilan bir o'lchovda emas —
+     * hokim ikkalasini solishtira olmaydi. Foiz plitkaning izohida qoladi,
+     * asosiy raqam esa kWh: yo'qolgan energiyani sotilgan energiya bilan
+     * bevosita taqqoslash mumkin bo'lsin.
+     */
     tile({
-      key: 'lossPct', metric: 'lossPct', labelUz: 'Jami yo’qotish', unit: '%',
-      value: cur.loss_pct, prev: p.loss_pct,
-      goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
+      key: 'kwhLossTotal', metric: 'kwhLossTotal', labelUz: 'Jami yo’qotish', unit: 'kWh',
+      value: cur.kwh_loss_total, prev: p.kwh_loss_total,
+      goodDirection: 'down', spark: spark.kwhLoss, sparkBucket: 'day',
     }),
     tile({
-      key: 'naturalPct', metric: 'naturalLossPct', labelUz: 'Texnologik yo‘qotish', unit: '%',
-      value: cur.natural_pct, prev: p.natural_pct,
-      goodDirection: 'down', spark: spark.naturalPct, sparkBucket: 'day',
+      key: 'kwhLossTechnical', metric: 'kwhLossTechnical', labelUz: 'Texnologik yo‘qotish', unit: 'kWh',
+      value: cur.kwh_loss_technical, prev: p.kwh_loss_technical,
+      goodDirection: 'down', spark: spark.kwhLossTechnical, sparkBucket: 'day',
     }),
+    /*
+     * Qarzdorlik o'rniga UMUMIY ABONENTLAR.
+     *
+     * Qarzdorlik manbasi fider darajasidagi hisobotlarda yo'q — plitka doim
+     * "0.0 mln so'm" ko'rsatib turardi, bu esa "qarz yo'q" degan noto'g'ri
+     * xulosaga olib keladi. Abonentlarning umumiy soni esa hisobotda bor va
+     * yonidagi faol/uzilgan plitkalari uchun MAXRAJ bo'lib xizmat qiladi:
+     * 3 441 va 124 raqamlari nimadan olingani shu bilan ko'rinadi.
+     */
     tile({
-      key: 'debt', metric: 'debtTotalMln', labelUz: 'Qarzdorlik', unit: 'mln so‘m',
-      value: cur.debt_total_mln, prev: p.debt_total_mln,
-      goodDirection: 'down', spark: spark.debt, sparkBucket: 'month',
+      key: 'consumersTotal', metric: 'consumersTotal', labelUz: 'Umumiy abonentlar', unit: 'ta',
+      value: cur.consumers_total, prev: p.consumers_total,
+      goodDirection: 'up', spark: spark.consumersTotal, sparkBucket: 'month',
     }),
     tile({
       key: 'consumersActive', metric: 'consumersActive', labelUz: 'Aloqaga chiqayotgan istemolchilar', unit: 'ta',
@@ -432,55 +479,6 @@ function linearForecast(values: number[], fromPeriod: string, steps: number):
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MFY reytingi
-// ═══════════════════════════════════════════════════════════════════════════
-
-export async function mfyRanking(ctx: AppContext, date: string): Promise<MfyRankRow[]> {
-  const rows = await query<{
-    mfy_id: number; name_uz: string; loss_pct: number; prev_loss_pct: number | null;
-    delta_pp: number | null; rnk: number; prev_rnk: number | null; rank_delta: number | null; trend: string;
-  }>(`SELECT * FROM agg.mfy_loss_rank($1::date)`, [date], ctx);
-
-  return rows.map((r) => ({
-    mfyId: r.mfy_id, nameUz: r.name_uz,
-    lossPct: Number(r.loss_pct), prevLossPct: r.prev_loss_pct === null ? null : Number(r.prev_loss_pct),
-    deltaPp: r.delta_pp === null ? null : Number(r.delta_pp),
-    rank: r.rnk, prevRank: r.prev_rnk, rankDelta: r.rank_delta,
-    trend: r.trend as MfyRankRow['trend'],
-  }));
-}
-
-/** Reyting poygasi (bump chart) — oylar bo'yicha o'rin o'zgarishi. */
-export async function rankingHistory(
-  ctx: AppContext, period: string, months = 12,
-): Promise<{ mfyId: number; nameUz: string; points: { period: string; rank: number; lossPct: number }[] }[]> {
-  const rows = await query<{ mfy_id: number; name_uz: string; p: string; rnk: number; loss_pct: number }>(
-    `SELECT a.mfy_id, m.name_uz, to_char(a.period_month, 'YYYY-MM') AS p,
-            rank() OVER (PARTITION BY a.period_month ORDER BY
-              100 * a.kwh_loss_total / nullif(a.kwh_in, 0) DESC)::int AS rnk,
-            round(100 * a.kwh_loss_total / nullif(a.kwh_in, 0), 2) AS loss_pct
-     FROM agg.mfy_monthly a
-     JOIN ref.mfy m ON m.id = a.mfy_id
-     WHERE a.kwh_in > 0
-       AND a.period_month <= ($1 || '-01')::date
-       AND a.period_month >  ($1 || '-01')::date - ($2 || ' months')::interval
-     ORDER BY a.period_month, rnk`,
-    [period, months], ctx,
-  );
-
-  const byMfy = new Map<number, { mfyId: number; nameUz: string; points: { period: string; rank: number; lossPct: number }[] }>();
-  for (const r of rows) {
-    let entry = byMfy.get(r.mfy_id);
-    if (!entry) {
-      entry = { mfyId: r.mfy_id, nameUz: r.name_uz, points: [] };
-      byMfy.set(r.mfy_id, entry);
-    }
-    entry.points.push({ period: r.p, rank: r.rnk, lossPct: Number(r.loss_pct) });
-  }
-  return [...byMfy.values()];
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // Texnik yo'qotish: standart vs amaldagi
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -501,35 +499,6 @@ export async function technicalLoss(ctx: AppContext, period: string): Promise<Te
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Masofa analitikasi (TR → iste'molchi)
-// ═══════════════════════════════════════════════════════════════════════════
-
-export async function distanceAnalytics(ctx: AppContext, period: string): Promise<DistanceRow[]> {
-  const rows = await query<{
-    mfy_id: number; name_uz: string; avg_distance_m: number; standard_m: number;
-    tp_count: number; tp_over: number;
-  }>(`SELECT t.mfy_id, m.name_uz,
-             round(avg(t.avg_distance_m), 0) AS avg_distance_m,
-             max(ref.norm_value('TP_MAX_DISTANCE_M', t.mfy_id, ($1 || '-01')::date)) AS standard_m,
-             count(*)::int AS tp_count,
-             count(*) FILTER (
-               WHERE t.avg_distance_m > ref.norm_value('TP_MAX_DISTANCE_M', t.mfy_id, ($1 || '-01')::date)
-             )::int AS tp_over
-      FROM ref.tp t
-      JOIN ref.mfy m ON m.id = t.mfy_id
-      WHERE t.decommissioned_on IS NULL AND t.avg_distance_m IS NOT NULL
-      GROUP BY t.mfy_id, m.name_uz
-      ORDER BY avg_distance_m DESC`, [period], ctx);
-
-  return rows.map((r) => ({
-    mfyId: r.mfy_id, nameUz: r.name_uz,
-    avgDistanceM: Number(r.avg_distance_m), standardM: Number(r.standard_m),
-    compliant: Number(r.avg_distance_m) <= Number(r.standard_m),
-    tpCount: r.tp_count, tpOverStandard: r.tp_over,
-  }));
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // Transformator monitoringi
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -537,14 +506,28 @@ export async function tpMonitoring(
   ctx: AppContext, period: string, mfyId: number | null = null, limit = 200,
 ): Promise<TpMonitorRow[]> {
   const rows = await query<{
-    tp_id: number; code: string; mfy_id: number; mfy_name: string; rated_kva: number;
-    load_pct: number; optimal_pct: number | null; condition: string;
+    tp_id: number; code: string; mfy_id: number; mfy_name: string; rated_kva: number | null;
+    load_pct: number | null; optimal_pct: number | null; condition: string | null;
     avg_distance_m: number | null; distance_compliant: boolean | null;
-  }>(`SELECT tp_id, code, mfy_id, mfy_name, rated_kva, load_pct, optimal_pct,
-             condition, avg_distance_m, distance_compliant
-      FROM agg.tp_monthly
-      WHERE period_month = ($1 || '-01')::date
-        AND ($2::int IS NULL OR mfy_id = $2)
+  }>(`/*
+        REGISTRDAN boshlanadi, jamlanmadan emas.
+        Oylik holat hisoboti kelmagan TP ham ro'yxatda KO'RINISHI kerak —
+        yuklama va holat ustunlari bo'sh bo'ladi, lekin transformatorning
+        o'zi yo'qolib qolmaydi. Ilgari so'rov jamlanmadan boshlanardi va
+        holati kiritilmagan TP butunlay ko'rinmasdi.
+      */
+      SELECT t.id AS tp_id, t.code, t.mfy_id, m.name_uz AS mfy_name, t.rated_kva,
+             a.load_pct, a.optimal_pct, a.condition, t.avg_distance_m,
+             CASE WHEN t.avg_distance_m IS NULL THEN NULL
+                  ELSE t.avg_distance_m <= ref.norm_value(
+                         'TP_MAX_DISTANCE_M', t.mfy_id, ($1 || '-01')::date)
+             END AS distance_compliant
+      FROM ref.tp t
+      JOIN ref.mfy m ON m.id = t.mfy_id
+      LEFT JOIN agg.tp_monthly a
+             ON a.tp_id = t.id AND a.period_month = ($1 || '-01')::date
+      WHERE t.decommissioned_on IS NULL
+        AND ($2::int IS NULL OR t.mfy_id = $2)
       /*
         HOLAT bo'yicha, keyin yuklama bo'yicha.
 
@@ -558,22 +541,113 @@ export async function tpMonitoring(
         nosozlik (to'q sariq) → diqqat (sariq) → yaxshi. Normadan uzoq
         TP lar teng holatda oldinroq turadi.
       */
-      ORDER BY CASE condition
+      ORDER BY CASE a.condition
                  WHEN 'OVERLOAD'  THEN 0
                  WHEN 'FAULT'     THEN 1
                  WHEN 'ATTENTION' THEN 2
-                 ELSE 3
+                 WHEN 'GOOD'      THEN 3
+                 ELSE 4
                END,
-               (NOT coalesce(distance_compliant, true)) DESC,
-               load_pct DESC
+               (t.avg_distance_m IS NOT NULL AND NOT (t.avg_distance_m <= ref.norm_value(
+                  'TP_MAX_DISTANCE_M', t.mfy_id, ($1 || '-01')::date))) DESC,
+               a.load_pct DESC NULLS LAST,
+               t.code
       LIMIT $3`, [period, mfyId, limit], ctx);
 
   return rows.map((r) => ({
     tpId: r.tp_id, code: r.code, mfyId: r.mfy_id, mfyName: r.mfy_name,
-    ratedKva: Number(r.rated_kva), loadPct: Number(r.load_pct),
-    optimalPct: Number(r.optimal_pct ?? 70), condition: r.condition as TpMonitorRow['condition'],
+    ratedKva: r.rated_kva === null ? null : Number(r.rated_kva),
+    loadPct: r.load_pct === null ? null : Number(r.load_pct),
+    optimalPct: r.optimal_pct === null ? null : Number(r.optimal_pct),
+    condition: (r.condition ?? null) as TpMonitorRow['condition'],
     avgDistanceM: r.avg_distance_m === null ? null : Number(r.avg_distance_m),
     distanceCompliant: r.distance_compliant,
+  }));
+}
+
+/**
+ * Fider boshidagi oylik balans.
+ *
+ * Jadvalda hisoblagich ko'rsatkichlari va to'rt raqam turadi; o'rtacha
+ * yuklama va qamrov ulushi shu yerda HISOBLANADI — ular saqlanmaydi, chunki
+ * manba raqamlardan bir qatorda kelib chiqadi.
+ */
+export async function feederMonthly(
+  ctx: AppContext, period: string, mfyId: number,
+): Promise<FeederMonthly | null> {
+  const row = await queryOne<{
+    period_month: string; substation: string | null; input_name: string | null;
+    meter_prev: number; meter_curr: number; meter_coef: number;
+    kwh_in: number; kwh_tp_sum: number; kwh_tech_loss: number; kwh_commercial_loss: number;
+    days: number;
+  }>(
+    `SELECT to_char(f.period_month, 'YYYY-MM') AS period_month, f.substation, f.input_name,
+            f.meter_prev, f.meter_curr, f.meter_coef,
+            f.kwh_in, f.kwh_tp_sum, f.kwh_tech_loss, f.kwh_commercial_loss,
+            extract(day FROM (f.period_month + INTERVAL '1 month - 1 day'))::int AS days
+       FROM fact.feeder_monthly f
+      WHERE f.mfy_id = $1 AND f.period_month = ($2 || '-01')::date`,
+    [mfyId, period], ctx,
+  );
+  if (!row) return null;
+
+  const kwhIn = Number(row.kwh_in);
+  const days = Number(row.days) || 30;
+
+  return {
+    periodMonth: row.period_month,
+    substation: row.substation,
+    inputName: row.input_name,
+    meterPrev: Number(row.meter_prev),
+    meterCurr: Number(row.meter_curr),
+    meterCoef: Number(row.meter_coef),
+    kwhIn,
+    kwhTpSum: Number(row.kwh_tp_sum),
+    kwhTechLoss: Number(row.kwh_tech_loss),
+    kwhCommercialLoss: Number(row.kwh_commercial_loss),
+    meteredPct: kwhIn > 0 ? Number(((Number(row.kwh_tp_sum) / kwhIn) * 100).toFixed(1)) : 0,
+    avgDailyKwh: Number((kwhIn / days).toFixed(1)),
+    avgLoadKw: Number((kwhIn / (days * 24)).toFixed(1)),
+    days,
+  };
+}
+
+/**
+ * TP kesimidagi oylik hisobot — hisoblagich ko'rsatkichlari va iste'molchilar.
+ *
+ * Bu «Тўлиқ ҳисобот» varag'ining aynan o'zi: transformatorlar sahifasi shu
+ * ma'lumotni ko'rsatadi, chunki fider darajasidagi tizimda asosiy tafsilot
+ * shu yerda.
+ */
+export async function tpMonthly(
+  ctx: AppContext, period: string, mfyId: number | null = null,
+): Promise<TpMonthlyRow[]> {
+  const rows = await query<{
+    tp_id: number; code: string; consumers_total: number; consumers_active: number;
+    consumers_disconnected: number; meter_no: string | null; meter_coef: number;
+    reading_prev: number; reading_curr: number; kwh_month: number;
+  }>(
+    `SELECT t.id AS tp_id, t.code, m.consumers_total, m.consumers_active,
+            m.consumers_disconnected, m.meter_no, m.meter_coef,
+            m.reading_prev, m.reading_curr, m.kwh_month
+       FROM fact.tp_monthly m
+       JOIN ref.tp t ON t.id = m.tp_id
+      WHERE m.period_month = ($1 || '-01')::date
+        AND ($2::int IS NULL OR t.mfy_id = $2)
+      ORDER BY m.kwh_month DESC, t.code`,
+    [period, mfyId], ctx,
+  );
+
+  return rows.map((r) => ({
+    tpId: r.tp_id, code: r.code,
+    consumersTotal: r.consumers_total,
+    consumersActive: r.consumers_active,
+    consumersDisconnected: r.consumers_disconnected,
+    meterNo: r.meter_no,
+    meterCoef: Number(r.meter_coef),
+    readingPrev: Number(r.reading_prev),
+    readingCurr: Number(r.reading_curr),
+    kwhMonth: Number(r.kwh_month),
   }));
 }
 
@@ -802,109 +876,6 @@ export async function workDetail(ctx: AppContext, id: number): Promise<WorkDetai
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Ogohlantirishlar — DETERMINISTIK SQL QOIDALARI (AI emas, LLM yo'q)
-// ═══════════════════════════════════════════════════════════════════════════
-
-export async function alerts(ctx: AppContext, period: string): Promise<AlertItem[]> {
-  const out: AlertItem[] = [];
-
-  // 1. Yo'qotishi normadan keskin oshgan MFY lar
-  const lossRows = await query<{ mfy_id: number; name_uz: string; loss_pct: number; norm: number }>(
-    `SELECT a.mfy_id, m.name_uz, a.loss_pct, coalesce(a.total_loss_target_pct, 8.0) AS norm
-     FROM agg.mfy_monthly a JOIN ref.mfy m ON m.id = a.mfy_id
-     WHERE a.period_month = ($1 || '-01')::date AND a.kwh_in > 0
-       AND a.loss_pct > coalesce(a.total_loss_target_pct, 8.0) * 1.6
-     ORDER BY a.loss_pct DESC LIMIT 5`, [period], ctx);
-  for (const r of lossRows) {
-    out.push({
-      id: `loss-${r.mfy_id}`, severity: 'critical', rule: 'LOSS_ABOVE_TARGET',
-      titleUz: `${r.name_uz}da yo‘qotish ${Number(r.loss_pct).toFixed(1)}%`,
-      detailUz: `Maqsadli ko‘rsatkich ${Number(r.norm).toFixed(1)}% — ${(Number(r.loss_pct) / Number(r.norm)).toFixed(1)} barobar oshgan.`,
-      href: `/dashboard/mfy/${r.mfy_id}`, mfyId: r.mfy_id,
-    });
-  }
-
-  // 2. Ortiqcha yuklangan transformatorlar
-  const tpRow = await queryOne<{ n: number; mfys: string }>(
-    `SELECT count(*)::int AS n, string_agg(DISTINCT mfy_name, ', ') AS mfys
-     FROM agg.tp_monthly
-     WHERE period_month = ($1 || '-01')::date AND load_pct >= coalesce(overload_pct, 90)`,
-    [period], ctx);
-  if (tpRow && tpRow.n > 0) {
-    out.push({
-      id: 'tp-overload', severity: 'serious', rule: 'TP_OVERLOAD',
-      titleUz: `${tpRow.n} ta transformator ortiqcha yuklangan`,
-      detailUz: `90% dan yuqori yuklama qayd etildi: ${tpRow.mfys ?? '—'}`,
-      href: '/dashboard#tp', mfyId: null,
-    });
-  }
-
-  // 3. Masofa normasini buzgan MFY lar
-  const distRows = await query<{ mfy_id: number; name_uz: string; avg_m: number }>(
-    `SELECT t.mfy_id, m.name_uz, round(avg(t.avg_distance_m), 0) AS avg_m
-     FROM ref.tp t JOIN ref.mfy m ON m.id = t.mfy_id
-     WHERE t.decommissioned_on IS NULL AND t.avg_distance_m IS NOT NULL
-     GROUP BY 1, 2
-     HAVING avg(t.avg_distance_m) > ref.norm_value('TP_MAX_DISTANCE_M', t.mfy_id, ($1 || '-01')::date)
-     ORDER BY avg_m DESC LIMIT 3`, [period], ctx);
-  for (const r of distRows) {
-    out.push({
-      id: `dist-${r.mfy_id}`, severity: 'warning', rule: 'DISTANCE_OVER_NORM',
-      titleUz: `${r.name_uz}da TP → iste’molchi masofasi ${Number(r.avg_m)} m`,
-      detailUz: 'Standart 300 m. Uzoq masofa texnik yo‘qotishni oshiradi.',
-      href: `/dashboard/mfy/${r.mfy_id}`, mfyId: r.mfy_id,
-    });
-  }
-
-  // 4. Ma'lumot yubormagan MFY lar (joriy oy)
-  const missing = await query<{ mfy_id: number; name_uz: string; days: number }>(
-    `SELECT m.id AS mfy_id, m.name_uz,
-            (CURRENT_DATE - coalesce(max(s.period_end), CURRENT_DATE - 60))::int AS days
-     FROM ref.mfy m
-     LEFT JOIN fact.submission s
-       ON s.scope_id = m.id AND s.scope_type = 'MFY'
-      AND s.domain = 'ENERGY_BALANCE' AND s.status = 'approved'
-     WHERE m.valid_to IS NULL
-     GROUP BY m.id, m.name_uz
-     HAVING (CURRENT_DATE - coalesce(max(s.period_end), CURRENT_DATE - 60))::int > 40
-     ORDER BY days DESC LIMIT 5`, [], ctx);
-  for (const r of missing) {
-    out.push({
-      id: `late-${r.mfy_id}`, severity: 'warning', rule: 'SUBMISSION_LATE',
-      titleUz: `${r.name_uz} ${r.days} kundan beri ma’lumot yubormadi`,
-      detailUz: 'Tasdiqlangan energiya balansi yo‘q. Korxona bilan bog‘laning.',
-      href: '/entry', mfyId: r.mfy_id,
-    });
-  }
-
-  // 5. Qarzdorligi keskin o'sgan MFY lar
-  const debtRows = await query<{ mfy_id: number; name_uz: string; growth: number; debt: number }>(
-    `WITH cur AS (
-       SELECT mfy_id, debt_total_mln FROM agg.mfy_monthly
-       WHERE period_month = ($1 || '-01')::date),
-     prv AS (
-       SELECT mfy_id, debt_total_mln FROM agg.mfy_monthly
-       WHERE period_month = ($1 || '-01')::date - INTERVAL '1 month')
-     SELECT c.mfy_id, m.name_uz, c.debt_total_mln AS debt,
-            round(100 * (c.debt_total_mln - p.debt_total_mln) / nullif(p.debt_total_mln, 0), 1) AS growth
-     FROM cur c JOIN prv p ON p.mfy_id = c.mfy_id JOIN ref.mfy m ON m.id = c.mfy_id
-     WHERE p.debt_total_mln > 0
-       AND (c.debt_total_mln - p.debt_total_mln) / p.debt_total_mln > 0.10
-     ORDER BY growth DESC LIMIT 3`, [period], ctx);
-  for (const r of debtRows) {
-    out.push({
-      id: `debt-${r.mfy_id}`, severity: 'serious', rule: 'DEBT_GROWTH',
-      titleUz: `${r.name_uz}da qarzdorlik ${Number(r.growth)}% o‘sdi`,
-      detailUz: `Joriy qarzdorlik ${Number(r.debt).toFixed(1)} mln so‘m.`,
-      href: `/dashboard/mfy/${r.mfy_id}`, mfyId: r.mfy_id,
-    });
-  }
-
-  const order: Record<AlertItem['severity'], number> = { critical: 0, serious: 1, warning: 2, info: 3 };
-  return out.sort((a, b) => order[a.severity] - order[b.severity]);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // Vaqt qatorlari
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -935,13 +906,24 @@ export async function timeSeries(
 // MFY paneli uchun maxsus so'rovlar
 // ═══════════════════════════════════════════════════════════════════════════
 
-export async function capacity(ctx: AppContext, mfyId: number, period: string): Promise<CapacityInfo> {
+/**
+ * Tarmoq quvvati.
+ *
+ * TP pasportlari (kVA) kiritilmagan bo'lsa `null` qaytadi — panel "ma'lumot
+ * yo'q" holatini ko'rsatadi. Nolli gauge chizish YOLG'ON bo'lardi: "quvvat
+ * 0 kVA" degan xulosa "quvvat noma'lum" dan butunlay boshqa narsa.
+ */
+export async function capacity(
+  ctx: AppContext, mfyId: number, period: string,
+): Promise<CapacityInfo | null> {
   const t = await periodTotals(ctx, period, mfyId, null);
   const cap = t?.capacity_kva ?? 0;
+  if (cap <= 0) return null;
+
   const used = t?.used_kva ?? 0;
   return {
     capacityKva: cap, currentKva: used, reserveKva: Math.max(0, cap - used),
-    loadPct: cap > 0 ? Number(((used / cap) * 100).toFixed(1)) : 0,
+    loadPct: Number(((used / cap) * 100).toFixed(1)),
   };
 }
 

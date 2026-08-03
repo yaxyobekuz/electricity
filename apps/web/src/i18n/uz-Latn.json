@@ -1,21 +1,17 @@
 {
   "app": {
     "name": "BEAP",
-    "fullName": "Baliqchi Energetika Analitik Platformasi",
-    "districtName": "Baliqchi tumani energetika nazorat tizimi",
-    "subtitle": "Baliqchi Elektraset & Chinobod Elektraset",
+    "fullName": "Elektr energiya Analitik Platformasi",
+    "districtName": "Xaqulobod fideri — energetika nazorat tizimi",
+    "subtitle": "Chinobod Elektraset · НИМ станция Чинобод · Хақулобод фидери",
     "footer": "Baliqchi tumani hokimligi. Barcha huquqlar himoyalangan.",
     "version": "Versiya"
   },
   "nav": {
-    "dashboard": "Bosh sahifa",
-    "mahallalar": "Mahallalar",
+    "dashboard": "Fider paneli",
     "transformers": "Transformatorlar",
     "consumers": "Abonentlar",
     "energyBalance": "Energiya balansi",
-    "losses": "Yo‘qotishlar",
-    "debt": "Qarzdorlik",
-    "passport": "Pasport",
     "reports": "Hisobotlar",
     "entry": "Ma’lumot kiritish",
     "review": "Tasdiqlash",

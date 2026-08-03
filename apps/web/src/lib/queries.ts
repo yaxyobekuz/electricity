@@ -6,11 +6,10 @@
  * yuklashda ko'rinadi.
  */
 import type {
-  AlertItem, Bootstrap, CapacityInfo, ConsumerBreakdown, DebtBreakdown,
-  DistanceRow, DistrictOverview, EfficiencyBreakdown, EnergyBalanceNode,
-  LossMapCell, LossStructure, MfyOverview, MfyRankRow, OperationalMetrics,
-  Passport, PassportReconcileRow, ResultsSummary, Submission, TechnicalLossRow,
-  TimeSeriesPoint, TpMonitorRow, ViolationSummary, WorkDetail, WorkRow, CompletenessCell,
+  Bootstrap, CapacityInfo, CompletenessCell, ConsumerBreakdown, DebtBreakdown,
+  DistrictOverview, EfficiencyBreakdown, EnergyBalanceNode, FeederMonthly, LossStructure,
+  MfyOverview, OperationalMetrics, ResultsSummary, Submission, TimeSeriesPoint,
+  TpMonitorRow, TpMonthlyRow, ViolationSummary, WorkDetail, WorkRow,
 } from '@beap/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -22,8 +21,6 @@ export const keys = {
     ['dash', 'district', panel, params] as const,
   mfy: (id: number, panel: string, params: Record<string, unknown> = {}) =>
     ['dash', 'mfy', id, panel, params] as const,
-  passport: (scope: string, id: number | null, period: string) =>
-    ['passport', scope, id, period] as const,
   entry: (part: string, params: Record<string, unknown> = {}) =>
     ['entry', part, params] as const,
 };
@@ -77,56 +74,20 @@ export function useTpMonitoring(period?: string, limit = 60) {
   });
 }
 
-export function useMfyRanking(date?: string) {
+/** Fider boshidagi oylik balans — hisoblagich ko'rsatkichlari bilan. */
+export function useFeederMonthly(id: number, period?: string) {
   return useQuery({
-    queryKey: keys.district('mfy-ranking', { date }),
-    queryFn: ({ signal }) => api.get<MfyRankRow[]>(`/dash/district/mfy-ranking${qs({ date })}`, signal),
+    queryKey: keys.mfy(id, 'feeder-monthly', { period }),
+    queryFn: ({ signal }) => api.get<FeederMonthly>(`/dash/mfy/${id}/feeder-monthly${qs({ period })}`, signal),
     ...DASH_OPTIONS,
   });
 }
 
-export interface RankHistoryEntry {
-  mfyId: number;
-  nameUz: string;
-  points: { period: string; rank: number; lossPct: number }[];
-}
-
-export function useRankingHistory(period?: string, months = 12) {
+/** TP kesimidagi oylik hisobot — hisoblagich, iste'molchilar, iste'mol. */
+export function useTpMonthly(period?: string) {
   return useQuery({
-    queryKey: keys.district('ranking-history', { period, months }),
-    queryFn: ({ signal }) => api.get<RankHistoryEntry[]>(`/dash/district/ranking-history${qs({ period, months })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useTechnicalLoss(period?: string) {
-  return useQuery({
-    queryKey: keys.district('technical-loss', { period }),
-    queryFn: ({ signal }) => api.get<TechnicalLossRow[]>(`/dash/district/technical-loss${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useDistance(period?: string) {
-  return useQuery({
-    queryKey: keys.district('distance', { period }),
-    queryFn: ({ signal }) => api.get<DistanceRow[]>(`/dash/district/distance${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useDebt(period?: string) {
-  return useQuery({
-    queryKey: keys.district('debt', { period }),
-    queryFn: ({ signal }) => api.get<DebtBreakdown>(`/dash/district/debt${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useLossMap(period?: string) {
-  return useQuery({
-    queryKey: keys.district('loss-map', { period }),
-    queryFn: ({ signal }) => api.get<LossMapCell[]>(`/dash/district/loss-map${qs({ period })}`, signal),
+    queryKey: keys.district('tp-monthly', { period }),
+    queryFn: ({ signal }) => api.get<TpMonthlyRow[]>(`/dash/district/tp-monthly${qs({ period })}`, signal),
     ...DASH_OPTIONS,
   });
 }
@@ -143,14 +104,6 @@ export function useMfyViolations(id: number, period?: string) {
   return useQuery({
     queryKey: keys.mfy(id, 'violations', { period }),
     queryFn: ({ signal }) => api.get<ViolationSummary>(`/dash/mfy/${id}/violations${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useDistrictViolations(period?: string) {
-  return useQuery({
-    queryKey: keys.district('violations', { period }),
-    queryFn: ({ signal }) => api.get<ViolationSummary>(`/dash/district/violations${qs({ period })}`, signal),
     ...DASH_OPTIONS,
   });
 }
@@ -194,34 +147,10 @@ export function useDeleteWorkPhoto(workId: number | null) {
   });
 }
 
-export function useAlerts(period?: string) {
-  return useQuery({
-    queryKey: keys.district('alerts', { period }),
-    queryFn: ({ signal }) => api.get<AlertItem[]>(`/dash/district/alerts${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
 export function useDistrictSeries(params: { from?: string; to?: string; bucket?: 'day' | 'week' | 'month'; last?: number } = {}) {
   return useQuery({
     queryKey: keys.district('series', params),
     queryFn: ({ signal }) => api.get<TimeSeriesPoint[]>(`/dash/district/series${qs(params)}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useDistrictLossStructure(period?: string) {
-  return useQuery({
-    queryKey: keys.district('loss-structure', { period }),
-    queryFn: ({ signal }) => api.get<LossStructure>(`/dash/district/loss-structure${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useDistrictResults(period?: string, months = 12) {
-  return useQuery({
-    queryKey: keys.district('results', { period, months }),
-    queryFn: ({ signal }) => api.get<ResultsSummary>(`/dash/district/results${qs({ period, months })}`, signal),
     ...DASH_OPTIONS,
   });
 }
@@ -268,6 +197,15 @@ export function useMfyTp(id: number, period?: string) {
   });
 }
 
+/** Fiderning TP kesimi — hisoblagich, iste'molchilar, oylik iste'mol. */
+export function useMfyTpMonthly(id: number, period?: string) {
+  return useQuery({
+    queryKey: keys.mfy(id, 'tp-monthly', { period }),
+    queryFn: ({ signal }) => api.get<TpMonthlyRow[]>(`/dash/mfy/${id}/tp-monthly${qs({ period })}`, signal),
+    ...DASH_OPTIONS,
+  });
+}
+
 export function useMfyLossStructure(id: number, period?: string) {
   return useQuery({
     queryKey: keys.mfy(id, 'loss-structure', { period }),
@@ -308,45 +246,7 @@ export function useMfyResults(id: number, period?: string, months = 12) {
   });
 }
 
-export function useMfyEfficiency(id: number, period?: string) {
-  return useQuery({
-    queryKey: keys.mfy(id, 'efficiency', { period }),
-    queryFn: ({ signal }) => api.get<EfficiencyBreakdown>(`/dash/mfy/${id}/efficiency${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
 // ─── Pasport ────────────────────────────────────────────────────────────────
-
-export function useTumanPassport(period?: string) {
-  return useQuery({
-    queryKey: keys.passport('tuman', null, period ?? 'latest'),
-    queryFn: ({ signal }) => api.get<Passport>(`/passport/tuman${qs({ period })}`, signal),
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useMfyPassport(id: number | null, period?: string) {
-  return useQuery({
-    queryKey: keys.passport('mfy', id, period ?? 'latest'),
-    queryFn: ({ signal }) => api.get<Passport>(`/passport/mfy/${id!}${qs({ period })}`, signal),
-    // MFY tanlanmaguncha so'rov yubormaymiz — aks holda `/passport/mfy/0`
-    // ketadi va server 400 qaytaradi.
-    enabled: typeof id === 'number' && id > 0,
-    ...DASH_OPTIONS,
-  });
-}
-
-export function useReconcile(period: string | null | undefined) {
-  return useQuery({
-    queryKey: ['passport', 'reconcile', period ?? 'none'],
-    queryFn: ({ signal }) =>
-      api.get<PassportReconcileRow[]>(`/passport/tuman/${period!}/reconcile`, signal),
-    // Davr aniqlanmaguncha kutamiz — bo'sh davr `/tuman//reconcile` beradi.
-    enabled: Boolean(period),
-    ...DASH_OPTIONS,
-  });
-}
 
 // ─── Input panel ────────────────────────────────────────────────────────────
 

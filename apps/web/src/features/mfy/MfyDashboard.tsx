@@ -17,7 +17,7 @@ import { energy, kva, kw, money, monthShort, num, pct, pieces, volts } from '@be
 import { Chip, ListBox, Select } from '@heroui/react';
 import {
   Activity, ArrowRight, Building2, CircleDollarSign, Gauge as GaugeIcon, Leaf, PowerOff,
-  TrendingDown, Users, Zap, ZapOff,
+  TrendingDown, TrendingUp, Users, UsersRound, Zap, ZapOff,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,8 +38,8 @@ import {
 import { PeriodPicker } from '../district/panels/PeriodPicker.tsx';
 import { TpMonitorPanel } from '../district/panels/TpMonitorPanel.tsx';
 import {
-  useMfyCapacity, useMfyConsumers, useMfyDebt, useMfyDynamics,
-  useMfyLossStructure, useMfyOperational, useMfyOverview, useMfyResults, useMfyTp,
+  useBootstrap, useFeederMonthly, useMfyConsumers, useMfyDebt, useMfyDynamics,
+  useMfyLossStructure, useMfyOverview, useMfyResults, useMfyTpMonthly,
   useMfyViolations, useMfyWorks,
 } from '../../lib/queries.ts';
 import { ViolationsPanel } from '../violations/ViolationsPanel.tsx';
@@ -51,7 +51,7 @@ const TILE_ICONS: Record<string, React.ReactNode> = {
   kwhSold: <CircleDollarSign className="size-4" />,
   lossPct: <Activity className="size-4" />,
   naturalPct: <Leaf className="size-4" />,
-  debt: <CircleDollarSign className="size-4" />,
+  consumersTotal: <UsersRound className="size-4" />,
   consumersActive: <Users className="size-4" />,
   consumersDisconnected: <ZapOff className="size-4" />,
   tpCount: <Building2 className="size-4" />,
@@ -62,7 +62,7 @@ const TILE_TONES: Record<string, Tone> = {
   kwhSold: 'green',
   lossPct: 'orange',
   naturalPct: 'purple',
-  debt: 'pink',
+  consumersTotal: 'pink',
   consumersActive: 'sky',
   consumersDisconnected: 'amber',
   tpCount: 'cyan',
@@ -72,7 +72,16 @@ export default function MfyDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const params = useParams();
-  const mfyId = Number(params['mfyId']);
+  const boot = useBootstrap();
+
+  /*
+   * Manzilda id bo'lmasa (bosh sahifa) — registrdagi YAGONA fider olinadi.
+   * Tizim qamrovi bitta fider, shuning uchun "qaysi biri?" degan savol yo'q.
+   */
+  const paramId = Number(params['mfyId']);
+  const mfyId = Number.isFinite(paramId) && paramId > 0
+    ? paramId
+    : (boot.data?.mfys[0]?.id ?? 0);
   const period = useUi((s) => s.period);
   // Tanlangan sana — kunlik grafik AYNAN shu kunda tugaydi.
   const asOfDate = useUi((s) => s.asOfDate);
@@ -80,17 +89,17 @@ export default function MfyDashboard() {
 
   const overview = useMfyOverview(mfyId, period ?? undefined);
   const dynamics = useMfyDynamics(mfyId, { bucket, last: 7, ...(asOfDate ? { to: asOfDate } : {}) });
-  const capacity = useMfyCapacity(mfyId, period ?? undefined);
   const consumers = useMfyConsumers(mfyId, period ?? undefined);
-  const tp = useMfyTp(mfyId, period ?? undefined);
   const lossStructure = useMfyLossStructure(mfyId, period ?? undefined);
   const debt = useMfyDebt(mfyId, period ?? undefined);
   const works = useMfyWorks(mfyId);
   const results = useMfyResults(mfyId, period ?? undefined);
-  const operational = useMfyOperational(mfyId, period ?? undefined);
   const violations = useMfyViolations(mfyId, period ?? undefined);
+  const feeder = useFeederMonthly(mfyId, period ?? undefined);
+  const tpMonthly = useMfyTpMonthly(mfyId, period ?? undefined);
 
-  if (!Number.isFinite(mfyId)) return <ErrorState message="MFY identifikatori noto‘g‘ri" />;
+  if (boot.isLoading || (mfyId === 0 && !boot.isError)) return <LoadingState rows={6} />;
+  if (mfyId === 0) return <ErrorState message="Fider registrda topilmadi" />;
   if (overview.isLoading) return <LoadingState rows={6} />;
   if (overview.isError || !overview.data) {
     return (
@@ -133,20 +142,20 @@ export default function MfyDashboard() {
     .sort((a, b) => (a.plannedEnd ?? '9999').localeCompare(b.plannedEnd ?? '9999'));
 
   /*
-   * Kuchlanish rangi NOMINALDAN chetlanishga qarab beriladi: 220 V ning
-   * o'zi "yaxshi" ham, "yomon" ham emas — me'yor MFY bo'yicha boshqacha
-   * bo'lishi mumkin, shuning uchun normativ qiymat serverdan keladi.
+   * Tezkor ko'rsatkichlar HISOBOTDAN hisoblanadi.
+   *
+   * Eng yuklangan TP — uning oylik energiyasi soatlarga bo'linadi, ya'ni bu
+   * O'RTACHA yuklama. Cho'qqi yuklamani bilish uchun soatlik profil kerak,
+   * u hisobotda yo'q.
    */
-  const voltageDeviation =
-    operational.data && operational.data.avgVoltageV !== null && operational.data.nominalVoltageV > 0
-      ? Math.abs(operational.data.avgVoltageV - operational.data.nominalVoltageV) /
-        operational.data.nominalVoltageV
-      : null;
-  const voltageTone =
-    voltageDeviation === null ? 'accent'
-      : voltageDeviation > 0.1 ? 'critical'
-        : voltageDeviation > 0.05 ? 'warning'
-          : 'good';
+  const days = feeder.data?.days ?? 31;
+  const topTpKw = (tpMonthly.data ?? []).reduce(
+    (mx, r) => Math.max(mx, r.kwhMonth / (days * 24)),
+    0,
+  );
+  const offShare = totals.consumersTotal > 0
+    ? (totals.consumersDisconnected / totals.consumersTotal) * 100
+    : 0;
 
   return (
     <MotionStage className={overview.isFetching ? 'opacity-70 transition-opacity' : ''}>
@@ -158,7 +167,7 @@ export default function MfyDashboard() {
           </>
         }
         breadcrumbs={[
-          { label: 'Baliqchi tumani', to: '/dashboard' },
+          { label: 'НИМ станция Чинобод', to: '/dashboard' },
           { label: mfy.elektrosetName },
           { label: mfy.nameUz },
         ]}
@@ -226,23 +235,45 @@ export default function MfyDashboard() {
           )}
         </Panel>
 
-        <Panel className="xl:col-span-3" title="Tarmoq quvvati">
-          {capacity.data ? (
+        {/*
+          Tarmoq quvvati O'RNIGA fider hisoblagichi.
+
+          Quvvat (kVA) TP pasportidan keladi va hozircha tizimda yo'q — bo'sh
+          gauge o'rniga hisobotda BOR raqam ko'rsatiladi: fider boshidagi
+          hisoblagich va uning TP hisoblagichlari bilan solishtiruvi. Halqa
+          esa "qancha energiya hisobga olindi" degan savolga javob beradi —
+          bu fider uchun asosiy sifat ko'rsatkichi.
+        */}
+        <Panel className="xl:col-span-3" title="Fider hisoblagichi">
+          {feeder.data ? (
             <div className="flex h-full flex-col gap-3">
               <Gauge
                 height={158}
-                higherIsBetter={false}
-                label="Joriy yuklama"
+                label="Hisobga olingan"
                 suffix="%"
-                value={capacity.data.loadPct}
+                value={feeder.data.meteredPct}
               />
 
               <dl className="grid grid-cols-2 gap-2 text-center">
-                <CapacityCell label="Texnik quvvat" value={capacity.data.capacityKva} />
-                <CapacityCell label="Joriy sarf" value={capacity.data.currentKva} />
+                <MeterCell
+                  label="Oldingi ko‘rsatkich"
+                  value={num(feeder.data.meterPrev, 0)}
+                />
+                <MeterCell
+                  label="Joriy ko‘rsatkich"
+                  value={num(feeder.data.meterCurr, 0)}
+                />
+                <MeterCell
+                  label="Koeffitsient"
+                  value={num(feeder.data.meterCoef, 0)}
+                />
+                <MeterCell
+                  label="O‘rtacha yuklama"
+                  value={`${num(feeder.data.avgLoadKw, 0)} kW`}
+                />
               </dl>
 
-              {/* Zaxira quvvat — alohida, pastda: bu xulosa qiymat */}
+              {/* TP hisoblagichlarida qayd etilgan energiya — xulosa qiymat */}
               <div
                 className="mt-auto flex items-baseline justify-center gap-2 rounded-lg px-3 py-3"
                 style={{
@@ -250,17 +281,15 @@ export default function MfyDashboard() {
                   color: 'var(--viz-good)',
                 }}
               >
-                <span className="text-[11px] font-medium">Zaxira</span>
+                <span className="text-[11px] font-medium">TP larda qayd etilgan</span>
                 <CountUp
                   className="tabular text-[19px] font-bold leading-none"
-                  format={(v) => kva(v)}
-                  value={capacity.data.reserveKva}
+                  format={(v) => num(energy(v).value, 1)}
+                  value={feeder.data.kwhTpSum}
                 />
-                {capacity.data.capacityKva > 0 && (
-                  <span className="text-[11px] font-semibold">
-                    ({((capacity.data.reserveKva / capacity.data.capacityKva) * 100).toFixed(0)}%)
-                  </span>
-                )}
+                <span className="text-[11px] font-semibold">
+                  {energy(feeder.data.kwhTpSum).unit}
+                </span>
               </div>
             </div>
           ) : (
@@ -341,7 +370,7 @@ export default function MfyDashboard() {
               className="text-[11.5px] font-semibold text-accent hover:underline"
               to="/transformers"
             >
-              Barchasi ({num(tp.data?.length ?? 0)})
+              Barchasi ({num(totals.tpCount)})
             </Link>
           }
           className="md:col-span-2 xl:col-span-4"
@@ -349,8 +378,12 @@ export default function MfyDashboard() {
           footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
           title="Transformatorlar holati"
         >
-          {/* 5 qator — qatordagi qo'shni kartalar bilan bir xil balandlik. */}
-          <TpMonitorPanel rows={(tp.data ?? []).slice(0, 5)} />
+          {/* Eng ko'p iste'mol qilgan 5 ta TP — server shu tartibda qaytaradi. */}
+          <TpMonitorPanel
+            days={feeder.data?.days ?? 31}
+            rows={(tpMonthly.data ?? []).slice(0, 5)}
+            totalKwh={tpMonthly.data?.reduce((a, r) => a + r.kwhMonth, 0) ?? 0}
+          />
         </Panel>
 
         <Panel
@@ -409,35 +442,40 @@ export default function MfyDashboard() {
           className="xl:col-span-2"
           footerAction={{
             label: 'Batafsil texnik ma’lumot',
-            to: `/passport/mfy/${mfyId}/${period ?? 'latest'}`,
+            to: '/transformers',
           }}
           title="Tezkor ko‘rsatkichlar"
         >
-          {operational.data ? (
+          {/*
+            Hammasi HISOBOTDAGI raqamlardan hisoblanadi:
+            kuchlanish va o'chirishlar TP o'lchovlaridan kelishi kerak edi,
+            ular hozircha yo'q — o'rniga fider energiyasi va TP kesimidan
+            chiqadigan real ko'rsatkichlar turadi.
+          */}
+          {feeder.data ? (
             /* Bitta ustun — karta tor (2/12), yorliqlar to'liq ko'rinadi. */
             <div className="flex flex-col gap-3.5">
               <QuickMetric
                 icon={<Zap className="size-3.5" />}
-                label="Maksimal yuklama"
+                label="O‘rtacha yuklama"
                 tone="warning"
-                value={kw(operational.data.maxLoadKw)}
+                value={kw(feeder.data.avgLoadKw)}
               />
               <QuickMetric
-                icon={<TrendingDown className="size-3.5" />}
-                label="Minimal yuklama"
-                value={kw(operational.data.minLoadKw)}
+                icon={<TrendingUp className="size-3.5" />}
+                label="Eng yuklangan TP"
+                value={kw(topTpKw)}
               />
               <QuickMetric
                 icon={<GaugeIcon className="size-3.5" />}
-                label="O‘rtacha kuchlanish"
-                tone={voltageTone}
-                value={volts(operational.data.avgVoltageV)}
+                label="Kunlik iste’mol"
+                value={`${num(feeder.data.avgDailyKwh, 0)} kWh`}
               />
               <QuickMetric
                 icon={<PowerOff className="size-3.5" />}
-                label="O‘chirishlar soni"
-                tone={(operational.data.outageCount ?? 0) > 0 ? 'critical' : 'good'}
-                value={pieces(operational.data.outageCount)}
+                label="Aloqada emas"
+                tone={offShare >= 5 ? 'critical' : 'good'}
+                value={`${pieces(totals.consumersDisconnected)} · ${pct(offShare, 1)}`}
               />
             </div>
           ) : (
@@ -598,9 +636,9 @@ export default function MfyDashboard() {
         <button
           className="font-semibold text-accent hover:underline"
           type="button"
-          onClick={() => void navigate(`/passport/mfy/${mfyId}/${period ?? 'latest'}`)}
+          onClick={() => void navigate('/transformers')}
         >
-          Pasportni ochish
+          Transformatorlar kesimi
         </button>
       </FooterNote>
     </MotionStage>
@@ -686,17 +724,12 @@ export function BucketPicker({
 }
 
 /** Quvvat panelidagi uchta ustunli qiymat. */
-function CapacityCell({ label, value, tone }: { label: string; value: number; tone?: string }) {
+/** Fider hisoblagichi kartasidagi katak — yorliq ustida, qiymat ostida. */
+function MeterCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <dt className="truncate text-[11px] leading-tight text-muted">{label}</dt>
-      <dd className="truncate leading-tight" style={{ color: tone }}>
-        <CountUp
-          className="tabular text-[19px] font-bold"
-          format={(v) => kva(v)}
-          value={value}
-        />
-      </dd>
+      <dd className="tabular truncate text-[15px] font-bold leading-tight">{value}</dd>
     </div>
   );
 }

@@ -93,7 +93,7 @@ export default function ReviewQueue() {
           <table className="dt">
             <thead>
               <tr>
-                <th>Mahalla</th>
+                <th>Fider</th>
                 <th>Ma’lumot turi</th>
                 <th>Davr</th>
                 <th>Revision</th>

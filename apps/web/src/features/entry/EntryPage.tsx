@@ -96,7 +96,7 @@ export default function EntryPage() {
       </div>
 
       <Panel
-        subtitle="Mahalla × ma’lumot turi. Katakcha ustiga bosib formani oching."
+        subtitle="Fider × ma’lumot turi. Katakcha ustiga bosib formani oching."
         title={t('entry.completeness')}
         flush
       >
@@ -104,7 +104,7 @@ export default function EntryPage() {
           <table className="dt min-w-[900px]">
             <thead>
               <tr>
-                <th className="sticky left-0 z-20 bg-surface">Mahalla</th>
+                <th className="sticky left-0 z-20 bg-surface">Fider</th>
                 {DOMAINS.map((d) => (
                   <th key={d} className="text-center">
                     <span className="block max-w-24 truncate" title={DOMAIN_LABEL_UZ[d]}>

@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 
 import robotUrl from '../../assets/robot.png';
+import { AiAssistant } from '../ai/AiAssistant.tsx';
 import { LANGUAGES, setLanguage, type LanguageCode } from '../../i18n/index.ts';
 import { apiUrl } from '../../lib/api.ts';
 import { useBootstrap, useEfficiency } from '../../lib/queries.ts';
@@ -49,15 +50,18 @@ const HeaderSlot = createContext<HTMLElement | null>(null);
  */
 const FooterSlot = createContext<HTMLElement | null>(null);
 
+/*
+ * Menyu — FIDER darajasidagi tizim uchun.
+ *
+ * Mahallalar ro'yxati, yo'qotish reytingi, qarzdorlik va tuman pasporti
+ * olib tashlandi: ular 22 mahallani solishtirish uchun edi, bitta fider
+ * doirasida esa solishtiradigan narsa yo'q.
+ */
 const NAV: NavItem[] = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: <Home className="size-4.5" /> },
-  { to: '/mahallalar', labelKey: 'nav.mahallalar', icon: <Building2 className="size-4.5" /> },
   { to: '/transformers', labelKey: 'nav.transformers', icon: <Zap className="size-4.5" /> },
   { to: '/energy-balance', labelKey: 'nav.energyBalance', icon: <Activity className="size-4.5" /> },
-  { to: '/losses', labelKey: 'nav.losses', icon: <BarChart3 className="size-4.5" /> },
-  { to: '/debt', labelKey: 'nav.debt', icon: <CircleDollarSign className="size-4.5" /> },
   { to: '/works', labelKey: 'nav.plannedWorks', icon: <ClipboardList className="size-4.5" /> },
-  { to: '/passport', labelKey: 'nav.passport', icon: <ScrollText className="size-4.5" /> },
   { to: '/reports', labelKey: 'nav.reports', icon: <FileSpreadsheet className="size-4.5" /> },
   {
     to: '/entry', labelKey: 'nav.entry', icon: <ClipboardCheck className="size-4.5" />,
@@ -157,7 +161,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {efficiency.data.advice && (
               <AdviceCard
                 advice={efficiency.data.advice}
-                onOpen={() => void navigate('/losses')}
+                onOpen={() => void navigate('/energy-balance')}
               />
             )}
           </div>
@@ -307,6 +311,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </footer>
       </div>
+
+      {/*
+        AI yordamchi — qobiqning ichida, lekin `fixed` joylashuvda: sahifa
+        almashganda panel yopilmaydi va suhbat uzilmaydi.
+      */}
+      <AiAssistant />
     </div>
   );
 }
@@ -477,9 +487,9 @@ function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: nu
  * Tavsiya kartasi.
  *
  * DIQQAT: "AI" — bu yerda faqat KO'RINISH nomi. Tagida hech qanday model
- * yo'q: mahallalar normadan oshgani SQL qoidasi bilan aniqlanadi va
- * normativ daraja `TOTAL_LOSS_TARGET_PCT` me'yoridan olinadi. Shu sababli
- * raqamni har doim izohlab berish mumkin.
+ * yo'q: fiderning normadan oshgani SQL qoidasi bilan aniqlanadi va normativ
+ * daraja `TOTAL_LOSS_TARGET_PCT` me'yoridan olinadi. Shu sababli raqamni
+ * har doim izohlab berish mumkin.
  */
 function AdviceCard({
   advice, onOpen,
@@ -512,13 +522,13 @@ function AdviceCard({
         <p className="min-w-0 flex-1 text-[11px] font-medium leading-snug">
           {advice.count > 0 ? (
             <>
-              Yo‘qotishlarni <span className="font-bold">{pct(advice.targetLossPct, 1)}</span> gacha
-              tushirish uchun <span className="font-bold">{advice.count} ta</span> asosiy tavsiya
-              mavjud.
+              Yo‘qotish normadan yuqori:{' '}
+              <span className="font-bold">{pct(advice.currentLossPct, 1)}</span>. Normativ daraja —{' '}
+              <span className="font-bold">{pct(advice.targetLossPct, 1)}</span>.
             </>
           ) : (
             <>
-              Barcha mahallalar normativ darajada
+              Yo‘qotish normativ darajada
               (<span className="font-bold">{pct(advice.targetLossPct, 1)}</span>) — qo‘shimcha
               tavsiya yo‘q.
             </>

@@ -186,17 +186,62 @@ export interface DistanceRow {
   tpOverStandard: number;
 }
 
+/**
+ * Transformator holati.
+ *
+ * `null` = MA'LUMOT YO'Q (pasport kiritilmagan yoki oylik holat hisoboti
+ * kelmagan), 0 emas. Interfeys bunday maydonni «—» deb ko'rsatadi.
+ */
 export interface TpMonitorRow {
   tpId: number;
   code: string;
   mfyId: number;
   mfyName: string;
-  ratedKva: number;
-  loadPct: number;
-  optimalPct: number;
-  condition: TpCondition;
+  ratedKva: number | null;
+  loadPct: number | null;
+  optimalPct: number | null;
+  condition: TpCondition | null;
   avgDistanceM: number | null;
   distanceCompliant: boolean | null;
+}
+
+/**
+ * Fider boshidagi oylik balans — hisoblagich ko'rsatkichi va undan
+ * kelib chiqadigan to'rt raqam.
+ */
+export interface FeederMonthly {
+  periodMonth: string;
+  substation: string | null;
+  inputName: string | null;
+  meterPrev: number;
+  meterCurr: number;
+  meterCoef: number;
+  kwhIn: number;
+  kwhTpSum: number;
+  kwhTechLoss: number;
+  kwhCommercialLoss: number;
+  /** Hisoblangan: TP hisoblagichlarida qayd etilgan energiya ulushi, %. */
+  meteredPct: number;
+  /** Hisoblangan: o'rtacha kunlik iste'mol, kWh. */
+  avgDailyKwh: number;
+  /** Hisoblangan: o'rtacha yuklama, kW. */
+  avgLoadKw: number;
+  /** Davrdagi kunlar soni — yuqoridagi o'rtachalar shundan chiqadi. */
+  days: number;
+}
+
+/** TP kesimidagi oylik hisoblagich va iste'molchi ma'lumoti. */
+export interface TpMonthlyRow {
+  tpId: number;
+  code: string;
+  consumersTotal: number;
+  consumersActive: number;
+  consumersDisconnected: number;
+  meterNo: string | null;
+  meterCoef: number;
+  readingPrev: number;
+  readingCurr: number;
+  kwhMonth: number;
 }
 
 export interface DebtBreakdown {

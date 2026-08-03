@@ -157,29 +157,44 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
  * `apiFetch` tanani JSON qilib o'raydi, `FormData` va rasm oqimi esa xom
  * holida ketishi kerak. Token va `credentials` bir xil qoidada qoladi.
  */
-export async function apiFetchRaw(path: string, options: { method?: string; body?: BodyInit } = {}): Promise<Response> {
-  const headers: Record<string, string> = {};
-  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-
-  let res = await fetch(`${BASE}${path}`, {
-    method: options.method ?? 'GET',
-    headers,
-    credentials: 'include',
-    ...(options.body ? { body: options.body } : {}),
-  });
-
-  if (res.status === 401 && (await refreshAccessToken())) {
-    const retry: Record<string, string> = {};
-    if (accessToken) retry['Authorization'] = `Bearer ${accessToken}`;
-    res = await fetch(`${BASE}${path}`, {
+export async function apiFetchRaw(
+  path: string,
+  options: {
+    method?: string;
+    body?: BodyInit;
+    /** Qo'shimcha sarlavhalar — SSE oqimi uchun `Accept`, JSON tana uchun `Content-Type`. */
+    headers?: Record<string, string>;
+    signal?: AbortSignal;
+  } = {},
+): Promise<Response> {
+  const build = (): RequestInit => {
+    const headers: Record<string, string> = { ...options.headers };
+    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+    return {
       method: options.method ?? 'GET',
-      headers: retry,
+      headers,
       credentials: 'include',
       ...(options.body ? { body: options.body } : {}),
-    });
+      ...(options.signal ? { signal: options.signal } : {}),
+    };
+  };
+
+  let res = await fetch(`${BASE}${path}`, build());
+
+  if (res.status === 401 && (await refreshAccessToken())) {
+    res = await fetch(`${BASE}${path}`, build());
   }
 
-  if (!res.ok) throw new ApiRequestError(res.status, { message: `Fayl so‘rovi xatosi (${res.status})` });
+  if (!res.ok) {
+    // Server sababni JSON da aytgan bo'lsa — o'shani ko'rsatamiz, "xato 503" emas.
+    let payload: Partial<ApiError> = {};
+    try {
+      payload = (await res.json()) as Partial<ApiError>;
+    } catch {
+      payload = { message: `So‘rov xatosi (${res.status})` };
+    }
+    throw new ApiRequestError(res.status, payload);
+  }
   return res;
 }
 

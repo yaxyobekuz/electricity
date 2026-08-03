@@ -78,6 +78,23 @@ export const config = {
     cookieSecure: bool('COOKIE_SECURE', false),
   },
 
+  /*
+   * AI yordamchi — YAGONA tashqi xizmat.
+   *
+   * Kalit berilmasa (`OPENAI_API_KEY` bo'sh) modul BUTUNLAY o'chadi va tizim
+   * avvalgidek to'liq offline ishlaydi. Kalit qo'yilgan taqdirdagina server
+   * OpenAI ga chiqadi; brauzer hech qachon chiqmaydi (CSP `connect-src 'self'`),
+   * shuning uchun kalit klientga tushmaydi.
+   */
+  ai: {
+    apiKey: str('OPENAI_API_KEY', ''),
+    model: str('OPENAI_MODEL', 'gpt-4o-mini'),
+    baseUrl: str('OPENAI_BASE_URL', 'https://api.openai.com/v1').replace(/\/+$/, ''),
+    /** Javob uzunligi chegarasi — uzun esse emas, qisqa yordam kerak. */
+    maxTokens: int('OPENAI_MAX_TOKENS', 700),
+    timeoutMs: int('OPENAI_TIMEOUT_MS', 60_000),
+  },
+
   paths: {
     migrations: resolve(API_ROOT, 'migrations'),
     sql: resolve(API_ROOT, 'src/db/sql'),

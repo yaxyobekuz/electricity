@@ -74,6 +74,13 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return p ? q.efficiency(req.ctx, p) : null;
   });
 
+  /** Butun tizim bo'yicha TP kesimi (fider tanlanmaganda). */
+  app.get('/district/tp-monthly', async (req) => {
+    const { period } = periodQ.parse(req.query);
+    const p = await resolvePeriod(req.ctx, period);
+    return p ? q.tpMonthly(req.ctx, p) : [];
+  });
+
   app.get('/district/tp-monitoring', async (req) => {
     const { period } = periodQ.parse(req.query);
     const { limit } = z.object({ limit: z.coerce.number().int().min(1).max(1000).default(60) })
@@ -82,70 +89,16 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return p ? q.tpMonitoring(req.ctx, p, null, limit) : [];
   });
 
-  app.get('/district/mfy-ranking', async (req) => {
-    const { date } = dateQ.parse(req.query);
-    const { period } = periodQ.parse(req.query);
-    let d = date;
-    if (!d) {
-      // Qisman to'ldirilgan joriy oyning tasodifiy kuni emas — vakillik
-      // qiladigan davrning oxirgi kuni.
-      const p = await resolvePeriod(req.ctx, period);
-      d = (p ? await q.latestDateInPeriod(req.ctx, p) : null) ?? undefined;
-    }
-    return d ? q.mfyRanking(req.ctx, d) : [];
-  });
-
-  app.get('/district/ranking-history', async (req) => {
-    const { period } = periodQ.parse(req.query);
-    const { months } = z.object({ months: z.coerce.number().int().min(3).max(36).default(12) })
-      .parse(req.query);
-    const p = await resolvePeriod(req.ctx, period);
-    return p ? q.rankingHistory(req.ctx, p, months) : [];
-  });
-
-  app.get('/district/technical-loss', async (req) => {
-    const { period } = periodQ.parse(req.query);
-    const p = await resolvePeriod(req.ctx, period);
-    return p ? q.technicalLoss(req.ctx, p) : [];
-  });
-
-  app.get('/district/distance', async (req) => {
-    const { period } = periodQ.parse(req.query);
-    const p = await resolvePeriod(req.ctx, period);
-    return p ? q.distanceAnalytics(req.ctx, p) : [];
-  });
-
-  app.get('/district/debt', async (req) => {
-    const { period } = periodQ.parse(req.query);
-    const p = await resolvePeriod(req.ctx, period);
-    return p ? q.debtBreakdown(req.ctx, p) : null;
-  });
-
-  /** Xarita O'RNIGA: MFY plitkalari — maydon = energiya, rang = normadan farq. */
-  app.get('/district/loss-map', async (req) => {
-    const { period } = periodQ.parse(req.query);
-    const p = await resolvePeriod(req.ctx, period);
-    return p ? q.lossMap(req.ctx, p) : [];
-  });
+  /*
+   * MAHALLALARNI SOLISHTIRUVCHI marshrutlar olib tashlandi (reyting, reyting
+   * tarixi, texnik yo'qotish farqi, masofa analitikasi, yo'qotish xaritasi,
+   * ogohlantirishlar, tuman qarzdorligi va natijadorligi). Tizim qamrovi
+   * bitta fider — solishtiradigan ikkinchi obyekt yo'q.
+   */
 
   app.get('/district/works', async (req) => {
     const { status } = z.object({ status: z.string().optional() }).parse(req.query);
     return q.works(req.ctx, null, status ?? null, 60);
-  });
-
-  /** Deterministik qoidalar asosidagi ogohlantirishlar. LLM ishlatilmaydi. */
-  app.get('/district/alerts', async (req) => {
-    const { period } = periodQ.parse(req.query);
-    const p = await resolvePeriod(req.ctx, period);
-    return p ? q.alerts(req.ctx, p) : [];
-  });
-
-  app.get('/district/results', async (req) => {
-    const { period } = periodQ.parse(req.query);
-    const { months } = z.object({ months: z.coerce.number().int().min(2).max(36).default(12) })
-      .parse(req.query);
-    const p = await resolvePeriod(req.ctx, period);
-    return p ? q.results(req.ctx, null, p, months) : null;
   });
 
   app.get('/district/series', async (req) => {
@@ -275,6 +228,22 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     const { period } = periodQ.parse(req.query);
     const p = await resolvePeriod(req.ctx, period);
     return p ? q.operational(req.ctx, id, p) : null;
+  });
+
+  /** Fider boshidagi oylik balans — hisoblagich ko'rsatkichlari bilan. */
+  app.get('/mfy/:id/feeder-monthly', async (req) => {
+    const { id } = idParam.parse(req.params);
+    const { period } = periodQ.parse(req.query);
+    const p = await resolvePeriod(req.ctx, period);
+    return p ? q.feederMonthly(req.ctx, p, id) : null;
+  });
+
+  /** TP kesimi — transformatorlar sahifasi uchun. */
+  app.get('/mfy/:id/tp-monthly', async (req) => {
+    const { id } = idParam.parse(req.params);
+    const { period } = periodQ.parse(req.query);
+    const p = await resolvePeriod(req.ctx, period);
+    return p ? q.tpMonthly(req.ctx, p, id) : [];
   });
 
   app.get('/mfy/:id/violations', async (req) => {
