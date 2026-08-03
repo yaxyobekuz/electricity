@@ -47,6 +47,71 @@ const DAY_WEIGHTS = Array.from({ length: DAYS }, (_, i) => {
   return dow === 5 || dow === 6 ? 0.92 : 1.03;
 });
 
+interface WorkDef {
+  /** Bajarilgan ish uchun — tugagan sana; reja uchun — rejalashtirilgan tugash. */
+  day: string;
+  type: string;
+  /** TP kodi — ish aynan bitta transformatorga tegishli bo'lsa. */
+  tp: string | null;
+  title: string;
+  qty: number;
+  unit: string;
+  costMln: number;
+  /** Faqat bajarilganda — oyiga tejalgan energiya (NATIJADORLIK paneli). */
+  savingKwh?: number;
+  /** Rejadagi ish uchun bajarilish ulushi. 0 dan katta bo'lsa "Jarayonda". */
+  progressPct?: number;
+}
+
+/**
+ * Ishlar — "Amalga oshirilgan / Rejalashtirilgan ishlar" panellari uchun.
+ *
+ * NIMA UCHUN QO'LDA YOZILADI: Excel faylida ishlar kesimi YO'Q — u faqat
+ * energiya, abonent va qarzdorlikni beradi. Panel esa bo'sh qolmasligi kerak.
+ * Har mahallaga 4 tadan bajarilgan va 4 tadan rejadagi ish yoziladi, ishlar
+ * o'sha mahallaning FAYLDAGI muammosiga bog'lab tanlangan: Go'ravonda 18 ta
+ * aloqasi uzilgan hisoblagich bor — bajarilgan birinchi ish aynan shu.
+ *
+ * TREE_CLEARING ATAYIN YO'Q: bajarilgan daraxt kesish pasportning
+ * "tozalangan km" qatoriga kiradi (provenance.ts), faylda esa bunday son yo'q —
+ * qo'shilsa pasport manbasi bo'lmagan raqamni ko'rsatib qo'yardi.
+ *
+ * Tejalgan energiya oylik YO'QOTISHDAN kelib chiqib berilgan (Sarnaul 15 000,
+ * Go'ravon 14 000 kWh/oy): 4 ta ish yig'indisi yo'qotishning ~⅓ i, ya'ni
+ * fayldagi balansga sig'adi.
+ */
+const WORKS: Record<string, { done: WorkDef[]; plan: WorkDef[] }> = {
+  'MFY-SARNAUL': {
+    done: [
+      { day: '2026-07-24', type: 'TP_MODERNIZATION',   tp: 'TR-0102', title: 'TR-0102 transformator yog‘i va izolyatorlari almashtirildi', qty: 1,   unit: 'ta', costMln: 18.4, savingKwh: 1450 },
+      { day: '2026-07-20', type: 'CABLE_REPLACEMENT',  tp: null,      title: '0.4 kV kabel liniyasi rekonstruksiya qilindi',                qty: 0.8, unit: 'km', costMln: 42.0, savingKwh: 1180 },
+      { day: '2026-07-16', type: 'ILLEGAL_DISCONNECT', tp: null,      title: 'Noqonuniy ulanishlar aniqlanib bartaraf etildi',              qty: 5,   unit: 'ta', costMln: 3.2,  savingKwh: 1320 },
+      { day: '2026-07-11', type: 'SUPPORT_REPLACEMENT', tp: 'TR-0105', title: 'Yaroqsiz tayanch ustunlar almashtirildi',                     qty: 3,   unit: 'ta', costMln: 9.6,  savingKwh: 620 },
+    ],
+    plan: [
+      { day: '2026-08-14', type: 'METER_REPLACEMENT',     tp: null,      title: 'Eskirgan hisoblagichlarni almashtirish',        qty: 20,  unit: 'ta', costMln: 24.0, progressPct: 35 },
+      { day: '2026-08-22', type: 'OVERHEAD_LINE_RENEWAL', tp: null,      title: '10 kV havo liniyasi simlarini yangilash',       qty: 1.6, unit: 'km', costMln: 56.5 },
+      { day: '2026-08-28', type: 'TP_INSTALL',            tp: null,      title: 'Yangi 250 kVA transformator punkti o‘rnatish',  qty: 1,   unit: 'ta', costMln: 132.0 },
+      { day: '2026-09-04', type: 'OTHER',                 tp: 'TR-0103', title: 'Qarzdor abonentlar bilan ishlash reydi',        qty: 0,   unit: 'ta', costMln: 0 },
+    ],
+  },
+
+  'MFY-GORAVON': {
+    done: [
+      { day: '2026-07-26', type: 'METER_REPLACEMENT',     tp: null,      title: 'Aloqasi uzilgan hisoblagichlar almashtirildi',      qty: 18,  unit: 'ta', costMln: 21.6, savingKwh: 1380 },
+      { day: '2026-07-21', type: 'OVERHEAD_LINE_RENEWAL', tp: null,      title: '0.4 kV havo liniyasi simlari yangilandi',           qty: 1.4, unit: 'km', costMln: 48.3, savingKwh: 1240 },
+      { day: '2026-07-17', type: 'TP_MODERNIZATION',      tp: 'TR-0114', title: 'TR-0114 transformator punkti ta’mirlandi',          qty: 1,   unit: 'ta', costMln: 16.8, savingKwh: 970 },
+      { day: '2026-07-12', type: 'ILLEGAL_DISCONNECT',    tp: null,      title: 'Noqonuniy ulanishlar aniqlanib uzildi',             qty: 7,   unit: 'ta', costMln: 4.1,  savingKwh: 710 },
+    ],
+    plan: [
+      { day: '2026-08-12', type: 'SUPPORT_REPLACEMENT', tp: null,      title: 'Yaroqsiz tayanch ustunlarni almashtirish',       qty: 12,  unit: 'ta', costMln: 34.8, progressPct: 45 },
+      { day: '2026-08-20', type: 'CABLE_REPLACEMENT',   tp: null,      title: '0.4 kV kabel liniyasi tortish',                  qty: 1.1, unit: 'km', costMln: 58.2 },
+      { day: '2026-08-27', type: 'TP_INSTALL',          tp: null,      title: 'Qo‘shimcha 160 kVA transformator o‘rnatish',     qty: 1,   unit: 'ta', costMln: 98.5 },
+      { day: '2026-09-05', type: 'OTHER',               tp: 'TR-0210', title: 'Kam iste’mol qiluvchi abonentlarni tekshirish',  qty: 0,   unit: 'ta', costMln: 0 },
+    ],
+  },
+};
+
 interface SheetData {
   activeConsumers: number;
   disconnected: number;
@@ -321,6 +386,46 @@ async function main(): Promise<void> {
             [subIds.get('TP_READING'), t.id, date, maxKw, Number((maxKw * 0.35).toFixed(2))],
           );
         }
+      }
+
+      // ── Ishlar ────────────────────────────────────────────────────────
+      /*
+       * Ish konvertga BOG'LANMAYDI (submission_id = NULL): u oylik hisobot
+       * emas, mahalla bo'ylab davom etadigan faoliyat. Sxema ham shunga
+       * ruxsat beradi — ustun nullable.
+       */
+      const w = WORKS[mfyCode];
+      if (!w) {
+        console.log('  ⚠ ishlar ro‘yxati aniqlanmagan — ishlar yozilmadi');
+      } else {
+        for (const job of w.done) {
+          await c.query(
+            `INSERT INTO fact.work
+               (mfy_id, tp_id, work_type, title_uz, status, planned_start, planned_end,
+                actual_end, progress_pct, quantity, unit, cost_mln, effect_saving_kwh_month)
+             VALUES ($1, (SELECT id FROM ref.tp WHERE code = $2 AND mfy_id = $1),
+                     $3, $4, 'COMPLETED', $5::date - 12, $5::date, $5::date, 100,
+                     $6, $7, $8, $9)`,
+            [mfyId, job.tp, job.type, job.title, job.day, job.qty, job.unit,
+              job.costMln, job.savingKwh ?? 0],
+          );
+        }
+
+        for (const job of w.plan) {
+          // Boshlangan ish "Jarayonda", boshlanmagani "Reja" chipini oladi.
+          const pct = job.progressPct ?? 0;
+          await c.query(
+            `INSERT INTO fact.work
+               (mfy_id, tp_id, work_type, title_uz, status, planned_start, planned_end,
+                progress_pct, quantity, unit, cost_mln)
+             VALUES ($1, (SELECT id FROM ref.tp WHERE code = $2 AND mfy_id = $1),
+                     $3, $4, $5, $6::date - 20, $6::date, $7, $8, $9, $10)`,
+            [mfyId, job.tp, job.type, job.title,
+              pct > 0 ? 'IN_PROGRESS' : 'PLANNED', job.day, pct,
+              job.qty, job.unit, job.costMln],
+          );
+        }
+        console.log(`  ishlar: ${w.done.length} ta bajarilgan, ${w.plan.length} ta rejada`);
       }
     }
 
