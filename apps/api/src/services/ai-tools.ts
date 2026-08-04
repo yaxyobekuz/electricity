@@ -46,7 +46,7 @@ export type ToolOutcome =
   | { kind: 'action'; action: ClientAction; result: unknown };
 
 export interface ClientAction {
-  type: 'navigate' | 'set_period' | 'set_as_of_date' | 'download';
+  type: 'navigate' | 'set_period' | 'set_as_of_date' | 'download' | 'chart';
   payload: Record<string, unknown>;
 }
 
@@ -187,6 +187,30 @@ export const TOOL_SPECS: ToolSpec[] = [
       period: period('Oy; berilmasa joriy davr'),
     }, ['kind']),
 
+  fn('show_chart', 'Ma’lumotni DIAGRAMMA/RASM ko‘rinishida (PNG grafik) ko‘rsatadi. '
+    + 'Foydalanuvchi «grafik», «diagramma» so‘zlarini ishlatganda, biror narsani «rasm» '
+    + 'holida ko‘rishni so‘raganda yoki hisobot vizual holda tushunarliroq bo‘ladigan '
+    + 'bo‘lsa SHU asbobni chaqir.',
+    {
+      kind: {
+        type: 'string',
+        enum: ['energy_trend', 'tp_ranking', 'loss_breakdown', 'loss_forecast'],
+        description: 'Diagramma turi. energy_trend — kirgan/sotilgan energiya dinamikasi '
+          + '(vaqt bo‘yicha); tp_ranking — list_tps asbobidagi bilan bir xil TP reytingi, '
+          + 'lekin rasm shaklida; loss_breakdown — sotilgan/texnologik yo‘qotish/tijoriy '
+          + 'yo‘qotish taqsimoti; loss_forecast — yo‘qotish foizi prognozi.',
+      },
+      period: period('Oy, "YYYY-MM". Faqat energy_trend va loss_breakdown uchun ma’noli; '
+        + 'berilmasa joriy davr'),
+      sort_by: {
+        type: 'string', enum: ['kwh', 'disconnected', 'off_share', 'consumers'],
+        description: 'Faqat tp_ranking uchun. kwh — iste’mol; disconnected — uzilgan '
+          + 'abonentlar soni; off_share — uzilganlar ulushi (%); consumers — abonentlar soni',
+      },
+      limit: int('Faqat tp_ranking uchun, nechta qator (1–20). Standart 10.'),
+      months_ahead: int('Faqat loss_forecast uchun, nechta oy oldinga. Standart 3.'),
+    }, ['kind']),
+
   // ── C. Yozish ─────────────────────────────────────────────────────────────
   fn('create_submission', 'Oylik hisobot uchun QORALAMA ochadi (yoki mavjudini qaytaradi).',
     {
@@ -247,6 +271,7 @@ export const TOOL_LABELS: Record<string, string> = {
   set_period: 'Davr almashtirilmoqda',
   set_as_of_date: 'Sana o’rnatilmoqda',
   download_report: 'Hisobot tayyorlanmoqda',
+  show_chart: 'Diagramma tayyorlanmoqda',
   create_submission: 'Qoralama ochilmoqda',
   save_monthly_return: 'Raqamlar saqlanmoqda',
   submit_submission: 'Hisobot yuborilmoqda',
@@ -502,6 +527,35 @@ export async function runTool(
         kind: 'action',
         action: { type: 'download', payload: { url, ext, kind, period } },
         result: { ok: true, note: 'Fayl foydalanuvchining brauzeriga yuklanmoqda', kind, ext, period },
+      };
+    }
+
+    case 'show_chart': {
+      const kind = asString(args['kind']) ?? '';
+      const allowedKinds = ['energy_trend', 'tp_ranking', 'loss_breakdown', 'loss_forecast'];
+      if (!allowedKinds.includes(kind)) {
+        return denied(`Noma’lum diagramma turi. Mumkin: ${allowedKinds.join(', ')}`);
+      }
+
+      /*
+       * Manzil SERVERDA quriladi — model ixtiyoriy URL bera olmasin, xuddi
+       * `download_report` dagidek. `/api` prefiksi qo'shilmaydi: klient uni
+       * o'zi qo'shadi. Rasmning o'zi bu yerda EMAS — brauzer/bot shu URL ni
+       * chaqirganda serverda tayyorlanadi.
+       */
+      const qs = new URLSearchParams({ period });
+      const sortBy = asString(args['sort_by']);
+      if (sortBy) qs.set('sort_by', sortBy);
+      const limit = asNumber(args['limit']);
+      if (limit !== undefined) qs.set('limit', String(limit));
+      const monthsAhead = asNumber(args['months_ahead']);
+      if (monthsAhead !== undefined) qs.set('months_ahead', String(monthsAhead));
+      const url = `/report/chart/${kind}.png?${qs.toString()}`;
+
+      return {
+        kind: 'action',
+        action: { type: 'chart', payload: { url, kind, period } },
+        result: { ok: true, note: `Diagramma tayyorlandi: ${kind}`, kind },
       };
     }
 

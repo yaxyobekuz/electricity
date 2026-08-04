@@ -64,7 +64,7 @@ export interface AiToolEvent {
  * buyruq sifatida yuboradi.
  */
 export interface AiAction {
-  type: 'navigate' | 'set_period' | 'set_as_of_date' | 'download';
+  type: 'navigate' | 'set_period' | 'set_as_of_date' | 'download' | 'chart';
   payload: Record<string, unknown>;
 }
 

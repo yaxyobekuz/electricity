@@ -55,3 +55,27 @@ export async function sendReportFile(
     return false;
   }
 }
+
+/**
+ * `show_chart` asbobi qaytargan PNG'ni olib, Telegramga RASM sifatida (hujjat
+ * emas) yuboradi — `sendReportFile` bilan bir xil manzil qurish/fetch/xato
+ * naqshi, faqat `sendDocument` o'rniga `sendPhoto` chaqiriladi, shunda chat
+ * ichida diagramma to'g'ridan-to'g'ri ko'rinadi. Rasmlar uchun foydalanuvchiga
+ * ko'rinadigan haqiqiy fayl nomi shart emas — shuning uchun `fileNameFrom` ham
+ * chaqirilmaydi, doim 'chart.png'.
+ */
+export async function sendChartPhoto(
+  api: Api, chatId: number, apiBaseUrl: string, url: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(`${apiBaseUrl}${url}`);
+    if (!res.ok) return false;
+
+    const buf = Buffer.from(await res.arrayBuffer());
+    await api.sendPhoto(chatId, new InputFile(buf, 'chart.png'));
+    return true;
+  } catch {
+    // Tarmoq xatosi — chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
+    return false;
+  }
+}

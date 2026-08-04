@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router';
 
 import robotUrl from '../../assets/robot.png';
 import { type AiAction, type AiMessage, type AiToolEvent, fetchAiStatus, streamAiChat } from '../../lib/ai.ts';
+import { apiUrl } from '../../lib/api.ts';
 import { downloadFile } from '../../lib/download.ts';
 import { useUi } from '../../lib/ui-store.ts';
 
@@ -47,6 +48,8 @@ interface ChatItem extends AiMessage {
   isError?: boolean;
   /** Shu javob davomida bajarilgan amallar — pufak ustida chiplar bo'lib chiqadi. */
   tools?: AiToolEvent[];
+  /** Agent yuborgan diagramma rasmi — alohida pufak sifatida ko'rsatiladi. */
+  imageUrl?: string;
 }
 
 function readStore(): ChatItem[] {
@@ -147,6 +150,23 @@ export function AiAssistant() {
             isError: true,
           }]);
         });
+        break;
+      }
+
+      case 'chart': {
+        const url = String(p['url'] ?? '');
+        if (!url.startsWith('/')) break;
+        /*
+         * Rasm hozir oqib kelayotgan matn pufagiga QO'SHILMAYDI — o'sha
+         * pufak hali `onDelta` bilan to'ldirilmoqda, amal esa oqim
+         * o'rtasida kelishi mumkin. Shuning uchun YANGI xabar sifatida
+         * qo'shiladi, xuddi `download` xato holatidagi kabi.
+         */
+        setItems((prev) => [...prev, {
+          role: 'assistant',
+          content: '',
+          imageUrl: apiUrl(url),
+        }]);
         break;
       }
     }
@@ -329,6 +349,7 @@ export function AiAssistant() {
               items.map((m, i) => (
                 <Bubble
                   key={i}
+                  imageUrl={m.imageUrl}
                   isError={m.isError ?? false}
                   isTyping={busy && i === items.length - 1 && m.content === ''
                     && (m.tools?.length ?? 0) === 0}
@@ -450,13 +471,14 @@ function Greeting({ onPick }: { onPick: (text: string) => void }) {
  * kutubxonasi shu qadar kichik matn uchun ortiqcha.
  */
 function Bubble({
-  role, text, isError, isTyping, tools,
+  role, text, isError, isTyping, tools, imageUrl,
 }: {
   role: 'user' | 'assistant';
   text: string;
   isError: boolean;
   isTyping: boolean;
   tools: AiToolEvent[];
+  imageUrl?: string;
 }) {
   const isUser = role === 'user';
 
@@ -469,6 +491,22 @@ function Bubble({
       {tools.length > 0 && (
         <div className="flex max-w-[90%] flex-col gap-1">
           {tools.map((t, i) => <ToolChip key={`${t.name}-${i}`} tool={t} />)}
+        </div>
+      )}
+
+      {/*
+        Diagramma — matn pufagidan ALOHIDA, chunki o'z xabari sifatida
+        keladi (`runAction` dagi 'chart' — qarang yuqorida). Rasm uchun
+        ichki bo'shliq matnnikidan kamroq — chekka bilan tirqish qolmasin.
+      */}
+      {imageUrl && (
+        <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-bl-md bg-surface p-1 shadow-surface">
+          <img
+            alt="Diagramma"
+            className="max-h-64 w-full rounded-xl object-contain"
+            loading="lazy"
+            src={imageUrl}
+          />
         </div>
       )}
 

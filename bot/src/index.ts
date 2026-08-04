@@ -17,7 +17,7 @@
 import { Bot } from 'grammy';
 
 import { type ChatAction, type ChatMessage, streamChat } from './chat.ts';
-import { sendReportFile } from './download.ts';
+import { sendChartPhoto, sendReportFile } from './download.ts';
 import { env } from './env.ts';
 
 // `OPENAI_API_KEY` bo'shligida `aiEnabled()` qanday o'chsa (`services/ai.ts`),
@@ -78,13 +78,24 @@ bot.on('message:text', async (ctx) => {
 
   const handleAction = (action: ChatAction): void => {
     // navigate/set_period/set_as_of_date — brauzersiz ma'nosiz, e'tiborsiz qoldiriladi.
-    if (action.type !== 'download') return;
-    const url = typeof action.payload['url'] === 'string' ? action.payload['url'] : null;
-    if (!url) return;
+    if (action.type === 'download') {
+      const url = typeof action.payload['url'] === 'string' ? action.payload['url'] : null;
+      if (!url) return;
 
-    void sendReportFile(ctx.api, chatId, env.apiBaseUrl, url).then((ok) => {
-      if (!ok) void ctx.reply('Hisobot faylini yuklab bo‘lmadi.');
-    });
+      void sendReportFile(ctx.api, chatId, env.apiBaseUrl, url).then((ok) => {
+        if (!ok) void ctx.reply('Hisobot faylini yuklab bo‘lmadi.');
+      });
+      return;
+    }
+
+    if (action.type === 'chart') {
+      const url = typeof action.payload['url'] === 'string' ? action.payload['url'] : null;
+      if (!url) return;
+
+      void sendChartPhoto(ctx.api, chatId, env.apiBaseUrl, url).then((ok) => {
+        if (!ok) void ctx.reply('Diagrammani yuborib bo‘lmadi.');
+      });
+    }
   };
 
   await streamChat(env.apiBaseUrl, histories.get(chatId) ?? [], {
