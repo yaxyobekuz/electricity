@@ -24,7 +24,10 @@ import { DOMAINS, monthlyReturnSchema } from '@beap/shared';
 import type { AppContext } from '../db/pool.ts';
 import * as q from '../db/queries/dashboard.ts';
 import * as entry from '../db/queries/entry.ts';
+import * as passport from '../db/queries/passport.ts';
 import { refreshAggregates } from './aggregates.ts';
+import * as alerts from './alerts.ts';
+import * as analytics from './analytics.ts';
 
 export interface ToolContext {
   ctx: AppContext;
@@ -121,6 +124,35 @@ export const TOOL_SPECS: ToolSpec[] = [
   fn('list_review_queue', 'Tasdiqlash navbati: yuborilgan, lekin hali tasdiqlanmagan '
     + 'hisobotlar. Tizimga kirish talab qilinadi.'),
 
+  fn('get_completeness', 'Berilgan OY uchun qaysi MFY/hisobot turi hali kiritilmagani '
+    + 'yoki tasdiqlanmaganini ko‘rsatadi.',
+    { period: period('Oy; berilmasa joriy davr') }),
+
+  fn('reconcile_passport', 'Fider pasportidagi (muzlatilgan) raqamlar bilan joriy '
+    + 'hisoblangan yig‘indi orasidagi farqni tekshiradi.',
+    { period: period('Oy; berilmasa joriy davr') }),
+
+  fn('search_debtor', 'Qarzdorni ism bo‘yicha qidiradi (aniq yozilmagan bo‘lsa ham topadi).',
+    {
+      query: str('Qarzdor ismi yoki ismning bir qismi'),
+      limit: int('Nechta natija kerak. Standart 10.'),
+    }, ['query']),
+
+  fn('get_anomalies', 'Kunlik ko‘rsatkichlarda va TP holatida g‘ayrioddiy og‘ishlarni '
+    + 'aniqlaydi (yo‘qotish sakrashi, ortiqcha yuklama).',
+    { period: period('Oy; berilmasa joriy davr') }),
+
+  fn('forecast_losses', 'Kelgusi oylar uchun yo‘qotish foizi prognozini beradi.',
+    { months_ahead: int('Nechta oy oldinga; standart 3') }),
+
+  fn('get_alerts', 'Tizimda hozir diqqat talab qiladigan barcha muammolar ro‘yxati: '
+    + 'qoidabuzarlik, muddati o‘tgan ish, kiritilmagan ma’lumot, pasport nomuvofiqligi, '
+    + 'anomaliya.'),
+
+  fn('validate_submission', 'Qoralamani YUBORMASDAN oldin xatolarni tekshiradi va '
+    + 'tushuntiradi.',
+    { id: int('Qoralama raqami') }, ['id']),
+
   // ── B. Interfeys amallari ─────────────────────────────────────────────────
   fn('navigate', 'Foydalanuvchini panelning boshqa sahifasiga OLIB O‘TADI. '
     + 'Sahifani aytish o‘rniga shu asbobni chaqir.',
@@ -204,6 +236,13 @@ export const TOOL_LABELS: Record<string, string> = {
   get_work: 'Dalolatnoma ochilmoqda',
   get_violations: 'Qoidabuzarliklar olinmoqda',
   list_review_queue: 'Tasdiqlash navbati olinmoqda',
+  get_completeness: 'To’liqlik tekshirilmoqda',
+  reconcile_passport: 'Pasport solishtirilmoqda',
+  search_debtor: 'Qarzdor qidirilmoqda',
+  get_anomalies: 'Anomaliyalar qidirilmoqda',
+  forecast_losses: 'Prognoz hisoblanmoqda',
+  get_alerts: 'Ogohlantirishlar olinmoqda',
+  validate_submission: 'Qoralama tekshirilmoqda',
   navigate: 'Sahifa ochilmoqda',
   set_period: 'Davr almashtirilmoqda',
   set_as_of_date: 'Sana o’rnatilmoqda',
@@ -362,6 +401,50 @@ export async function runTool(
       }
       const rows = await entry.reviewQueue(tc.ctx);
       return { kind: 'data', result: { count: rows.length, rows } };
+    }
+
+    case 'get_completeness': {
+      const rows = await entry.completeness(tc.ctx, period);
+      const missing = rows.filter((r) => r.status === 'missing');
+      return { kind: 'data', result: { period, total: rows.length, missingCount: missing.length, rows } };
+    }
+
+    case 'reconcile_passport': {
+      const rows = await passport.reconcile(tc.ctx, period);
+      const mismatches = rows.filter((r) => !r.ok);
+      return { kind: 'data', result: { period, mismatchCount: mismatches.length, rows } };
+    }
+
+    case 'search_debtor': {
+      const text = asString(args['query']);
+      if (!text) return denied('Qidiruv matni kerak');
+      const limit = Math.min(Math.max(asNumber(args['limit']) ?? 10, 1), 50);
+      const rows = await q.searchDebtor(tc.ctx, text, limit);
+      return { kind: 'data', result: { count: rows.length, rows } };
+    }
+
+    case 'get_anomalies': {
+      const report = await analytics.detectAnomalies(tc.ctx, tc.feederId, period);
+      return { kind: 'data', result: report };
+    }
+
+    case 'forecast_losses': {
+      const monthsAhead = Math.min(Math.max(asNumber(args['months_ahead']) ?? 3, 1), 12);
+      const report = await analytics.forecastLosses(tc.ctx, tc.feederId, monthsAhead);
+      return { kind: 'data', result: report };
+    }
+
+    case 'get_alerts': {
+      const report = await alerts.computeAlerts(tc.ctx, tc.feederId, period);
+      return { kind: 'data', result: report };
+    }
+
+    case 'validate_submission': {
+      const id = asNumber(args['id']);
+      if (id === undefined) return denied('Qoralama raqami kerak');
+      // Faqat tekshiradi — holatni o'zgartirmaydi, `submit_submission` ichida shu chaqiriladi.
+      const report = await entry.validateSubmission(tc.ctx, id);
+      return { kind: 'data', result: report };
     }
 
     // ── B. Interfeys ────────────────────────────────────────────────────────

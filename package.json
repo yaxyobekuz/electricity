@@ -9,12 +9,15 @@
   },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "bot"
   ],
   "scripts": {
     "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev --workspace @beap/api",
     "dev:web": "npm run dev --workspace @beap/web",
+    "dev:bot": "npm run dev --workspace @beap/bot",
+    "start:bot": "npm run start --workspace @beap/bot",
     "build": "npm run build --workspace @beap/shared && npm run build --workspace @beap/api && npm run build --workspace @beap/web",
     "migrate": "npm run migrate --workspace @beap/api",
     "migrate:reset": "npm run migrate:reset --workspace @beap/api",

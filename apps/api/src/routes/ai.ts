@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { config } from '../config.ts';
 import type { ToolContext } from '../services/ai-tools.ts';
 import { AiError, aiEnabled, buildSnapshot, runAgent } from '../services/ai.ts';
+import { getCachedDigest } from '../services/alerts.ts';
 
 const chatBody = z.object({
   messages: z.array(z.object({
@@ -41,6 +42,19 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
     enabled: aiEnabled(),
     model: aiEnabled() ? config.ai.model : null,
   }));
+
+  /**
+   * Kunlik ogohlantirish digest'i — `server.ts` dagi cron har kuni 08:00 da
+   * hisoblab keshlaydi, bu yerda faqat o'qiladi (qayta hisoblanmaydi).
+   * Server hali birinchi marta 08:00 ga yetmagan bo'lsa (masalan yangi
+   * ishga tushgan) — `/status` dagi "enabled: false" uslubida
+   * `available: false` qaytadi, xato emas.
+   */
+  app.get('/alerts', async () => {
+    const digest = getCachedDigest();
+    if (!digest) return { available: false };
+    return { available: true, ...digest };
+  });
 
   app.post('/chat', {
     config: { rateLimit: { max: 20, timeWindow: '1 minute' } },

@@ -6,7 +6,7 @@
  * Kontent maydoni yumshoq ko'k fonda, kartalar soya bilan "suzadi".
  */
 import { dateLabel, dateTimeLabel, pct } from '@beap/shared';
-import { Button, Calendar, Chip, Dropdown, Popover, Tooltip, cn } from '@heroui/react';
+import { Badge, Button, Calendar, Chip, Dropdown, Popover, Tooltip, cn } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import {
   Activity, ArrowDown, ArrowUp, BarChart3, Bell, Building2, CalendarDays,
@@ -22,7 +22,7 @@ import robotUrl from '../../assets/robot.png';
 import { AiAssistant } from '../ai/AiAssistant.tsx';
 import { LANGUAGES, setLanguage, type LanguageCode } from '../../i18n/index.ts';
 import { apiUrl } from '../../lib/api.ts';
-import { useBootstrap, useEfficiency } from '../../lib/queries.ts';
+import { useAlerts, useBootstrap, useEfficiency } from '../../lib/queries.ts';
 import { useUi } from '../../lib/ui-store.ts';
 
 interface NavItem {
@@ -202,6 +202,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             {boot?.dataRange.maxDate && boot.dataRange.minDate && (
               <AsOfDatePicker maxDate={boot.dataRange.maxDate} minDate={boot.dataRange.minDate} />
             )}
+
+            {/* Ogohlantirishlar qo'ng'irog'i — kesh hali tayyor bo'lmasa o'zi yashiradi */}
+            <AlertsBell />
 
             {/* Til */}
             <Dropdown>
@@ -395,6 +398,80 @@ function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string
             >
               Eng so‘nggi kun ({dateLabel(maxDate)})
             </Button>
+          )}
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
+  );
+}
+
+/**
+ * Ogohlantirishlar qo'ng'irog'i — yuqori chiziqdagi ixcham belgi.
+ *
+ * Kunlik kesh cron orqali 08:00 da hisoblanadi (`services/alerts.ts`). Server
+ * hali birinchi marta hisoblamagan bo'lsa `GET /ai/alerts` `{ available:
+ * false }` qaytaradi — bu XATO EMAS, shuning uchun bu holatda belgi shunchaki
+ * ko'rsatilmaydi, xato holati chiqarilmaydi.
+ */
+function AlertsBell() {
+  const { data } = useAlerts();
+  const [open, setOpen] = useState(false);
+
+  if (!data?.available) return null;
+
+  const { items, summaryText } = data;
+
+  return (
+    <Popover isOpen={open} onOpenChange={setOpen}>
+      {/*
+        Tugma `Popover` ning BEVOSITA farzandi (`AsOfDatePicker` dagi kabi) —
+        HeroUI uni tetik deb oladi. Badge Tugma ICHIDA joylashadi va
+        `relative` shu yerda beriladi — `Badge.Anchor` o'ramisiz ham
+        `top-right` joylashuvi to'g'ri ishlaydi.
+      */}
+      <Button
+        isIconOnly
+        aria-label={`Ogohlantirishlar${items.length > 0 ? ` (${items.length} ta)` : ''}`}
+        className="relative rounded-lg"
+        size="sm"
+        variant="ghost"
+      >
+        <Bell className="size-4" />
+        {items.length > 0 && (
+          <Badge color="danger" size="sm">
+            {items.length > 9 ? '9+' : items.length}
+          </Badge>
+        )}
+      </Button>
+
+      <Popover.Content className="w-80">
+        <Popover.Dialog className="p-0">
+          <Popover.Heading className="px-3.5 pb-2 pt-3 text-[12.5px]">
+            Ogohlantirishlar
+          </Popover.Heading>
+
+          {items.length === 0 ? (
+            <p className="px-3.5 pb-3.5 text-[11.5px] leading-snug text-muted">{summaryText}</p>
+          ) : (
+            <ul className="scroll-y flex max-h-80 flex-col gap-1 px-2 pb-2.5">
+              {items.map((it, i) => (
+                <li
+                  key={`${it.code}-${i}`}
+                  className="flex items-start gap-2 rounded-lg px-1.5 py-1.5 text-[11.5px] leading-snug hover:bg-background"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'mt-1 size-1.5 shrink-0 rounded-full',
+                      it.severity === 'high' && 'bg-danger',
+                      it.severity === 'medium' && 'bg-warning',
+                      it.severity === 'low' && 'bg-muted',
+                    )}
+                  />
+                  <span className="min-w-0 flex-1">{it.messageUz}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </Popover.Dialog>
       </Popover.Content>

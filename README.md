@@ -8,8 +8,12 @@ tarmoq holatini kuzatish tizimi. Ikki qismdan iborat:
 | **Boshqaruv paneli** | Hokimiyat | Tuman va MFY kesimida ko'rsatkichlar, reyting, ogohlantirishlar |
 | **Ma'lumot kiritish paneli** | Elektroset xodimlari | Kunlik va oylik ma'lumotlarni kiritish, tekshirish, tasdiqlatish |
 
-> **Tizim to'liq OFFLINE ishlaydi.** Xarita, CDN, tashqi shrift, telemetriya va
-> sun'iy intellekt xizmatlari ishlatilmaydi. Ma'lumot ichki tarmoqdan chiqmaydi.
+> **Tizim ODATIY holatda TO'LIQ OFFLINE ishlaydi.** Xarita, CDN, tashqi shrift
+> va telemetriya umuman ishlatilmaydi, ma'lumot ichki tarmoqdan chiqmaydi.
+> Ikkita ATAYLAB qo'shilgan, IXTIYORIY va faqat serverda ishlaydigan istisno
+> bor — AI yordamchi (`OPENAI_API_KEY`) va Telegram bot (`TELEGRAM_BOT_TOKEN`)
+> — kalit/token bo'sh bo'lsa ikkalasi ham butunlay o'chiq turadi, brauzer esa
+> hech qachon o'zi tashqariga so'rov yubormaydi (`CSP connect-src 'self'`).
 > Bu va'da `npm run verify:offline` bilan mashina tomonidan tekshiriladi.
 
 ---
@@ -117,12 +121,20 @@ O'rnida **`@nivo/treemap`**: plitka **maydoni** = tarmoqqa kirgan energiya,
 plitka **rangi** = amaldagi yo'qotish % − norma %. Xarita bir vaqtda hajm va
 darajani ko'rsata olmaydi — treemap ko'rsatadi.
 
-### «AI Agent» paneli o'rniga qoidalar
+### «AI Agent» paneli — keyin ixtiyoriy istisno sifatida qo'shildi
 
-Mijoz AI hozircha kerak emas dedi. Uning o'rnida **«Diqqat talab qiladigan
-holatlar»** paneli — deterministik SQL qoidalari (yo'qotish normadan oshgan,
-TP ortiqcha yuklangan, MFY ma'lumot yubormagan, qarzdorlik keskin o'sgan).
-LLM ham, tashqi xizmat ham yo'q. Keyinchalik qo'shish uchun joy tayyor.
+Boshida mijoz AI hozircha kerak emas dedi. Uning o'rnida **«Diqqat talab
+qiladigan holatlar»** paneli qurildi — deterministik SQL qoidalari (yo'qotish
+normadan oshgan, TP ortiqcha yuklangan, MFY ma'lumot yubormagan, qarzdorlik
+keskin o'sgan). Bu qoidalar hozir ham ishlaydi, LLM'siz.
+
+Keyinroq **ixtiyoriy** AI yordamchi qo'shildi: `OPENAI_API_KEY` bo'sh bo'lsa
+xususiyat butunlay o'chiq turadi (panelda tugma ham chiqmaydi) va tizim
+avvalgidek to'liq offline ishlaydi. Xuddi shu tamoyilda **ixtiyoriy** Telegram
+bot ham bor (`TELEGRAM_BOT_TOKEN`) — foydalanuvchilar bir xil yordamchidan
+Telegram orqali savol so'rashi va kunlik ogohlantirish digestini olishi
+mumkin, veb panelga qo'shimcha yoki o'rniga. Ikkalasi ham faqat serverda
+ishlaydi; kalit/token berilmasa — tashqi xizmatga birorta so'rov ketmaydi.
 
 ---
 
@@ -297,7 +309,8 @@ tasdiqlanishi kerak:
 ## Keyingi bosqichlar
 
 Tayyor: DB + API + dashboardlar + pasport + kiritish paneli (energiya balansi
-va oylik hisobot) + tasdiqlash oqimi + auth/RBAC.
+va oylik hisobot) + tasdiqlash oqimi + auth/RBAC + AI yordamchi va Telegram
+bot (ikkalasi ham ixtiyoriy, faqat serverda).
 
 Qolgan:
 

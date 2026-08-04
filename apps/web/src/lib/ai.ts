@@ -23,6 +23,31 @@ export async function fetchAiStatus(signal?: AbortSignal): Promise<AiStatus> {
   return (await res.json()) as AiStatus;
 }
 
+/** `services/alerts.ts` dagi `AlertItem` bilan bir xil shakl. */
+export interface AlertItem {
+  severity: 'high' | 'medium' | 'low';
+  code: string;
+  messageUz: string;
+  refType?: string;
+  refId?: string | number;
+}
+
+/**
+ * `routes/ai.ts` GET `/alerts` javobi.
+ *
+ * Kunlik kesh hali hisoblanmagan bo'lsa (server yangi ishga tushgan, soat
+ * 08:00 ga yetmagan) `available: false` qaytadi — bu XATO EMAS, oddiy "hali
+ * tayyor emas" holati, xuddi `/status` dagi "enabled: false" kabi.
+ */
+export type AlertsDigest =
+  | { available: false }
+  | { available: true; period: string; generatedAt: string; items: AlertItem[]; summaryText: string };
+
+export async function fetchAlerts(signal?: AbortSignal): Promise<AlertsDigest> {
+  const res = await apiFetchRaw('/ai/alerts', signal ? { signal } : {});
+  return (await res.json()) as AlertsDigest;
+}
+
 /** Agent bajarayotgan amal — chatda ko'rsatiladi. */
 export interface AiToolEvent {
   name: string;

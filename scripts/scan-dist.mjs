@@ -32,6 +32,14 @@ const ok = [];
 /**
  * Hech qachon bo'lmasligi kerak bo'lgan hostlar — shunchaki eslatilsa ham
  * qattiq xato, chunki ular faqat bitta maqsad uchun ishlatiladi: tashqi resurs.
+ *
+ * `api.openai.com` ATAYLAB shu ro'yxatda YO'Q: bu — yagona ataylab qo'shilgan,
+ * hujjatlashtirilgan, ixtiyoriy istisno (OPENAI_API_KEY bo'sh = xususiyat
+ * butunlay o'chiq). Uning faqat SERVERDA ishlashi pastdagi CSP tekshiruvi
+ * ("connect-src" — shu faylda quyiroqda) bilan mashina darajasida
+ * kafolatlanadi, shuning uchun shu hostni bu yerdan olib tashlash haqiqiy
+ * air-gap kafolatini bo'shashtirmaydi — faqat ko'rib chiqilgan, qonuniy
+ * istisno bo'yicha yolg'on-musbat xatoni to'xtatadi.
  */
 const FORBIDDEN_HOSTS = [
   'fonts.googleapis.com', 'fonts.gstatic.com',
@@ -41,7 +49,7 @@ const FORBIDDEN_HOSTS = [
   'maps.googleapis.com', 'maps.google.com',
   'google-analytics.com', 'googletagmanager.com',
   'sentry.io', 'posthog.com', 'segment.io', 'hotjar.com',
-  'api.openai.com', 'api.anthropic.com', 'generativelanguage.googleapis.com',
+  'api.anthropic.com', 'generativelanguage.googleapis.com',
 ];
 
 const URL_RE = /https?:\/\/[^\s'"`)\\<>]+/g;

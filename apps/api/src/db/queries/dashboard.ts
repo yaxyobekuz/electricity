@@ -688,6 +688,38 @@ export async function debtBreakdown(
   };
 }
 
+/**
+ * Qarzdorni ISM bo'yicha loyqa qidirish — AI yordamchining "TP kodi emas,
+ * odam nomi" so'rovlari uchun.
+ *
+ * ILIKE va `similarity()` BIRGA ishlatiladi: foydalanuvchi ismning bir
+ * qismini aniq yozgan bo'lsa ILIKE uni albatta topadi (masalan familiya
+ * boshi), imlo xatosi yoki so'z tartibi boshqacha bo'lsa esa trigram
+ * o'xshashligi yordam beradi. `dt_name_trgm` indeksi ikkalasini ham
+ * tezlashtiradi — yangi indeks yaratilmaydi, mavjudi ishlatiladi.
+ *
+ * Davr bo'yicha CHEKLANMAYDI: qidiruv "bu odam qachondir qarzdorlar
+ * ro'yxatida bo'lganmi" degan savolga javob beradi, faqat joriy oyga emas.
+ */
+export async function searchDebtor(
+  ctx: AppContext, queryText: string, limit: number,
+): Promise<DebtBreakdown['topDebtors']> {
+  const rows = await query<{
+    rank: number; debtor_name: string; category: string; amount_mln: number; mfy_name: string;
+  }>(`SELECT d.rank, d.debtor_name, d.category, d.amount_mln, m.name_uz AS mfy_name
+      FROM fact.debt_top_entry d
+      JOIN ref.mfy m ON m.id = d.mfy_id
+      WHERE d.debtor_name ILIKE '%' || $1 || '%' OR similarity(d.debtor_name, $1) > 0.25
+      ORDER BY similarity(d.debtor_name, $1) DESC
+      LIMIT $2`, [queryText, limit], ctx);
+
+  return rows.map((d, i) => ({
+    rank: i + 1, debtorName: d.debtor_name,
+    category: d.category as DebtBreakdown['topDebtors'][number]['category'],
+    amountMln: Number(d.amount_mln), mfyName: d.mfy_name,
+  }));
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Yo'qotish xaritasi (treemap) — XARITA EMAS, geo ma'lumot ishlatilmaydi
 // ═══════════════════════════════════════════════════════════════════════════

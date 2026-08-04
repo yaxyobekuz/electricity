@@ -91,8 +91,22 @@ export const config = {
     model: str('OPENAI_MODEL', 'gpt-4o-mini'),
     baseUrl: str('OPENAI_BASE_URL', 'https://api.openai.com/v1').replace(/\/+$/, ''),
     /** Javob uzunligi chegarasi — uzun esse emas, qisqa yordam kerak. */
-    maxTokens: int('OPENAI_MAX_TOKENS', 700),
+    maxTokens: int('OPENAI_MAX_TOKENS', 1200),
     timeoutMs: int('OPENAI_TIMEOUT_MS', 60_000),
+  },
+
+  /*
+   * Telegram — kunlik ogohlantirish push'i uchun (server.ts dagi cron).
+   *
+   * Token bo'sh bo'lsa xususiyat BUTUNLAY o'chgan holatda qoladi — cron
+   * ogohlantirishlarni hisoblab kesh'da saqlaydi, lekin Telegram'ga
+   * yubormaydi. Bu YAGONA bot/ ish maydonidagi mustaqil Telegram botdan
+   * ALOHIDA: o'sha bot o'z env o'zgaruvchilarini o'zi to'g'ridan-to'g'ri
+   * o'qiydi, bu joydagi sozlamalarga bog'liq emas.
+   */
+  telegram: {
+    botToken: str('TELEGRAM_BOT_TOKEN', ''),
+    alertChatId: str('TELEGRAM_ALERT_CHAT_ID', ''),
   },
 
   paths: {

@@ -13,6 +13,7 @@ import type {
 } from '@beap/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { fetchAlerts } from './ai.ts';
 import { api, apiFetchRaw, qs } from './api.ts';
 
 export const keys = {
@@ -37,6 +38,23 @@ export function useBootstrap() {
     queryKey: keys.bootstrap,
     queryFn: ({ signal }) => api.get<Bootstrap>('/ref/bootstrap', signal),
     staleTime: 10 * 60_000,
+  });
+}
+
+/**
+ * Kunlik ogohlantirish digest'i — yuqori chiziqdagi qo'ng'iroq belgisi uchun.
+ *
+ * Server tarafida kesh cron orqali kuniga bir marta yangilanadi, shuning
+ * uchun mijozda ham tez-tez so'rashning hojati yo'q: 5 daqiqalik
+ * `refetchInterval` shunchaki sahifa ochiq turgan paytda yangi kun
+ * boshlangani (yangi kesh hisoblangani) sezilishi uchun yetarli.
+ */
+export function useAlerts() {
+  return useQuery({
+    queryKey: ['ai', 'alerts'] as const,
+    queryFn: ({ signal }) => fetchAlerts(signal),
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
   });
 }
 

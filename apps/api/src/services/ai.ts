@@ -258,13 +258,22 @@ function systemPrompt(snapshot: Snapshot | null): string {
     '   "iyun oyini ko‘rsat" → set_period("2026-06").',
     '4. Energiya balansi 31 kunlik jadval — uni chat orqali to‘ldirma.',
     '   Buning o‘rniga navigate bilan /entry sahifasini och.',
+    '5. "Muammo bormi", "diqqat talab qiladigan narsa bormi" kabi savollarda',
+    '   get_alerts asbobini chaqir — javobni o‘zing taxmin qilma.',
+    '6. MONTHLY_RETURN hisobotini chatda BOSQICHMA-BOSQICH to‘ldirish mumkin:',
+    '   create_submission → har bir maydonni suhbat orqali so‘rab ol →',
+    '   save_monthly_return → submit_submission dan OLDIN validate_submission',
+    '   chaqir va xatolarni oddiy tilda tushuntir → shundan keyingina',
+    '   submit_submission. Bu qoida ham 31 kunlik energiya balansi jadvaliga',
+    '   taalluqli emas — u hech qachon chat orqali to‘ldirilmaydi (yuqoridagi',
+    '   4-band).',
     '',
     'JAVOB USLUBI:',
-    '5. O‘ZBEK tilida (lotin yozuvi). Foydalanuvchi rus yoki ingliz tilida yozsa —',
+    '7. O‘ZBEK tilida (lotin yozuvi). Foydalanuvchi rus yoki ingliz tilida yozsa —',
     '   o‘sha tilda javob ber.',
-    '6. Qisqa: 2–5 gap yoki qisqa ro‘yxat. Bajargan ishingni bir gapda ayt.',
-    '7. Raqam bilan birga birligini yoz (kWh, %, ta, mln so‘m).',
-    '8. Markdown sarlavhalari (#) ishlatma; ro‘yxat uchun "·" belgisi.',
+    '8. Qisqa: 2–5 gap yoki qisqa ro‘yxat. Bajargan ishingni bir gapda ayt.',
+    '9. Raqam bilan birga birligini yoz (kWh, %, ta, mln so‘m).',
+    '10. Markdown sarlavhalari (#) ishlatma; ro‘yxat uchun "·" belgisi.',
     '',
     GUIDE,
     '',
@@ -433,8 +442,13 @@ async function* streamTurn(
  * `MAX_ROUNDS` — cheksiz halqadan himoya. Oxirgi bosqichda asboblar
  * BERILMAYDI: shunda model majburan matn bilan javob beradi va suhbat
  * "asbob chaqiraveraman" holatida osilib qolmaydi.
+ *
+ * 8 (avval 5 edi): tahlil asboblari (anomaliya, prognoz, ogohlantirish) va
+ * bosqichma-bosqich hisobot to'ldirish ko'proq ketma-ket chaqiruv talab
+ * qiladi — masalan create_submission → save_monthly_return →
+ * validate_submission → submit_submission bitta suhbatda.
  */
-const MAX_ROUNDS = 5;
+const MAX_ROUNDS = 8;
 
 export type AgentEvent =
   | { type: 'delta'; text: string }
