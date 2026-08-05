@@ -7,7 +7,8 @@
  */
 import {
   DOMAINS, createSubmissionSchema, energyBalancePatchSchema,
-  monthlyReturnSchema, reviewActionSchema,
+  monthlyReturnSchema, networkDefectPatchSchema, reviewActionSchema,
+  tpStatusPatchSchema,
 } from '@beap/shared';
 import type { Domain } from '@beap/shared';
 import type { FastifyPluginAsync } from 'fastify';
@@ -54,7 +55,11 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
         ? e.energyBalanceRows(req.ctx, id)
         : sub.domain === 'MONTHLY_RETURN'
           ? e.monthlyReturnRow(req.ctx, id)
-          : Promise.resolve(null),
+          : sub.domain === 'TP_STATUS'
+            ? e.tpStatusRows(req.ctx, id)
+            : sub.domain === 'NETWORK_DEFECT'
+              ? e.networkDefectRows(req.ctx, id)
+              : Promise.resolve(null),
     ]);
 
     return { submission: sub, validation, data };
@@ -95,6 +100,36 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
     await e.saveMonthlyReturn(req.ctx, id, body);
     const validation = await e.validateSubmission(req.ctx, id);
     return { saved: 1, validation, savedAt: new Date().toISOString() };
+  });
+
+  app.patch('/submission/:id/tp-status', async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const body = tpStatusPatchSchema.parse(req.body);
+
+    const sub = await e.getSubmission(req.ctx, id);
+    if (!sub) return reply.code(404).send({ error: 'not_found', message: 'Konvert topilmadi' });
+    if (!app.assertMfyWrite(req, sub.scopeId)) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
+    }
+
+    const saved = await e.saveTpStatus(req.ctx, id, body.rows);
+    const validation = await e.validateSubmission(req.ctx, id);
+    return { saved, validation, savedAt: new Date().toISOString() };
+  });
+
+  app.patch('/submission/:id/network-defect', async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const body = networkDefectPatchSchema.parse(req.body);
+
+    const sub = await e.getSubmission(req.ctx, id);
+    if (!sub) return reply.code(404).send({ error: 'not_found', message: 'Konvert topilmadi' });
+    if (!app.assertMfyWrite(req, sub.scopeId)) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
+    }
+
+    const saved = await e.saveNetworkDefect(req.ctx, id, body.rows);
+    const validation = await e.validateSubmission(req.ctx, id);
+    return { saved, validation, savedAt: new Date().toISOString() };
   });
 
   // ── Tekshirish (dry-run) ────────────────────────────────────────────────

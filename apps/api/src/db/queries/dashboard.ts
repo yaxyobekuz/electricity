@@ -8,11 +8,12 @@ import type {
   CapacityInfo, ConsumerBreakdown, DebtBreakdown, EfficiencyBreakdown,
   EnergyBalanceNode, FeederMonthly, KpiTile, LossMapCell, LossStructure,
   OperationalMetrics, RagStatus, ResultsSummary, TechnicalLossRow, TimeSeriesPoint,
-  TpMonitorRow, TpMonthlyRow, ViolationActRow, ViolationSummary, WorkDetail, WorkRow,
+  TpMonitorRow, TpMonthlyRow, ViolationActRow, ViolationSummary, Work, WorkDetail,
+  WorkRow, WorkStatus,
 } from '@beap/shared';
 import { VIOLATION_CASE_LABEL_UZ, VIOLATION_CASE_TYPES } from '@beap/shared';
 
-import { type AppContext, query, queryOne } from '../pool.ts';
+import { type AppContext, isPgError, query, queryOne, withTransaction } from '../pool.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Davr yordamchilari
@@ -755,27 +756,9 @@ export async function lossMap(ctx: AppContext, period: string): Promise<LossMapC
 // Ishlar
 // ═══════════════════════════════════════════════════════════════════════════
 
-export async function works(
-  ctx: AppContext, mfyId: number | null = null, status: string | null = null, limit = 100,
-): Promise<WorkRow[]> {
-  const rows = await query<Record<string, unknown>>(
-    `SELECT w.id, w.mfy_id, m.name_uz AS mfy_name, t.code AS tp_code, w.work_type,
-            w.title_uz, w.status, w.planned_start, w.planned_end, w.actual_end,
-            w.progress_pct, w.quantity, w.unit, w.cost_mln,
-            w.effect_loss_pct_before, w.effect_loss_pct_after, w.effect_saving_kwh_month
-     FROM fact.work w
-     JOIN ref.mfy m ON m.id = w.mfy_id
-     LEFT JOIN ref.tp t ON t.id = w.tp_id
-     WHERE ($1::int IS NULL OR w.mfy_id = $1)
-       AND ($2::text IS NULL OR w.status = $2)
-     ORDER BY
-       CASE w.status WHEN 'IN_PROGRESS' THEN 1 WHEN 'PLANNED' THEN 2 ELSE 3 END,
-       coalesce(w.actual_end, w.planned_end) DESC NULLS LAST
-     LIMIT $3`,
-    [mfyId, status, limit], ctx,
-  );
-
-  return rows.map((r) => ({
+/** `works()`, `createWork()` va `updateWorkStatus()` bir xil qatorni bir xil shaklga keltiradi. */
+function mapWorkRow(r: Record<string, unknown>): WorkRow {
+  return {
     id: Number(r['id']), mfyId: Number(r['mfy_id']), mfyName: String(r['mfy_name']),
     tpCode: (r['tp_code'] as string | null) ?? null,
     workType: r['work_type'] as WorkRow['workType'],
@@ -788,7 +771,34 @@ export async function works(
     effectLossPctBefore: r['effect_loss_pct_before'] === null ? null : Number(r['effect_loss_pct_before']),
     effectLossPctAfter: r['effect_loss_pct_after'] === null ? null : Number(r['effect_loss_pct_after']),
     effectSavingKwhMonth: Number(r['effect_saving_kwh_month']),
-  }));
+  };
+}
+
+const WORK_SELECT = `
+  SELECT w.id, w.mfy_id, m.name_uz AS mfy_name, t.code AS tp_code, w.work_type,
+         w.title_uz, w.status, w.planned_start, w.planned_end, w.actual_end,
+         w.progress_pct, w.quantity, w.unit, w.cost_mln,
+         w.effect_loss_pct_before, w.effect_loss_pct_after, w.effect_saving_kwh_month
+    FROM fact.work w
+    JOIN ref.mfy m ON m.id = w.mfy_id
+    LEFT JOIN ref.tp t ON t.id = w.tp_id
+`;
+
+export async function works(
+  ctx: AppContext, mfyId: number | null = null, status: string | null = null, limit = 100,
+): Promise<WorkRow[]> {
+  const rows = await query<Record<string, unknown>>(
+    `${WORK_SELECT}
+     WHERE ($1::int IS NULL OR w.mfy_id = $1)
+       AND ($2::text IS NULL OR w.status = $2)
+     ORDER BY
+       CASE w.status WHEN 'IN_PROGRESS' THEN 1 WHEN 'PLANNED' THEN 2 ELSE 3 END,
+       coalesce(w.actual_end, w.planned_end) DESC NULLS LAST
+     LIMIT $3`,
+    [mfyId, status, limit], ctx,
+  );
+
+  return rows.map(mapWorkRow);
 }
 
 /**
@@ -905,6 +915,124 @@ export async function workDetail(ctx: AppContext, id: number): Promise<WorkDetai
       createdAt: String(p['created_at']),
     })),
   };
+}
+
+/**
+ * Yangi ish yozadi.
+ *
+ * Validatsiya BU YERDA emas — chaqiruvchi (marshrut yoki AI asbob) `workSchema`
+ * bilan tekshirgan qiymatni beradi, xuddi `entry.saveMonthlyReturn`dagi
+ * qatlamlanish kabi. Postgres RLS (`0004_security.sql`) ustidan ham turadi —
+ * bu yerdagi tekshiruv ikkinchi qatlam, birinchisi emas.
+ */
+export async function createWork(ctx: AppContext, input: Work): Promise<WorkRow> {
+  try {
+    return await withTransaction(ctx, async (client) => {
+      const ins = await client.query<{ id: number }>(
+        `INSERT INTO fact.work
+           (mfy_id, tp_id, work_type, title_uz, description, status,
+            planned_start, planned_end, actual_end, progress_pct,
+            quantity, unit, cost_mln,
+            effect_loss_pct_before, effect_loss_pct_after, effect_saving_kwh_month)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         RETURNING id`,
+        [
+          input.mfyId, input.tpId ?? null, input.workType, input.titleUz,
+          input.description ?? null, input.status, input.plannedStart ?? null,
+          input.plannedEnd ?? null, input.actualEnd ?? null, input.progressPct,
+          input.quantity, input.unit, input.costMln,
+          input.effectLossPctBefore ?? null, input.effectLossPctAfter ?? null,
+          input.effectSavingKwhMonth,
+        ],
+      );
+      const row = await client.query<Record<string, unknown>>(
+        `${WORK_SELECT} WHERE w.id = $1`, [ins.rows[0]!.id],
+      );
+      return mapWorkRow(row.rows[0]!);
+    });
+  } catch (err) {
+    /*
+     * `mfy_id`/`tp_id` chet kalit (FK) bilan tekshiriladi — bu yerda
+     * ATAYLAB oldindan SELECT bilan tekshirilmaydi (qo'shimcha so'rov, va
+     * baribir poyga sharoiti qoladi). Buning o'rniga Postgres xatosi
+     * (23503) tushunarli xabarga aylantiriladi — aks holda AI asbobi xom
+     * "violates foreign key constraint work_mfy_id_fkey" matnini
+     * foydalanuvchiga aytib bera boshlaydi (sinovda aynan shu ko'rindi:
+     * model buni o'zicha "fider raqami noto'g'ri" deb noaniq izohladi).
+     */
+    if (isPgError(err) && err.code === '23503') {
+      const field = err.constraint?.includes('tp_id') ? 'TP (transformator)' : 'MFY (fider)';
+      throw Object.assign(
+        new Error(`${field} topilmadi — berilgan ID mavjud emas`), { statusCode: 400 },
+      );
+    }
+    throw err;
+  }
+}
+
+/**
+ * Ish holatini (va unga bog'liq bajarilish maydonlarini) yangilaydi.
+ *
+ * `patch` TO'LIQ, chaqiruvchi tomonidan allaqachon tekshirilgan qiymatlarni
+ * kutadi (status/progressPct/actualEnd birga mos kelishi — DB CHECK
+ * `work_completed` shuni talab qiladi) — shuning uchun bu yerda `coalesce`
+ * yo'q: qisman yangilash yolg'on-to'liq holatga olib kelishi mumkin edi.
+ */
+export async function updateWorkStatus(
+  ctx: AppContext, id: number,
+  patch: { status: WorkStatus; progressPct: number; actualEnd: string | null },
+): Promise<WorkRow | null> {
+  return withTransaction(ctx, async (client) => {
+    const cur = await client.query<{ id: number }>(
+      'SELECT id FROM fact.work WHERE id = $1 FOR UPDATE', [id],
+    );
+    if (!cur.rows[0]) return null;
+
+    await client.query(
+      `UPDATE fact.work
+          SET status = $2, progress_pct = $3, actual_end = $4, updated_at = now()
+        WHERE id = $1`,
+      [id, patch.status, patch.progressPct, patch.actualEnd],
+    );
+
+    const row = await client.query<Record<string, unknown>>(`${WORK_SELECT} WHERE w.id = $1`, [id]);
+    return mapWorkRow(row.rows[0]!);
+  });
+}
+
+/**
+ * Ta'mirlanmagan tarmoq uzunligi (km) — kuchlanish klassi bo'yicha.
+ *
+ * `fact.network_defect` hozirgacha ilova kodida HECH QAYERDA o'qilmagan
+ * (faqat pasport qatori sifatida kiritiladi) — ish tavsiyasi uchun qimmatli,
+ * ilgari ishlatilmagan signal: qaysi MFY/kuchlanish klassida ta'mirlash
+ * "qarzi" ko'p to'planganini ko'rsatadi.
+ */
+export async function networkDefectBacklog(
+  ctx: AppContext, period: string, mfyId: number | null = null,
+): Promise<{
+  mfyId: number; mfyName: string; voltageKv: number;
+  repairNeededKm: number; repairedKm: number; backlogKm: number;
+}[]> {
+  const rows = await query<{
+    mfy_id: number; mfy_name: string; voltage_kv: number;
+    repair_needed_km: number; repaired_km: number;
+  }>(
+    `SELECT d.mfy_id, m.name_uz AS mfy_name, d.voltage_kv,
+            d.repair_needed_km, d.repaired_km
+       FROM fact.network_defect d
+       JOIN ref.mfy m ON m.id = d.mfy_id
+      WHERE d.period_month = ($1 || '-01')::date
+        AND ($2::int IS NULL OR d.mfy_id = $2)
+        AND d.repair_needed_km > d.repaired_km
+      ORDER BY (d.repair_needed_km - d.repaired_km) DESC`,
+    [period, mfyId], ctx,
+  );
+  return rows.map((r) => ({
+    mfyId: r.mfy_id, mfyName: r.mfy_name, voltageKv: Number(r.voltage_kv),
+    repairNeededKm: Number(r.repair_needed_km), repairedKm: Number(r.repaired_km),
+    backlogKm: Number((r.repair_needed_km - r.repaired_km).toFixed(2)),
+  }));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

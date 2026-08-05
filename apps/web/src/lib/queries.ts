@@ -8,7 +8,7 @@
 import type {
   Bootstrap, CapacityInfo, CompletenessCell, ConsumerBreakdown, DebtBreakdown,
   DistrictOverview, EfficiencyBreakdown, EnergyBalanceNode, FeederMonthly, LossStructure,
-  MfyOverview, OperationalMetrics, ResultsSummary, Submission, TimeSeriesPoint,
+  MfyOverview, MfyResponsible, OperationalMetrics, ResultsSummary, Submission, TimeSeriesPoint,
   TpMonitorRow, TpMonthlyRow, ViolationSummary, WorkDetail, WorkRow,
 } from '@beap/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -261,6 +261,28 @@ export function useMfyResults(id: number, period?: string, months = 12) {
     queryKey: keys.mfy(id, 'results', { period, months }),
     queryFn: ({ signal }) => api.get<ResultsSummary>(`/dash/mfy/${id}/results${qs({ period, months })}`, signal),
     ...DASH_OPTIONS,
+  });
+}
+
+/** Fider bo'yicha ma'sul shaxs — belgilanmagan bo'lsa `null`. */
+export function useMfyResponsible(id: number) {
+  return useQuery({
+    queryKey: keys.mfy(id, 'responsible'),
+    queryFn: ({ signal }) => api.get<MfyResponsible | null>(`/ref/mfy/${id}/responsible`, signal),
+    enabled: id > 0,
+    staleTime: 60_000,
+  });
+}
+
+/** Ma'sul shaxsni belgilash / o'zgartirish — sozlamalar sahifasida ishlatiladi. */
+export function useUpdateMfyResponsible(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { fullName: string; position: string | null; phone: string | null }) =>
+      api.patch<MfyResponsible>(`/ref/mfy/${id}/responsible`, input),
+    onSuccess: (data) => {
+      qc.setQueryData(keys.mfy(id, 'responsible'), data);
+    },
   });
 }
 

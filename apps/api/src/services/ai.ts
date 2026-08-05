@@ -19,6 +19,7 @@
 import { config } from '../config.ts';
 import { type AppContext, queryOne } from '../db/pool.ts';
 import * as q from '../db/queries/dashboard.ts';
+import { getMfyResponsible } from '../db/queries/ref.ts';
 import {
   TOOL_LABELS, TOOL_SPECS, type ClientAction, type ToolContext, type ToolOutcome, runTool,
 } from './ai-tools.ts';
@@ -81,13 +82,14 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
   );
   if (!feeder) return null;
 
-  const [overview, feederMonthly, tps, workRows, violationSummary, range] = await Promise.all([
+  const [overview, feederMonthly, tps, workRows, violationSummary, range, responsible] = await Promise.all([
     q.districtOverview(ctx, resolved),
     q.feederMonthly(ctx, resolved, feeder.id),
     q.tpMonthly(ctx, resolved, feeder.id),
     q.works(ctx, feeder.id, null, 40),
     q.violations(ctx, resolved, feeder.id),
     q.dataRange(ctx),
+    getMfyResponsible(ctx, feeder.id),
   ]);
 
   const t = overview?.totals;
@@ -96,6 +98,13 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
   lines.push(`FIDER: ${feeder.name_uz} (${feeder.elektroset})`);
   lines.push(`HISOBOT DAVRI: ${resolved}${feederMonthly ? ` (${feederMonthly.days} kun)` : ''}`);
   lines.push(`MA'LUMOT MAVJUD ORALIQ: ${range.minDate ?? '—'} … ${range.maxDate ?? '—'}`);
+  lines.push(
+    responsible
+      ? `MA'SUL SHAXS: ${responsible.fullName}`
+        + `${responsible.position ? ` — ${responsible.position}` : ''}`
+        + `${responsible.phone ? `, tel: ${responsible.phone}` : ''}`
+      : "MA'SUL SHAXS: hozircha belgilanmagan (sozlamalar: /settings/responsible)",
+  );
   lines.push('');
 
   if (feederMonthly) {
@@ -230,6 +239,7 @@ PANEL BO'LIMLARI (navigate asbobidagi yo'llar):
   · /reports        — Excel/PDF eksport sahifasi
   · /entry          — oylik shakllarni to'ldirish
   · /review         — kiritilgan ma'lumotni tekshirish va tasdiqlash
+  · /settings/responsible — fider uchun ma'sul shaxsni belgilash/o'zgartirish
 `.trim();
 
 function systemPrompt(snapshot: Snapshot | null): string {
@@ -273,13 +283,33 @@ function systemPrompt(snapshot: Snapshot | null): string {
     '   submit_submission. Bu qoida ham 31 kunlik energiya balansi jadvaliga',
     '   taalluqli emas — u hech qachon chat orqali to‘ldirilmaydi (yuqoridagi',
     '   5-band).',
+    '8. "Qanday ish tavsiya qilasan?", "nima qilish kerak?" kabi savollarda',
+    '   recommend_works asbobini chaqir. create_work FAQAT foydalanuvchi',
+    '   tavsiyani tasdiqlagach yoki aniq "shuni qo‘sh"/"yoz" desa chaqiriladi —',
+    '   so‘ralmasdan turib ish yaratma (bu — yozish amali, boshqa asboblardan',
+    '   farqli o‘laroq oldindan tasdiq talab qiladi). Ish holati haqida',
+    '   so‘ralganda yoki "TP-067 dagi ish tugadi/boshlandi" kabi xabar',
+    '   berilganda update_work_status chaqiriladi.',
+    '9. "TP-067 ortiqcha yuklangan", "TP-043 nosoz" kabi TP holati haqida xabar',
+    '   berilganda update_tp_status, "N km tarmoq ta’mirlanishi kerak" kabi',
+    '   xabarda update_network_defect chaqiriladi (recommend_works aynan shu',
+    '   ma’lumotlarga tayanadi — kiritilmasa tavsiya berolmaydi). Ikkalasi ham',
+    '   qoralama sifatida saqlaydi: rasman hisoblanishi (jamlanmalarga qo‘shilishi)',
+    '   uchun submit_submission KERAK, tasdiqlash esa faqat elektroset menejeri',
+    '   yoki administrator uchun (approve_submission) — buni foydalanuvchiga',
+    '   ayt yoki agar u shu rolda bo‘lsa o‘zing bajaraver.',
     '',
     'JAVOB USLUBI:',
-    '8. O‘ZBEK tilida (lotin yozuvi). Foydalanuvchi rus yoki ingliz tilida yozsa —',
+    '10. O‘ZBEK tilida (lotin yozuvi). Foydalanuvchi rus yoki ingliz tilida yozsa —',
     '   o‘sha tilda javob ber.',
-    '9. Qisqa: 2–5 gap yoki qisqa ro‘yxat. Bajargan ishingni bir gapda ayt.',
-    '10. Raqam bilan birga birligini yoz (kWh, %, ta, mln so‘m).',
-    '11. Markdown sarlavhalari (#) ishlatma; ro‘yxat uchun "·" belgisi.',
+    '11. Qisqa: 2–5 gap yoki qisqa ro‘yxat. Bajargan ishingni bir gapda ayt.',
+    '12. Raqam bilan birga birligini yoz (kWh, %, ta, mln so‘m).',
+    '13. Markdown sarlavhalari (#) ishlatma; ro‘yxat uchun "·" belgisi.',
+    '14. Savol 4 ta tayyor show_chart turiga yoki boshqa asboblarning oddiy matnli javobiga',
+    '    sig‘masa, lekin foydalanuvchi javobni RASM/JADVAL holida ko‘rishni xohlasa — avval',
+    '    kerakli raqamlarni tegishli ma’lumot asboblari bilan (get_tp, get_series,',
+    '    compare_periods va h.k.) ol, keyin render_table yoki render_custom_chart ni O‘SHA',
+    '    raqamlar bilan chaqir. Raqamni hech qachon o‘zing o‘ylab topma.',
     '',
     GUIDE,
     '',

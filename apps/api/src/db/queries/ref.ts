@@ -1,7 +1,7 @@
 /** Spravochnik so'rovlari. */
-import type { Bootstrap, Elektroset, Mfy, NetworkSegment, Norm, Tp } from '@beap/shared';
+import type { Bootstrap, Elektroset, Mfy, MfyResponsible, NetworkSegment, Norm, Tp } from '@beap/shared';
 
-import { type AppContext, query, queryOne } from '../pool.ts';
+import { type AppContext, query, queryOne, withTransaction } from '../pool.ts';
 import { dataRange } from './dashboard.ts';
 
 export async function bootstrap(ctx: AppContext): Promise<Bootstrap> {
@@ -87,6 +87,39 @@ export async function listNetworkSegments(ctx: AppContext, mfyId: number | null)
     installedOn: (r['installed_on'] as string | null) ?? null,
     retiredOn: (r['retired_on'] as string | null) ?? null,
   }));
+}
+
+function mapMfyResponsible(r: Record<string, unknown>): MfyResponsible {
+  return {
+    mfyId: Number(r['mfy_id']), fullName: String(r['full_name']),
+    position: (r['position'] as string | null) ?? null,
+    phone: (r['phone'] as string | null) ?? null,
+    updatedAt: String(r['updated_at']),
+  };
+}
+
+export async function getMfyResponsible(ctx: AppContext, mfyId: number): Promise<MfyResponsible | null> {
+  const r = await queryOne<Record<string, unknown>>(
+    `SELECT mfy_id, full_name, position, phone, updated_at::text
+     FROM ref.mfy_responsible WHERE mfy_id = $1`, [mfyId], ctx);
+  return r ? mapMfyResponsible(r) : null;
+}
+
+export async function upsertMfyResponsible(
+  ctx: AppContext, mfyId: number,
+  input: { fullName: string; position: string | null; phone: string | null },
+): Promise<MfyResponsible> {
+  return withTransaction(ctx, async (client) => {
+    const res = await client.query<Record<string, unknown>>(
+      `INSERT INTO ref.mfy_responsible (mfy_id, full_name, position, phone, updated_by)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (mfy_id) DO UPDATE
+         SET full_name = excluded.full_name, position = excluded.position,
+             phone = excluded.phone, updated_at = now(), updated_by = excluded.updated_by
+       RETURNING mfy_id, full_name, position, phone, updated_at::text`,
+      [mfyId, input.fullName, input.position, input.phone, ctx.userId]);
+    return mapMfyResponsible(res.rows[0]!);
+  });
 }
 
 export async function getMfy(ctx: AppContext, id: number): Promise<Mfy | null> {

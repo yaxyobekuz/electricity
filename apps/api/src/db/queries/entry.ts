@@ -5,13 +5,13 @@
  * Jamilar DB da GENERATED ustunlar sifatida hisoblanadi.
  */
 import type {
-  CompletenessCell, Domain, EnergyBalanceDay, MonthlyReturn, Submission,
-  SubmissionDiffRow, SubmissionStatus, ValidationIssue, ValidationReport,
+  CompletenessCell, Domain, EnergyBalanceDay, MonthlyReturn, NetworkDefect, Submission,
+  SubmissionDiffRow, SubmissionStatus, TpStatus, ValidationIssue, ValidationReport,
 } from '@beap/shared';
 import { DOMAINS, balanceTolerance, canTransition } from '@beap/shared';
 import type pg from 'pg';
 
-import { type AppContext, query, queryOne, withTransaction } from '../pool.ts';
+import { type AppContext, isPgError, query, queryOne, withTransaction } from '../pool.ts';
 
 const SUBMISSION_SELECT = `
   s.id, s.scope_type, s.scope_id, s.domain, s.period_start::text, s.period_end::text,
@@ -220,6 +220,30 @@ export async function monthlyReturnRow(ctx: AppContext, submissionId: number): P
   };
 }
 
+export async function tpStatusRows(ctx: AppContext, submissionId: number): Promise<TpStatus[]> {
+  const rows = await query<Record<string, unknown>>(
+    `SELECT tp_id, load_pct, peak_kva, condition, under_load, repair_needed, repair_reason
+     FROM fact.tp_status_monthly WHERE submission_id = $1 ORDER BY tp_id`, [submissionId], ctx);
+
+  return rows.map((r) => ({
+    tpId: Number(r['tp_id']), loadPct: Number(r['load_pct']), peakKva: Number(r['peak_kva']),
+    condition: r['condition'] as TpStatus['condition'],
+    underLoad: Boolean(r['under_load']), repairNeeded: Boolean(r['repair_needed']),
+    repairReason: (r['repair_reason'] as string | null) ?? null,
+  }));
+}
+
+export async function networkDefectRows(ctx: AppContext, submissionId: number): Promise<NetworkDefect[]> {
+  const rows = await query<Record<string, unknown>>(
+    `SELECT voltage_kv, repair_needed_km, repaired_km
+     FROM fact.network_defect WHERE submission_id = $1 ORDER BY voltage_kv`, [submissionId], ctx);
+
+  return rows.map((r) => ({
+    voltageKv: Number(r['voltage_kv']),
+    repairNeededKm: Number(r['repair_needed_km']), repairedKm: Number(r['repaired_km']),
+  }));
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Ma'lumot yozish (autosave)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -286,6 +310,76 @@ export async function saveMonthlyReturn(
        data.metersReplaceNeedCnt, data.metersReplacedCnt]);
 
     await client.query('UPDATE fact.submission SET updated_at = now() WHERE id = $1', [submissionId]);
+  });
+}
+
+/**
+ * TP holati qatorlarini SAQLAYDI — `saveEnergyBalance` bilan bir xil "hammasini
+ * o'chir, qayta yoz" strategiyasi (bitta konvert = bitta oy uchun to'liq
+ * ro'yxat). Shu sababli AI asbobi (`update_tp_status`, `ai-tools.ts`) bitta
+ * TP ni yangilashdan oldin MAVJUD qatorlarni (`tpStatusRows`) o'qib, ustiga
+ * birlashtirib qayta yuborishi kerak — aks holda boshqa TP larning holati
+ * yo'qolib qolardi.
+ */
+export async function saveTpStatus(
+  ctx: AppContext, submissionId: number, rows: TpStatus[],
+): Promise<number> {
+  return withTransaction(ctx, async (client) => {
+    const { period } = await assertEditable(client, submissionId);
+    await client.query('DELETE FROM fact.tp_status_monthly WHERE submission_id = $1', [submissionId]);
+    if (rows.length === 0) return 0;
+
+    const params: unknown[] = [];
+    const tuples = rows.map((r) => {
+      params.push(
+        submissionId, r.tpId, period, r.loadPct, r.peakKva, r.condition,
+        r.underLoad, r.repairNeeded, r.repairReason ?? null,
+      );
+      const b = params.length - 9;
+      return `($${b + 1},$${b + 2},($${b + 3}||'-01')::date,$${b + 4},$${b + 5},$${b + 6},$${b + 7},$${b + 8},$${b + 9})`;
+    });
+
+    try {
+      await client.query(
+        `INSERT INTO fact.tp_status_monthly
+           (submission_id, tp_id, period_month, load_pct, peak_kva, condition,
+            under_load, repair_needed, repair_reason)
+         VALUES ${tuples.join(',')}`, params);
+    } catch (err) {
+      // `tp_id` chet kalit — noto'g'ri/o'chirilgan TP berilsa tushunarli xabar.
+      if (isPgError(err) && err.code === '23503') {
+        throw Object.assign(new Error('TP topilmadi — berilgan ID mavjud emas'), { statusCode: 400 });
+      }
+      throw err;
+    }
+
+    await client.query('UPDATE fact.submission SET updated_at = now() WHERE id = $1', [submissionId]);
+    return rows.length;
+  });
+}
+
+/** Tarmoq nuqsoni qatorlarini SAQLAYDI — `saveTpStatus` bilan bir xil naqsh. */
+export async function saveNetworkDefect(
+  ctx: AppContext, submissionId: number, rows: NetworkDefect[],
+): Promise<number> {
+  return withTransaction(ctx, async (client) => {
+    const { mfyId, period } = await assertEditable(client, submissionId);
+    await client.query('DELETE FROM fact.network_defect WHERE submission_id = $1', [submissionId]);
+    if (rows.length === 0) return 0;
+
+    const params: unknown[] = [];
+    const tuples = rows.map((r) => {
+      params.push(submissionId, mfyId, period, r.voltageKv, r.repairNeededKm, r.repairedKm);
+      const b = params.length - 6;
+      return `($${b + 1},$${b + 2},($${b + 3}||'-01')::date,$${b + 4},$${b + 5},$${b + 6})`;
+    });
+    await client.query(
+      `INSERT INTO fact.network_defect
+         (submission_id, mfy_id, period_month, voltage_kv, repair_needed_km, repaired_km)
+       VALUES ${tuples.join(',')}`, params);
+
+    await client.query('UPDATE fact.submission SET updated_at = now() WHERE id = $1', [submissionId]);
+    return rows.length;
   });
 }
 

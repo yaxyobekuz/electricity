@@ -31,6 +31,7 @@ const WorksPage = lazy(() => import('./features/works/WorksPage.tsx'));
 const EnergyBalancePage = lazy(() => import('./features/energy/EnergyBalancePage.tsx'));
 const ReportsPage = lazy(() => import('./features/reports/ReportsPage.tsx'));
 const LoginPage = lazy(() => import('./features/auth/LoginPage.tsx'));
+const ResponsibleSettingsPage = lazy(() => import('./features/settings/ResponsibleSettingsPage.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +131,7 @@ export function App() {
                       <Route path="/entry" element={<EntryPage />} />
                       <Route path="/entry/:mfyId/:period/:domain" element={<EntryForm />} />
                       <Route path="/review" element={<ReviewQueue />} />
+                      <Route path="/settings/responsible" element={<ResponsibleSettingsPage />} />
                       <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>

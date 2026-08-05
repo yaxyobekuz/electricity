@@ -18,16 +18,20 @@
  * HTTP so'rov yubora olmaydi. U faqat shu funksiyalarni, faqat shu
  * parametrlar bilan chaqira oladi — ya'ni qamrov kod bilan chegaralangan.
  */
-import type { AuthUser, Domain, MonthlyReturn } from '@beap/shared';
-import { DOMAINS, monthlyReturnSchema } from '@beap/shared';
+import type { AuthUser, Domain, MonthlyReturn, Work } from '@beap/shared';
+import {
+  DOMAINS, monthlyReturnSchema, networkDefectPatchSchema, TP_CONDITIONS, tpStatusPatchSchema,
+  WORK_STATUSES, WORK_TYPE_LABEL_UZ, WORK_TYPES, workSchema,
+} from '@beap/shared';
 
-import type { AppContext } from '../db/pool.ts';
+import { type AppContext, queryOne } from '../db/pool.ts';
 import * as q from '../db/queries/dashboard.ts';
 import * as entry from '../db/queries/entry.ts';
 import * as passport from '../db/queries/passport.ts';
 import { refreshAggregates } from './aggregates.ts';
 import * as alerts from './alerts.ts';
 import * as analytics from './analytics.ts';
+import { renderCustomChart, renderTable } from './charts.ts';
 
 export interface ToolContext {
   ctx: AppContext;
@@ -153,6 +157,14 @@ export const TOOL_SPECS: ToolSpec[] = [
     + 'tushuntiradi.',
     { id: int('Qoralama raqami') }, ['id']),
 
+  fn('recommend_works', 'Muammolarni (ortiqcha yuklangan/nosoz/masofasi me’yordan uzoq TP, '
+    + 'ta’mirlanmagan tarmoq) tahlil qilib, qanday YANGI ish (ta’mirlash, modernizatsiya, '
+    + 'o‘rnatish) qilish tavsiya etilishini ko‘rsatadi. «Qanday ish tavsiya qilasan?», «nima '
+    + 'qilish kerak?», «muammolarni qanday hal qilaman?» kabi savollarda SHU asbobni chaqir — '
+    + 'javobni o‘zing o‘ylab topma. Allaqachon reja/jarayondagi ishlar bilan qoplangan '
+    + 'muammolar qayta tavsiya etilmaydi.',
+    { period: period('Oy; berilmasa joriy davr') }),
+
   // ── B. Interfeys amallari ─────────────────────────────────────────────────
   fn('navigate', 'Foydalanuvchini panelning boshqa sahifasiga OLIB O‘TADI. '
     + 'Sahifani aytish o‘rniga shu asbobni chaqir.',
@@ -160,8 +172,9 @@ export const TOOL_SPECS: ToolSpec[] = [
       path: {
         type: 'string',
         enum: ['/dashboard', '/transformers', '/energy-balance', '/works', '/reports',
-          '/entry', '/review'],
-        description: 'Qaysi sahifa ochilsin',
+          '/entry', '/review', '/settings/responsible'],
+        description: 'Qaysi sahifa ochilsin. /settings/responsible — ma’sul shaxsni '
+          + 'belgilash/o‘zgartirish sahifasi.',
       },
       search: str('Sahifadagi qidiruv maydoniga qo‘yiladigan matn, masalan TP kodi. '
         + 'Faqat /transformers va /works uchun.'),
@@ -211,6 +224,56 @@ export const TOOL_SPECS: ToolSpec[] = [
       months_ahead: int('Faqat loss_forecast uchun, nechta oy oldinga. Standart 3.'),
     }, ['kind']),
 
+  fn('render_table', 'Ma’lumotni JADVAL rasmi (PNG) ko‘rinishida ko‘rsatadi — savol 4 ta '
+    + 'tayyor show_chart turiga yoki boshqa asboblarning oddiy matnli javobiga sig‘masa '
+    + '(masalan bitta TP ni bir necha oy bo‘yicha solishtirish yoki har qanday kichik '
+    + 'moslashuvchan taqqoslash) SHU asbobni chaqir. Avval kerakli raqamlarni boshqa asboblar '
+    + 'bilan ol (get_tp, get_series, compare_periods va h.k.), keyin shu bilan jadval qilib '
+    + 'ko‘rsat. Raqamni hech qachon o‘ylab topma.',
+    {
+      title: str('Jadval sarlavhasi'),
+      columns: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Ustun sarlavhalari (kamida 1, ko‘pi bilan 8 ta)',
+      },
+      rows: {
+        type: 'array',
+        items: { type: 'array', items: {} },
+        description: 'Jadval qatorlari — har bir ichki massiv BITTA qator, unda '
+          + '`columns` soniga mos qiymatlar (matn yoki raqam). Ko‘pi bilan 30 qator.',
+      },
+    }, ['title', 'columns', 'rows']),
+
+  fn('render_custom_chart', 'Ma’lumotni CHIZIQLI, USTUNLI yoki DONUT diagramma rasmi (PNG) '
+    + 'ko‘rinishida ko‘rsatadi — 4 ta tayyor show_chart turi qamrab olmaydigan ixtiyoriy '
+    + 'taqqoslash/dinamika uchun. Avval kerakli raqamlarni boshqa asboblar bilan ol (get_tp, '
+    + 'get_series, compare_periods va h.k.), keyin shu bilan diagramma qil. Raqamni hech qachon '
+    + 'o‘ylab topma.',
+    {
+      title: str('Diagramma sarlavhasi'),
+      chart_type: {
+        type: 'string',
+        enum: ['line', 'bar', 'donut'],
+        description: 'Diagramma turi: line — chiziqli, bar — ustunli, donut — doiraviy',
+      },
+      items: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            series: str('Faqat chart_type="line" uchun: nuqtalarni alohida nomli chiziqlarga '
+              + 'guruhlash uchun seriya nomi. Boshqa turlarda kerak emas.'),
+            label: str('Nuqta/ustun/tilim yorlig‘i'),
+            value: { type: 'number', description: 'Son qiymati' },
+          },
+          required: ['label', 'value'],
+        },
+        description: 'Chizish kerak bo‘lgan qiymatlar ro‘yxati, har birida yorliq va son '
+          + '(ko‘pi bilan 60 ta)',
+      },
+    }, ['title', 'chart_type', 'items']),
+
   // ── C. Yozish ─────────────────────────────────────────────────────────────
   fn('create_submission', 'Oylik hisobot uchun QORALAMA ochadi (yoki mavjudini qaytaradi).',
     {
@@ -247,6 +310,88 @@ export const TOOL_SPECS: ToolSpec[] = [
 
   fn('reject_submission', 'Yuborilgan hisobotni RAD ETADI. Sabab majburiy.',
     { id: int('Hisobot raqami'), note: str('Rad etish sababi') }, ['id', 'note']),
+
+  fn('create_work', 'YANGI ish yozadi (fact.work) — masalan recommend_works taklif qilgan '
+    + 'ishni qo‘shish uchun. FAQAT foydalanuvchi aniq tasdiqlagach yoki «qo‘sh»/«yoz»/«ha» '
+    + 'kabi ravshan buyruq bersa chaqir — so‘ralmasdan turib ish yaratma.',
+    {
+      mfy_id: int('Fider/MFY ICHKI raqami (get_tp/recommend_works natijasidagi mfyId, TP kodi '
+        + 'EMAS). Ko‘pincha BERMASLIK kerak — berilmasa yagona fider avtomatik olinadi. '
+        + 'Aniq bilmasangiz hech qachon o‘ylab topma — bo‘sh qoldir.'),
+      work_type: {
+        type: 'string', enum: [...WORK_TYPES],
+        description: 'Ish turi: CABLE_REPLACEMENT, TP_INSTALL, TP_MODERNIZATION, '
+          + 'OVERHEAD_LINE_RENEWAL, METER_REPLACEMENT, TREE_CLEARING, ILLEGAL_DISCONNECT, '
+          + 'SUPPORT_REPLACEMENT, OTHER',
+      },
+      title: str('Ish nomi (kamida 3 belgidan)'),
+      description: str('Qo‘shimcha tavsif (ixtiyoriy)'),
+      tp_id: int('Tegishli transformatorning ICHKI raqami (masalan recommend_works '
+        + 'natijasidagi tpId) — "TP-067" kabi KODNING O‘ZI EMAS. Foydalanuvchi TP kodini '
+        + 'aytgan bo‘lsa, avval get_tp bilan shu kodni qidirib ID\'sini top; ID\'ni hech '
+        + 'qachon kod raqamidan (masalan "067"dan) o‘ylab topma. Bilmasangiz bo‘sh qoldir.'),
+      status: {
+        type: 'string', enum: [...WORK_STATUSES],
+        description: 'Boshlang‘ich holat. Standart — Reja (PLANNED).',
+      },
+      planned_start: str('Reja boshlanish sanasi, "YYYY-MM-DD"'),
+      planned_end: str('Reja tugash sanasi, "YYYY-MM-DD"'),
+      actual_end: str('Haqiqiy tugash sanasi — status=COMPLETED bo‘lsa majburiy, "YYYY-MM-DD"'),
+      progress_pct: int('Bajarilish foizi (0-100). COMPLETED uchun 100 bo‘lishi shart.'),
+      quantity: { type: 'number', description: 'Hajm (masalan km yoki dona soni)' },
+      unit: str('O‘lchov birligi, masalan "km" yoki "ta"'),
+      cost_mln: { type: 'number', description: 'Taxminiy qiymati, mln so‘m' },
+    }, ['work_type', 'title']),
+
+  fn('update_work_status', 'Mavjud ishning holatini o‘zgartiradi (masalan Reja → Jarayonda, '
+    + 'yoki Jarayonda → Bajarildi).',
+    {
+      id: int('Ish raqami'),
+      status: {
+        type: 'string', enum: [...WORK_STATUSES],
+        description: 'Yangi holat',
+      },
+      progress_pct: int('Bajarilish foizi (0-100). Bajarildi uchun 100 bo‘lishi shart.'),
+      actual_end: str('Haqiqiy tugash sanasi — Bajarildi uchun majburiy, "YYYY-MM-DD"'),
+    }, ['id', 'status']),
+
+  fn('update_tp_status', 'Bitta TP ning oylik holatini (yuklama %, holati: yaxshi/diqqat/'
+    + 'ortiqcha yuklama/nosozlik) belgilaydi yoki yangilaydi. «TP-067 ortiqcha yuklangan», '
+    + '«TP-043 nosoz» kabi xabarlarda SHU asbobni chaqir — bu ma’lumot recommend_works, '
+    + 'get_alerts va TP monitoring jadvalining barchasiga ta’sir qiladi. Qoralama '
+    + 'sifatida saqlaydi (`draft`); rasman ko‘rinishi uchun keyin submit_submission, '
+    + 'kerak bo‘lsa approve_submission ham chaqirilishi kerak — buni foydalanuvchiga ayt '
+    + 'yoki ruxsating bo‘lsa o‘zing bajar.',
+    {
+      tp_code: str('TP kodi, masalan "TP-067"'),
+      condition: {
+        type: 'string', enum: [...TP_CONDITIONS],
+        description: 'Holati: GOOD (yaxshi), ATTENTION (diqqat talab qiladi), '
+          + 'OVERLOAD (ortiqcha yuklama), FAULT (nosozlik)',
+      },
+      load_pct: { type: 'number', description: 'Yuklama foizi (0-200)' },
+      peak_kva: { type: 'number', description: 'Eng yuqori yuklama, kVA' },
+      under_load: { type: 'boolean', description: 'Kam yuklangan (past foydalanish)' },
+      repair_needed: { type: 'boolean', description: 'Ta’mirlash kerakmi' },
+      repair_reason: str('Ta’mirlash sababi — repair_needed=true bo‘lsa majburiy'),
+      period: period('Oy; berilmasa joriy davr'),
+    }, ['tp_code']),
+
+  fn('update_network_defect', 'Ta’mirlanishi kerak bo‘lgan va ta’mirlangan tarmoq '
+    + 'uzunligini (km), kuchlanish klassi bo‘yicha, belgilaydi/yangilaydi. Foydalanuvchi '
+    + '«N km tarmoq ta’mirlanishi kerak» kabi ma’lumot bersa SHU asbobni chaqir — '
+    + 'recommend_works shu ma’lumotdan foydalanadi. Qoralama sifatida saqlaydi; rasman '
+    + 'ko‘rinishi uchun submit_submission (va kerak bo‘lsa approve_submission) kerak.',
+    {
+      mfy_id: int('Fider/MFY ICHKI raqami; berilmasa yagona fider olinadi'),
+      voltage_kv: {
+        type: 'number', enum: [0.4, 6, 10, 35],
+        description: 'Kuchlanish klassi, kV',
+      },
+      repair_needed_km: { type: 'number', description: 'Ta’mirlanishi kerak bo‘lgan uzunlik, km' },
+      repaired_km: { type: 'number', description: 'Ta’mirlangan uzunlik, km (ixtiyoriy, standart 0)' },
+      period: period('Oy; berilmasa joriy davr'),
+    }, ['voltage_kv', 'repair_needed_km']),
 ];
 
 /** Chat oynasida ko'rsatiladigan qisqa izoh — foydalanuvchi nima bo'layotganini bilsin. */
@@ -267,16 +412,23 @@ export const TOOL_LABELS: Record<string, string> = {
   forecast_losses: 'Prognoz hisoblanmoqda',
   get_alerts: 'Ogohlantirishlar olinmoqda',
   validate_submission: 'Qoralama tekshirilmoqda',
+  recommend_works: 'Tavsiyalar tayyorlanmoqda',
   navigate: 'Sahifa ochilmoqda',
   set_period: 'Davr almashtirilmoqda',
   set_as_of_date: 'Sana o’rnatilmoqda',
   download_report: 'Hisobot tayyorlanmoqda',
   show_chart: 'Diagramma tayyorlanmoqda',
+  render_table: 'Jadval tayyorlanmoqda',
+  render_custom_chart: 'Diagramma tayyorlanmoqda',
   create_submission: 'Qoralama ochilmoqda',
   save_monthly_return: 'Raqamlar saqlanmoqda',
   submit_submission: 'Hisobot yuborilmoqda',
   approve_submission: 'Hisobot tasdiqlanmoqda',
   reject_submission: 'Hisobot rad etilmoqda',
+  create_work: 'Ish qo’shilmoqda',
+  update_work_status: 'Holat yangilanmoqda',
+  update_tp_status: 'TP holati yangilanmoqda',
+  update_network_defect: 'Tarmoq nuqsoni yangilanmoqda',
 };
 
 // ─── Yordamchilar ───────────────────────────────────────────────────────────
@@ -293,6 +445,225 @@ const asNumber = (v: unknown): number | undefined => {
 const denied = (reason: string): ToolOutcome => ({ kind: 'data', result: { ok: false, reason } });
 
 const PERIOD_RE = /^\d{4}-\d{2}$/;
+
+interface WorkSuggestion {
+  workType: string; workTypeLabel: string;
+  mfyId: number; mfyName: string;
+  tpId?: number; tpCode?: string;
+  suggestedTitle: string; rationale: string;
+  priority: number;
+}
+
+/** Tavsiyalar orasida ko'rsatiladigan eng ko'p qator soni — chatda o'qib bo'lmas uzun ro'yxat bo'lmasin. */
+const MAX_RECOMMENDATIONS = 8;
+
+/** `TpMonitorPanel.tsx`dagi bilan BIR XIL bo'sag'a — "5%+/10%+ uzilgan ulush" ikki joyda ikki xil son bo'lmasin. */
+const OFF_SHARE_WARNING_PCT = 5;
+const OFF_SHARE_CRITICAL_PCT = 10;
+/** Yo'qotish maqsaddan shuncha foiz punktidan ko'p oshsa — tavsiya beriladi. */
+const LOSS_GAP_THRESHOLD_PP = 3;
+
+/**
+ * "Qanday ish tavsiya qilasan?" savoliga javob.
+ *
+ * BESH MUSTAQIL, MAVJUD signal manbasidan foydalanadi — yangi tahlil/anomaliya
+ * qoidasi deyarli yozilmaydi, faqat allaqachon boshqa joyda hisoblangan
+ * ko'rsatkichlar "bu ishga aylantirilsinmi" nuqtai nazaridan qayta o'qiladi:
+ *   · `q.tpMonitoring()` — `condition`/`loadPct`/`distanceCompliant` maydonlari
+ *     hozirgacha frontendda ham ishlatilmagan (masofa/ATTENTION signali
+ *     `detectAnomalies()`da ham yo'q — u faqat OVERLOAD/FAULT ni ko'radi).
+ *     Bu manba `fact.tp_status_monthly` TASDIQLANGANDA to'ladi — hozircha
+ *     hech kim to'ldirmagan bo'lsa BO'SH bo'ladi, bu XATO EMAS.
+ *   · `q.networkDefectBacklog()` — `fact.network_defect` ilgari HECH QAYERDA
+ *     o'qilmagan, ta'mirlanmagan km miqdorini ko'rsatadi. Xuddi shu — hech kim
+ *     to'ldirmagan bo'lsa bo'sh.
+ *   · `q.tpMonthly()` — uzilgan abonent ULUSHI, `TpMonitorPanel.tsx`da
+ *     allaqachon "muammo" deb rangli ko'rsatiladigan, lekin ishga
+ *     ulanmaydigan signal ("uzilgan hisoblagich — to'g'ridan-to'g'ri tijoriy
+ *     yo'qotish manbai", o'sha faylning izohi). Bu manba HAR DOIM to'ldirilgan
+ *     (oylik hisobot bilan birga keladi) — shuning uchun yuqoridagi ikkitasi
+ *     bo'sh bo'lsa ham odatda kamida shu yerdan tavsiya chiqadi.
+ *   · `q.efficiency()` — feeder darajasidagi yo'qotish % maqsad darajadan
+ *     qanchaga oshganini allaqachon hisoblaydi (bosh sahifadagi "AI tavsiya"
+ *     kartasi shundan o'qiydi). Katta farq bo'lsa — aniq TP ko'rsatilmasa ham
+ *     feeder darajasida umumiy tekshiruv/ta'mirlash tavsiya etiladi.
+ *   · Mavjud REJA/JARAYONDAGI ishlar — xuddi shu muammo uchun ish
+ *     allaqachon bor bo'lsa, qayta tavsiya qilinmaydi.
+ */
+async function recommendWorks(tc: ToolContext, period: string): Promise<{
+  period: string; count: number; totalFound: number; suggestions: WorkSuggestion[];
+}> {
+  const [tpRows, tpMonthlyRows, backlog, efficiencyInfo, lossParts, plannedWorks, inProgressWorks] = await Promise.all([
+    q.tpMonitoring(tc.ctx, period, tc.feederId, 500),
+    q.tpMonthly(tc.ctx, period, tc.feederId),
+    q.networkDefectBacklog(tc.ctx, period, tc.feederId),
+    q.efficiency(tc.ctx, period, tc.feederId),
+    q.lossStructure(tc.ctx, period, tc.feederId),
+    q.works(tc.ctx, tc.feederId, 'PLANNED', 200),
+    q.works(tc.ctx, tc.feederId, 'IN_PROGRESS', 200),
+  ]);
+
+  const existingWorks = [...plannedWorks, ...inProgressWorks];
+  const coveredTpCodes = new Set(existingWorks.map((w) => w.tpCode).filter((c): c is string => c !== null));
+  const coveredMfyType = new Set(existingWorks.map((w) => `${w.mfyId}:${w.workType}`));
+
+  const suggestions: WorkSuggestion[] = [];
+
+  for (const t of tpRows) {
+    if (coveredTpCodes.has(t.code)) continue;
+
+    if (t.condition === 'FAULT') {
+      suggestions.push({
+        workType: 'TP_MODERNIZATION', workTypeLabel: WORK_TYPE_LABEL_UZ.TP_MODERNIZATION,
+        mfyId: t.mfyId, mfyName: t.mfyName, tpId: t.tpId, tpCode: t.code,
+        suggestedTitle: `${t.code} transformatorini almashtirish/ta’mirlash`,
+        rationale: `${t.code} (${t.mfyName}) hozir NOSOZ holatda.`,
+        priority: 100,
+      });
+    } else if (t.condition === 'OVERLOAD') {
+      suggestions.push({
+        workType: 'TP_INSTALL', workTypeLabel: WORK_TYPE_LABEL_UZ.TP_INSTALL,
+        mfyId: t.mfyId, mfyName: t.mfyName, tpId: t.tpId, tpCode: t.code,
+        suggestedTitle: `${t.code} hududida qo’shimcha transformator quvvati`,
+        rationale: `${t.code} (${t.mfyName}) ortiqcha yuklangan`
+          + `${t.loadPct !== null ? ` (yuklama ${t.loadPct}%)` : ''}.`,
+        priority: 80,
+      });
+    } else if (t.distanceCompliant === false) {
+      suggestions.push({
+        workType: 'TP_INSTALL', workTypeLabel: WORK_TYPE_LABEL_UZ.TP_INSTALL,
+        mfyId: t.mfyId, mfyName: t.mfyName, tpId: t.tpId, tpCode: t.code,
+        suggestedTitle: `${t.code} hududida masofani qisqartirish uchun yangi TP`,
+        rationale: `${t.code} (${t.mfyName}) dagi o’rtacha abonent masofasi me’yordan uzoq.`,
+        priority: 50,
+      });
+    } else if (t.condition === 'ATTENTION') {
+      suggestions.push({
+        workType: 'TP_MODERNIZATION', workTypeLabel: WORK_TYPE_LABEL_UZ.TP_MODERNIZATION,
+        mfyId: t.mfyId, mfyName: t.mfyName, tpId: t.tpId, tpCode: t.code,
+        suggestedTitle: `${t.code} holatini tekshirish`,
+        rationale: `${t.code} (${t.mfyName}) diqqat talab qiladi.`,
+        priority: 40,
+      });
+    }
+  }
+
+  // Kuchlanish klassiga qarab taxminiy ish turi — aniq nuqson tafsiloti
+  // `fact.network_defect`da yo'q (faqat km jamlanmasi), shuning uchun bu
+  // qoida-taxmin, qat'iy xarita emas.
+  for (const b of backlog) {
+    const workType = b.voltageKv >= 35 ? 'OVERHEAD_LINE_RENEWAL' : 'CABLE_REPLACEMENT';
+    if (coveredMfyType.has(`${b.mfyId}:${workType}`)) continue;
+    suggestions.push({
+      workType, workTypeLabel: WORK_TYPE_LABEL_UZ[workType as keyof typeof WORK_TYPE_LABEL_UZ],
+      mfyId: b.mfyId, mfyName: b.mfyName,
+      suggestedTitle: `${b.mfyName}: ${b.voltageKv} kV tarmog‘ini ta’mirlash (${b.backlogKm} km)`,
+      rationale: `${b.mfyName}da ${b.voltageKv} kV tarmoqning ${b.backlogKm} km qismi `
+        + `hali ta’mirlanmagan.`,
+      priority: Math.min(70, 30 + b.backlogKm),
+    });
+  }
+
+  /*
+   * Uzilgan/aloqasiz abonent ULUSHI — `TpMonitorPanel.tsx` da AYNAN shu
+   * bo'sag'a (5%/10%) bilan "muammo" deb rangli ko'rsatiladi, lekin hech
+   * qanday ishga ulanmaydi. Bu manba (oylik hisobot) HAR DOIM to'ldirilgan
+   * bo'ladi — TP holati hali kiritilmagan bo'lsa ham tavsiya chiqishi mumkin.
+   */
+  const tpInfoByCode = new Map(tpRows.map((t) => [t.code, t]));
+  for (const m of tpMonthlyRows) {
+    if (coveredTpCodes.has(m.code) || m.consumersTotal <= 0) continue;
+    const offSharePct = (m.consumersDisconnected / m.consumersTotal) * 100;
+    if (offSharePct < OFF_SHARE_WARNING_PCT) continue;
+
+    const info = tpInfoByCode.get(m.code);
+    if (!info) continue;
+    suggestions.push({
+      workType: 'METER_REPLACEMENT', workTypeLabel: WORK_TYPE_LABEL_UZ.METER_REPLACEMENT,
+      mfyId: info.mfyId, mfyName: info.mfyName, tpId: info.tpId, tpCode: m.code,
+      suggestedTitle: `${m.code} dagi uzilgan/aloqasiz hisoblagichlarni tekshirish`,
+      rationale: `${m.code} da ${m.consumersDisconnected}/${m.consumersTotal} abonent aloqada `
+        + `emas (${offSharePct.toFixed(1)}%) — to‘g‘ridan-to‘g‘ri tijoriy yo‘qotish manbai bo‘lishi mumkin.`,
+      priority: offSharePct >= OFF_SHARE_CRITICAL_PCT ? 75 : 45,
+    });
+  }
+
+  /*
+   * Feeder darajasidagi yo'qotish % — maqsaddan sezilarli oshgan bo'lsa,
+   * aniq TP ko'rsatilmagan bo'lsa ham umumiy tekshiruv tavsiya etiladi.
+   * `efficiency()`ning `advice` maydoni bosh sahifadagi "AI tavsiya"
+   * kartasi (`AdviceCard`, deterministik, AI emas) bilan BIR XIL hisob-kitob
+   * — shu yerda esa "demak qanday ish kerak" savoliga javob beriladi.
+   */
+  if (efficiencyInfo?.advice) {
+    const { targetLossPct, currentLossPct } = efficiencyInfo.advice;
+    const gap = currentLossPct - targetLossPct;
+    if (gap > LOSS_GAP_THRESHOLD_PP) {
+      const commercialPct = lossParts.parts.find((p) => p.key === 'commercial')?.pct ?? 0;
+      const technologicalPct = lossParts.parts.find((p) => p.key === 'technological')?.pct ?? 0;
+      const workType = commercialPct >= technologicalPct ? 'ILLEGAL_DISCONNECT' : 'TP_MODERNIZATION';
+      const mfyId = tc.feederId ?? tpRows[0]?.mfyId ?? null;
+      const mfyName = tpRows[0]?.mfyName ?? 'Fider';
+
+      if (mfyId !== null && !coveredMfyType.has(`${mfyId}:${workType}`)) {
+        suggestions.push({
+          workType, workTypeLabel: WORK_TYPE_LABEL_UZ[workType],
+          mfyId, mfyName,
+          suggestedTitle: `${mfyName}: yo‘qotishni maqsad darajaga tushirish bo‘yicha tekshiruv`,
+          rationale: `Joriy yo‘qotish ${currentLossPct.toFixed(1)}% — maqsad `
+            + `${targetLossPct.toFixed(1)}% dan ${gap.toFixed(1)} f.p. yuqori `
+            + `(${commercialPct >= technologicalPct ? 'tijoriy' : 'texnologik'} yo‘qotish ustunlik `
+            + `qiladi: ${commercialPct.toFixed(1)}% / ${technologicalPct.toFixed(1)}%).`,
+          priority: Math.min(95, 60 + gap),
+        });
+      }
+    }
+  }
+
+  suggestions.sort((a, b) => b.priority - a.priority);
+  const top = suggestions.slice(0, MAX_RECOMMENDATIONS);
+  return { period, count: top.length, totalFound: suggestions.length, suggestions: top };
+}
+
+/*
+ * Login talab qilmasdan yozish — foydalanuvchi bilan ATAYLAB tasdiqlangan
+ * qaror (standart xavfsizlik andozasidan chetga chiqish).
+ *
+ * `fact.submission.created_by` haqiqiy `sec.app_user` qatoriga NOT NULL chet
+ * kalit bilan bog'langan — mehmon nomidan (`userId: null`) yozib bo'lmaydi,
+ * Postgres buni rad etadi. Shuning uchun tizimga kirmagan foydalanuvchi
+ * uchun yozish ADMINISTRATOR nomidan davom etadi: RLS/audit hali ham
+ * ISHLAYDI (kim yozgani jurналda "admin" deb qoladi), faqat inson login
+ * ekranini ko'rmaydi.
+ */
+let cachedAdminId: number | null = null;
+
+async function anonymousWriteContext(): Promise<AppContext | null> {
+  if (cachedAdminId === null) {
+    // `queryOne` ga `ctx` berilmasa standart `SYSTEM_CONTEXT` ishlatiladi —
+    // `sec.app_user`ni o'qish uchun kerak, mehmon konteksti yetarli emas.
+    const row = await queryOne<{ id: number }>(
+      `SELECT id FROM sec.app_user WHERE role = 'admin' ORDER BY id LIMIT 1`,
+    );
+    if (!row) return null;
+    cachedAdminId = row.id;
+  }
+  return { userId: cachedAdminId, role: 'admin', mfyIds: [], requestId: 'ai:anonymous-write' };
+}
+
+/**
+ * TP kodini ("TP-067") ichki ID/MFY'ga aylantiradi — `get_tp`dagi bilan bir
+ * xil qidiruv. `update_tp_status` shu orqali ishlaydi, model hech qachon
+ * ID'ni kod raqamidan o'ylab topmasin deb (`create_work`da bir marta shu
+ * xato ko'rilgan — bu yerda boshidanoq oldi olingan).
+ */
+async function resolveTpByCode(
+  tc: ToolContext, code: string, period: string,
+): Promise<{ tpId: number; mfyId: number; mfyName: string; code: string } | null> {
+  const rows = await q.tpMonitoring(tc.ctx, period, tc.feederId, 500);
+  const found = rows.find((r) => r.code.toUpperCase() === code.trim().toUpperCase());
+  return found ? { tpId: found.tpId, mfyId: found.mfyId, mfyName: found.mfyName, code: found.code } : null;
+}
 
 // ─── Bajaruvchi ─────────────────────────────────────────────────────────────
 
@@ -472,6 +843,10 @@ export async function runTool(
       return { kind: 'data', result: report };
     }
 
+    case 'recommend_works': {
+      return { kind: 'data', result: await recommendWorks(tc, period) };
+    }
+
     // ── B. Interfeys ────────────────────────────────────────────────────────
     case 'navigate': {
       const path = asString(args['path']);
@@ -556,6 +931,78 @@ export async function runTool(
         kind: 'action',
         action: { type: 'chart', payload: { url, kind, period } },
         result: { ok: true, note: `Diagramma tayyorlandi: ${kind}`, kind },
+      };
+    }
+
+    case 'render_table': {
+      const title = asString(args['title']);
+      if (!title) return denied('Jadval uchun sarlavha (title) kerak');
+
+      const columnsRaw = args['columns'];
+      if (!Array.isArray(columnsRaw) || columnsRaw.length === 0) {
+        return denied('columns — ustun sarlavhalari massivi bo‘lishi kerak (kamida 1 ta)');
+      }
+      const rowsRaw = args['rows'];
+      if (!Array.isArray(rowsRaw) || rowsRaw.length === 0 || !rowsRaw.every((r) => Array.isArray(r))) {
+        return denied('rows — massivlar massivi bo‘lishi kerak, har biri bitta jadval qatori');
+      }
+
+      // Model buzuq/keraksiz katta ma'lumot yubormasin — tavsifda aytilgan chegaralar shu yerda majburlanadi.
+      const columns = columnsRaw.slice(0, 8).map((c) => String(c));
+      const rows: (string | number)[][] = rowsRaw.slice(0, 30).map((r) =>
+        (r as unknown[]).map((cell) => (typeof cell === 'string' || typeof cell === 'number' ? cell : String(cell))));
+
+      /*
+       * Rasm to'g'ridan-to'g'ri shu yerda, SINXRON tayyorlanadi — `show_chart`
+       * dagidek keyinroq alohida HTTP marshrut orqali emas: bu ma'lumotlar
+       * fayl sifatida saqlanmagan, faqat shu chaqiruvda mavjud (model o'zi
+       * bergan raqamlar), shuning uchun manzil emas, tayyor rasm qaytariladi.
+       */
+      const buffer = renderTable(title, columns, rows);
+      const url = `data:image/png;base64,${buffer.toString('base64')}`;
+
+      return {
+        kind: 'action',
+        action: { type: 'chart', payload: { url, kind: 'custom_table', period } },
+        result: { ok: true, note: `Jadval tayyorlandi: ${title}` },
+      };
+    }
+
+    case 'render_custom_chart': {
+      const title = asString(args['title']);
+      if (!title) return denied('Diagramma uchun sarlavha (title) kerak');
+
+      const chartType = asString(args['chart_type']) ?? '';
+      const allowedTypes = ['line', 'bar', 'donut'];
+      if (!allowedTypes.includes(chartType)) {
+        return denied(`Noma’lum diagramma turi. Mumkin: ${allowedTypes.join(', ')}`);
+      }
+
+      const itemsRaw = args['items'];
+      if (!Array.isArray(itemsRaw) || itemsRaw.length === 0) {
+        return denied('items — kamida bitta {label, value} elementidan iborat massiv bo‘lishi kerak');
+      }
+      const items: { series?: string; label: string; value: number }[] = [];
+      for (const raw of itemsRaw.slice(0, 60)) {
+        if (typeof raw !== 'object' || raw === null) continue;
+        const rec = raw as Record<string, unknown>;
+        const label = asString(rec['label']);
+        const value = asNumber(rec['value']);
+        if (label === undefined || value === undefined) continue;
+        const series = asString(rec['series']);
+        items.push(series ? { series, label, value } : { label, value });
+      }
+      if (items.length === 0) {
+        return denied('items ichida to‘g‘ri {label, value} elementi topilmadi');
+      }
+
+      const buffer = renderCustomChart(title, chartType as 'line' | 'bar' | 'donut', items);
+      const url = `data:image/png;base64,${buffer.toString('base64')}`;
+
+      return {
+        kind: 'action',
+        action: { type: 'chart', payload: { url, kind: 'custom_chart', period } },
+        result: { ok: true, note: `Diagramma tayyorlandi: ${title}` },
       };
     }
 
@@ -657,6 +1104,207 @@ export async function runTool(
       if (!note) return denied('Rad etish sababi majburiy');
       const sub = await entry.changeStatus(tc.ctx, id, 'rejected', note);
       return { kind: 'data', result: { ok: true, submission: sub } };
+    }
+
+    case 'create_work': {
+      const mfyId = asNumber(args['mfy_id']) ?? tc.feederId;
+      if (mfyId === null || mfyId === undefined) return denied('Fider/MFY aniqlanmadi');
+
+      let writeCtx: AppContext;
+      if (tc.user) {
+        if (!tc.canWriteMfy(mfyId)) return denied('Bu fiderga yozish huquqingiz yo‘q');
+        writeCtx = tc.ctx;
+      } else {
+        const anon = await anonymousWriteContext();
+        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
+        writeCtx = anon;
+      }
+
+      const workType = asString(args['work_type']);
+      if (!workType || !(WORK_TYPES as readonly string[]).includes(workType)) {
+        return denied(`Noma’lum ish turi. Mumkin: ${WORK_TYPES.join(', ')}`);
+      }
+      const titleRaw = asString(args['title']);
+      if (!titleRaw) return denied('Ish nomi (title) kerak');
+      /*
+       * AI yaratgan ishlarni mavjud UI'da (dalolatnoma, ishlar ro'yxati)
+       * vizual ajratib turish uchun — yangi DB ustuni qo'shmasdan eng arzon
+       * yechim, xuddi rasm izohlaridagi kabi oddiy matn belgisi.
+       */
+      const AI_PREFIX = 'AI tavsiyasi: ';
+      const titleUz = titleRaw.startsWith(AI_PREFIX) ? titleRaw : `${AI_PREFIX}${titleRaw}`;
+
+      const candidate = {
+        mfyId, tpId: asNumber(args['tp_id']) ?? null, workType, titleUz,
+        description: asString(args['description']) ?? null,
+        status: asString(args['status']) ?? 'PLANNED',
+        plannedStart: asString(args['planned_start']) ?? null,
+        plannedEnd: asString(args['planned_end']) ?? null,
+        actualEnd: asString(args['actual_end']) ?? null,
+        progressPct: asNumber(args['progress_pct']) ?? 0,
+        quantity: asNumber(args['quantity']) ?? 0,
+        unit: asString(args['unit']) ?? 'ta',
+        costMln: asNumber(args['cost_mln']) ?? 0,
+        effectLossPctBefore: null, effectLossPctAfter: null, effectSavingKwhMonth: 0,
+      };
+
+      // `workSchema` — forma bilan BIR XIL tekshiruv, AI orqali chetlab o'tib bo'lmasin.
+      const parsed = workSchema.safeParse(candidate);
+      if (!parsed.success) {
+        return denied(
+          'Ma’lumotlar mos emas: ' + parsed.error.issues.map((i) => i.message).join('; '),
+        );
+      }
+
+      const work = await q.createWork(writeCtx, parsed.data as Work);
+      return { kind: 'data', result: { ok: true, work } };
+    }
+
+    case 'update_work_status': {
+      const id = asNumber(args['id']);
+      if (id === undefined) return denied('Ish raqami kerak');
+
+      const current = await q.workDetail(tc.ctx, id);
+      if (!current) return denied('Ish topilmadi');
+
+      let writeCtx: AppContext;
+      if (tc.user) {
+        if (!tc.canWriteMfy(current.mfyId)) return denied('Bu ishga yozish huquqingiz yo‘q');
+        writeCtx = tc.ctx;
+      } else {
+        const anon = await anonymousWriteContext();
+        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
+        writeCtx = anon;
+      }
+
+      const status = asString(args['status']);
+      if (!status || !(WORK_STATUSES as readonly string[]).includes(status)) {
+        return denied(`Noma’lum holat. Mumkin: ${WORK_STATUSES.join(', ')}`);
+      }
+
+      /*
+       * Berilmagan maydonlar MAVJUD qiymatdan olinadi va TO'LIQ obyekt
+       * sifatida qayta tekshiriladi — `routes/dash.ts`dagi PATCH marshruti
+       * bilan BIR XIL naqsh (status/progressPct/actualEnd birga mos kelishi
+       * shart, DB CHECK shuni talab qiladi).
+       */
+      const merged = workSchema.safeParse({
+        mfyId: current.mfyId, tpId: null, workType: current.workType,
+        titleUz: current.titleUz, description: current.description,
+        status,
+        plannedStart: current.plannedStart, plannedEnd: current.plannedEnd,
+        actualEnd: asString(args['actual_end']) ?? current.actualEnd,
+        progressPct: asNumber(args['progress_pct']) ?? current.progressPct,
+        quantity: current.quantity, unit: current.unit, costMln: current.costMln,
+        effectLossPctBefore: current.effectLossPctBefore,
+        effectLossPctAfter: current.effectLossPctAfter,
+        effectSavingKwhMonth: current.effectSavingKwhMonth,
+      });
+      if (!merged.success) {
+        return denied(
+          'Holat mos emas: ' + merged.error.issues.map((i) => i.message).join('; '),
+        );
+      }
+
+      const work = await q.updateWorkStatus(writeCtx, id, {
+        status: merged.data.status,
+        progressPct: merged.data.progressPct,
+        actualEnd: merged.data.actualEnd ?? null,
+      });
+      return { kind: 'data', result: { ok: true, work } };
+    }
+
+    case 'update_tp_status': {
+      const code = asString(args['tp_code']);
+      if (!code) return denied('TP kodi (tp_code) kerak');
+
+      const tp = await resolveTpByCode(tc, code, period);
+      if (!tp) return denied(`"${code}" nomli TP topilmadi`);
+
+      let writeCtx: AppContext;
+      if (tc.user) {
+        if (!tc.canWriteMfy(tp.mfyId)) return denied('Bu fiderga yozish huquqingiz yo‘q');
+        writeCtx = tc.ctx;
+      } else {
+        const anon = await anonymousWriteContext();
+        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
+        writeCtx = anon;
+      }
+
+      const sub = await entry.openDraft(writeCtx, tp.mfyId, 'TP_STATUS', period);
+      const existing = await entry.tpStatusRows(writeCtx, sub.id);
+      const current = existing.find((r) => r.tpId === tp.tpId);
+
+      /*
+       * Bitta TP ni yangilash uchun BUTUN ro'yxat qayta yuboriladi
+       * (`saveTpStatus` hammasini o'chirib qayta yozadi) — shuning uchun
+       * boshqa TP larning MAVJUD qatorlari saqlanadi, faqat shu birining
+       * qatori yangilanadi/qo'shiladi.
+       */
+      const candidate = {
+        tpId: tp.tpId,
+        loadPct: asNumber(args['load_pct']) ?? current?.loadPct ?? 0,
+        peakKva: asNumber(args['peak_kva']) ?? current?.peakKva ?? 0,
+        condition: asString(args['condition']) ?? current?.condition ?? 'GOOD',
+        underLoad: typeof args['under_load'] === 'boolean' ? args['under_load'] : current?.underLoad ?? false,
+        repairNeeded: typeof args['repair_needed'] === 'boolean'
+          ? args['repair_needed'] : current?.repairNeeded ?? false,
+        repairReason: asString(args['repair_reason']) ?? current?.repairReason ?? null,
+      };
+      const merged = [...existing.filter((r) => r.tpId !== tp.tpId), candidate];
+
+      const parsed = tpStatusPatchSchema.safeParse({ rows: merged });
+      if (!parsed.success) {
+        return denied(
+          'Ma’lumotlar mos emas: ' + parsed.error.issues.map((i) => i.message).join('; '),
+        );
+      }
+
+      await entry.saveTpStatus(writeCtx, sub.id, parsed.data.rows);
+      return {
+        kind: 'data',
+        result: { ok: true, submissionId: sub.id, tpCode: tp.code, saved: candidate },
+      };
+    }
+
+    case 'update_network_defect': {
+      const mfyId = asNumber(args['mfy_id']) ?? tc.feederId;
+      if (mfyId === null || mfyId === undefined) return denied('Fider/MFY aniqlanmadi');
+
+      let writeCtx: AppContext;
+      if (tc.user) {
+        if (!tc.canWriteMfy(mfyId)) return denied('Bu fiderga yozish huquqingiz yo‘q');
+        writeCtx = tc.ctx;
+      } else {
+        const anon = await anonymousWriteContext();
+        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
+        writeCtx = anon;
+      }
+
+      const voltageKv = asNumber(args['voltage_kv']);
+      if (voltageKv === undefined) return denied('Kuchlanish klassi (voltage_kv) kerak');
+      const repairNeededKm = asNumber(args['repair_needed_km']);
+      if (repairNeededKm === undefined) return denied('repair_needed_km kerak');
+
+      const sub = await entry.openDraft(writeCtx, mfyId, 'NETWORK_DEFECT', period);
+      const existing = await entry.networkDefectRows(writeCtx, sub.id);
+      const current = existing.find((r) => r.voltageKv === voltageKv);
+
+      const candidate = {
+        voltageKv, repairNeededKm,
+        repairedKm: asNumber(args['repaired_km']) ?? current?.repairedKm ?? 0,
+      };
+      const merged = [...existing.filter((r) => r.voltageKv !== voltageKv), candidate];
+
+      const parsed = networkDefectPatchSchema.safeParse({ rows: merged });
+      if (!parsed.success) {
+        return denied(
+          'Ma’lumotlar mos emas: ' + parsed.error.issues.map((i) => i.message).join('; '),
+        );
+      }
+
+      await entry.saveNetworkDefect(writeCtx, sub.id, parsed.data.rows);
+      return { kind: 'data', result: { ok: true, submissionId: sub.id, saved: candidate } };
     }
 
     default:

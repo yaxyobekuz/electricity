@@ -66,6 +66,24 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
       });
     }
 
+    /*
+     * Bu marshrut `requireAuth` talab qilmaydi — mehmon ham chatlasha oladi.
+     * Lekin `Authorization` sarlavhasi BERILGAN bo'lib, token yaroqsiz/eskirgan
+     * bo'lsa (`plugins/auth.ts`ning `onRequest` ilgagi buni jimgina `req.user =
+     * null` qilib qo'yadi — mehmon bilan farqlanmaydi), shu yerda 401
+     * qaytariladi. Aks holda avval kirgan foydalanuvchi 15 daqiqadan keyin
+     * "mehmon" sifatida davom etib, yozish asboblari doim "kirish huquqi yo'q"
+     * deb qaytaraverardi — klient buni hech qachon tushunmas, chunki
+     * `apiFetchRaw`dagi token-yangilash mexanizmi FAQAT 401 statusiga
+     * ishlaydi. 401 qaytarilsa, klient tokenni yangilab qayta so'raydi.
+     */
+    if (req.headers.authorization && !req.user) {
+      return reply.code(401).send({
+        error: 'token_expired',
+        message: 'Sessiya muddati tugagan. Qaytadan urinib ko‘ring.',
+      });
+    }
+
     const parsed = chatBody.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: 'bad_request', message: 'So‘rov noto‘g‘ri' });
@@ -151,6 +169,86 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
     } finally {
       reply.raw.end();
     }
+  });
+
+  /**
+   * Ovozli xabarni matnga aylantirish (Whisper).
+   *
+   * Telegram bot ovozli xabarlarni ogg/opus formatida shu yo'lga yuboradi —
+   * bot o'zi OpenAI kalitini bilmaydi, faqat shu API'ga ko'prik. `chat/
+   * completions` uchun ishlatiladigan `config.ai.model` bu yerga MOS
+   * KELMAYDI (u — matn modeli), shuning uchun `whisper-1` qattiq yozilgan.
+   */
+  app.post('/transcribe', {
+    config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
+  }, async (req, reply) => {
+    if (!aiEnabled()) {
+      return reply.code(503).send({
+        error: 'ai_disabled',
+        message: 'AI yordamchi sozlanmagan: .env faylida OPENAI_API_KEY berilishi kerak',
+      });
+    }
+
+    // `/chat` dagi bilan bir xil sabab — 401 klientning token-yangilash
+    // mexanizmini ishga tushiradi, aks holda eskirgan token jimgina
+    // mehmon rejimiga tushib qolardi.
+    if (req.headers.authorization && !req.user) {
+      return reply.code(401).send({
+        error: 'token_expired',
+        message: 'Sessiya muddati tugagan. Qaytadan urinib ko‘ring.',
+      });
+    }
+
+    const file = await req.file();
+    if (!file) {
+      return reply.code(400).send({ error: 'no_file', message: 'Ovozli fayl yuborilmadi' });
+    }
+
+    const buf = await file.toBuffer();
+
+    /*
+     * Node 24 ning o'rnatilgan FormData/Blob obyektlaridan foydalaniladi —
+     * `telegram.ts`dagi `sendDocument` xuddi shu texnikani ishlatadi.
+     * `Content-Type` sarlavhasini QO'LDA qo'ymaymiz: `fetch` FormData
+     * tanasi uchun to'g'ri `boundary`ni o'zi qo'shadi, qo'lda yozilsa buziladi.
+     */
+    /*
+     * `language` maydoni ATAYLAB berilmaydi: OpenAI'ning `whisper-1`i faqat
+     * o'zi tan olgan ISO-639-1 kodlar ro'yxatini qabul qiladi va "uz" o'sha
+     * ro'yxatda YO'Q — berilsa `400 unsupported_language` bilan butun so'rov
+     * qulaydi (sinovda aniqlandi). Til hinti bo'lmasa Whisper ovozdan o'zi
+     * aniqlaydi — bu qattiq xatodan ancha yaxshi.
+     */
+    const form = new FormData();
+    form.append('file', new Blob([buf], { type: file.mimetype || 'audio/ogg' }), 'voice.ogg');
+    form.append('model', 'whisper-1');
+
+    let res: Response;
+    try {
+      res = await fetch(`${config.ai.baseUrl}/audio/transcriptions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${config.ai.apiKey}` },
+        body: form,
+        signal: AbortSignal.timeout(config.ai.timeoutMs),
+      });
+    } catch (err) {
+      // Tarmoq yo'q / DNS ishlamayapti — offline muhitda odatiy hol.
+      return reply.code(502).send({
+        error: 'ai_upstream',
+        message: `AI xizmatiga ulanib bo‘lmadi: ${err instanceof Error ? err.message : 'noma’lum xato'}`,
+      });
+    }
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      return reply.code(502).send({
+        error: 'ai_upstream',
+        message: `AI xizmati xatosi (${res.status}): ${detail.slice(0, 300) || res.statusText}`,
+      });
+    }
+
+    const data = await res.json() as { text?: string };
+    return reply.send({ text: data.text ?? '' });
   });
 };
 

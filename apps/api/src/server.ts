@@ -6,6 +6,7 @@ import { assertProductionSecrets, config } from './config.ts';
 import { closePool, SYSTEM_CONTEXT } from './db/pool.ts';
 import { refreshAggregates } from './services/aggregates.ts';
 import * as alerts from './services/alerts.ts';
+import * as narrative from './services/narrative.ts';
 import * as telegram from './services/telegram.ts';
 
 async function main(): Promise<void> {
@@ -52,10 +53,60 @@ async function main(): Promise<void> {
     { timezone: 'Asia/Tashkent' },
   );
 
+  /*
+   * Haftalik AI tahliliy xulosa push'i — har Dushanba soat 08:30 da
+   * (Toshkent), kunlik ogohlantirish push'idan keyin, hokim ularni ketma-ket
+   * o'qisin deb. Xato yiqilib ketishi mumkin emas — sabab yuqoridagi bilan
+   * bir xil (bitta buzuq hisob-kitob butun cron rejalashtiruvchini
+   * to'xtatib qo'ymasligi kerak).
+   */
+  const weeklyNarrativeTask = cron.schedule(
+    '30 8 * * 1',
+    () => {
+      void (async () => {
+        try {
+          const text = await narrative.generateNarrative(SYSTEM_CONTEXT, null, 'weekly');
+
+          if (config.telegram.botToken && config.telegram.alertChatId) {
+            await telegram.sendMessage(config.telegram.botToken, config.telegram.alertChatId, text);
+          }
+        } catch (err) {
+          app.log.error({ err }, 'Haftalik tahliliy xulosa push\'i muvaffaqiyatsiz tugadi');
+        }
+      })();
+    },
+    { timezone: 'Asia/Tashkent' },
+  );
+
+  /*
+   * Oylik AI tahliliy xulosa push'i — har oyning 1-kuni soat 09:00 da
+   * (Toshkent). Mantiq yuqoridagi haftalik bilan bir xil, faqat `kind`
+   * 'monthly'.
+   */
+  const monthlyNarrativeTask = cron.schedule(
+    '0 9 1 * *',
+    () => {
+      void (async () => {
+        try {
+          const text = await narrative.generateNarrative(SYSTEM_CONTEXT, null, 'monthly');
+
+          if (config.telegram.botToken && config.telegram.alertChatId) {
+            await telegram.sendMessage(config.telegram.botToken, config.telegram.alertChatId, text);
+          }
+        } catch (err) {
+          app.log.error({ err }, 'Oylik tahliliy xulosa push\'i muvaffaqiyatsiz tugadi');
+        }
+      })();
+    },
+    { timezone: 'Asia/Tashkent' },
+  );
+
   const shutdown = async (signal: string): Promise<void> => {
     app.log.info({ signal }, 'To‘xtatilmoqda…');
     task.stop();
     alertsTask.stop();
+    weeklyNarrativeTask.stop();
+    monthlyNarrativeTask.stop();
     await app.close();
     await closePool();
     process.exit(0);

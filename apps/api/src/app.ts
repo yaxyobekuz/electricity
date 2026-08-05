@@ -82,6 +82,10 @@ export async function buildApp(): Promise<FastifyInstance> {
       origin: (origin, cb) => {
         cb(null, !origin || LOCAL_ORIGIN.test(origin));
       },
+      // `@fastify/cors` standart holatda faqat GET,HEAD,POST ga ruxsat beradi —
+      // PATCH/PUT/DELETE ishlatadigan barcha marshrutlar (autosave, o'chirish)
+      // ochiq yozilishi shart, aks holda preflight ularni jimgina bloklaydi.
+      methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
       credentials: true,
     });
   }

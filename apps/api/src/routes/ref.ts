@@ -1,19 +1,50 @@
 import { z } from 'zod';
 import type { FastifyPluginAsync } from 'fastify';
 
-import { bootstrap, getMfy, listNetworkSegments, listTp } from '../db/queries/ref.ts';
+import {
+  bootstrap, getMfy, getMfyResponsible, listNetworkSegments, listTp, upsertMfyResponsible,
+} from '../db/queries/ref.ts';
 
 const mfyQuery = z.object({ mfyId: z.coerce.number().int().positive().optional() });
+const idParam = z.object({ id: z.coerce.number().int().positive() });
+
+const responsibleBody = z.object({
+  fullName: z.string().trim().min(1).max(200),
+  position: z.string().trim().max(200).nullable().optional(),
+  phone: z.string().trim().max(50).nullable().optional(),
+});
 
 const refRoutes: FastifyPluginAsync = async (app) => {
   /** Bitta so'rovda barcha spravochniklar — klient startida chaqiriladi. */
   app.get('/bootstrap', async (req) => bootstrap(req.ctx));
 
   app.get('/mfy/:id', async (req, reply) => {
-    const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+    const { id } = idParam.parse(req.params);
     const mfy = await getMfy(req.ctx, id);
     if (!mfy) return reply.code(404).send({ error: 'not_found', message: 'MFY topilmadi' });
     return mfy;
+  });
+
+  /** Fider bo'yicha ma'sul shaxs — belgilanmagan bo'lsa `null`. */
+  app.get('/mfy/:id/responsible', async (req) => {
+    const { id } = idParam.parse(req.params);
+    return getMfyResponsible(req.ctx, id);
+  });
+
+  /*
+   * HOZIRCHA LOGINSIZ HAM YOZISH MUMKIN — tizim hali umumiy ochiq rejimda
+   * sinovdan o'tkazilmoqda, foydalanuvchi hisoblari keyinroq yoqiladi.
+   * Auth qaytarilganda bu yerga `{ onRequest: [app.requireAuth] }` va
+   * `app.assertMfyWrite` tekshiruvi qaytariladi (naqsh: `entry.ts`).
+   */
+  app.patch('/mfy/:id/responsible', async (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = responsibleBody.parse(req.body);
+    return upsertMfyResponsible(req.ctx, id, {
+      fullName: body.fullName,
+      position: body.position ?? null,
+      phone: body.phone ?? null,
+    });
   });
 
   app.get('/tp', async (req) => {

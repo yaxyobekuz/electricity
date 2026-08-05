@@ -3,6 +3,8 @@
  *
  * Qoida: bitta so'rov = bitta panel GURUHI. Tuman dashboardi 4–5 so'rovda yuklanadi.
  */
+import type { Work } from '@beap/shared';
+import { WORK_STATUSES, workSchema } from '@beap/shared';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 
@@ -136,6 +138,90 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     if (!row) return reply.code(404).send({ error: 'not_found', message: 'Ish topilmadi' });
     return row;
   });
+
+  /**
+   * Yangi ish yozadi.
+   *
+   * Bugungacha `fact.work` uchun yozish yo'li umuman yo'q edi (faqat rasm
+   * biriktirish, `routes/files.ts`) — bu marshrut AI asboblari ("ish tavsiya
+   * qilish") va kelajakda qo'lda kiritish formasi uchun umumiy kirish nuqtasi.
+   * Tekshiruv ikki qatlamli: `workSchema` (shu yerda) + Postgres CHECK/RLS.
+   */
+  app.post(
+    '/work',
+    { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },
+    async (req, reply) => {
+      const parsed = workSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'validation',
+          message: parsed.error.issues.map((i) => i.message).join('; '),
+        });
+      }
+      if (!app.assertMfyWrite(req, parsed.data.mfyId)) {
+        return reply.code(403).send({ error: 'forbidden', message: 'Bu fiderga yozish huquqingiz yo‘q' });
+      }
+
+      const row = await q.createWork(req.ctx, parsed.data as Work);
+      return reply.code(201).send(row);
+    },
+  );
+
+  /**
+   * Ish holatini o'zgartiradi (Reja → Jarayonda → Bajarildi / Bekor qilindi).
+   *
+   * Berilmagan maydonlar MAVJUD qiymatdan olinadi va `workSchema` bilan QAYTA
+   * to'liq tekshiriladi (`entry.ts`dagi `saveMonthlyReturn` bilan bir xil
+   * "birlashtir, keyin tekshir" naqshi) — aks holda masalan faqat
+   * `{status:'COMPLETED'}` yuborilsa, `actual_end`/`progress_pct` mosligi
+   * tekshirilmay, xato Postgres CHECK darajasida (o'qib bo'lmas ko'rinishda)
+   * chiqib ketardi.
+   */
+  app.patch(
+    '/work/:id/status',
+    { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const current = await q.workDetail(req.ctx, id);
+      if (!current) return reply.code(404).send({ error: 'not_found', message: 'Ish topilmadi' });
+      if (!app.assertMfyWrite(req, current.mfyId)) {
+        return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
+      }
+
+      const patch = z.object({
+        status: z.enum(WORK_STATUSES),
+        progressPct: z.coerce.number().int().min(0).max(100).optional(),
+        actualEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+      }).parse(req.body);
+
+      const merged = workSchema.safeParse({
+        mfyId: current.mfyId, tpId: null, workType: current.workType,
+        titleUz: current.titleUz, description: current.description,
+        status: patch.status,
+        plannedStart: current.plannedStart, plannedEnd: current.plannedEnd,
+        actualEnd: patch.actualEnd !== undefined ? patch.actualEnd : current.actualEnd,
+        progressPct: patch.progressPct ?? current.progressPct,
+        quantity: current.quantity, unit: current.unit, costMln: current.costMln,
+        effectLossPctBefore: current.effectLossPctBefore,
+        effectLossPctAfter: current.effectLossPctAfter,
+        effectSavingKwhMonth: current.effectSavingKwhMonth,
+      });
+      if (!merged.success) {
+        return reply.code(400).send({
+          error: 'validation',
+          message: merged.error.issues.map((i) => i.message).join('; '),
+        });
+      }
+
+      const row = await q.updateWorkStatus(req.ctx, id, {
+        status: merged.data.status,
+        progressPct: merged.data.progressPct,
+        actualEnd: merged.data.actualEnd ?? null,
+      });
+      if (!row) return reply.code(404).send({ error: 'not_found', message: 'Ish topilmadi' });
+      return row;
+    },
+  );
 
   // ═══════════════════════════════════════════════════════════════════════
   // MFY

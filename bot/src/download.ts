@@ -79,3 +79,23 @@ export async function sendChartPhoto(
     return false;
   }
 }
+
+/**
+ * `sendChartPhoto` bilan bir xil, lekin PNG baytlari chaqiruvchida
+ * ALLAQACHON tayyor bo'lganda (fetch shart emas) — masalan 'chart'
+ * action'ining payload.url'i 'data:image/png;base64,...' inline rasm
+ * bo'lsa ('render_table'/'render_custom_chart' asboblari qaytargan,
+ * ai-tools.ts'ga qarang). Baytlar base64'dan `index.ts`da dekodlanadi,
+ * bu funksiya faqat yuboradi.
+ */
+export async function sendChartBuffer(
+  api: Api, chatId: number, buf: Buffer,
+): Promise<boolean> {
+  try {
+    await api.sendPhoto(chatId, new InputFile(buf, 'chart.png'));
+    return true;
+  } catch {
+    // Tarmoq xatosi — chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
+    return false;
+  }
+}

@@ -38,6 +38,15 @@ export interface Mfy {
   gridCol: number | null;
 }
 
+/** Fider bo'yicha ma'sul shaxs — bitta fider uchun bitta amaldagi yozuv. */
+export interface MfyResponsible {
+  mfyId: number;
+  fullName: string;
+  position: string | null;
+  phone: string | null;
+  updatedAt: string;
+}
+
 export interface Tp {
   id: number;
   mfyId: number;

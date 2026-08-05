@@ -11,7 +11,7 @@ import { parseDate } from '@internationalized/date';
 import {
   Activity, ArrowDown, ArrowUp, BarChart3, Bell, Building2, CalendarDays,
   CircleDollarSign, ClipboardCheck, ClipboardList, FileSpreadsheet, Home, Languages,
-  LogOut, Menu, Moon, Ruler, ScrollText, Sun, TriangleAlert, Zap,
+  LogOut, Menu, Moon, Ruler, ScrollText, Settings, Sun, TriangleAlert, Zap,
 } from 'lucide-react';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -71,11 +71,15 @@ const NAV: NavItem[] = [
     to: '/review', labelKey: 'nav.review', icon: <Bell className="size-4.5" />,
     roles: ['elektroset_manager', 'admin'],
   },
+  {
+    to: '/settings/responsible', labelKey: 'nav.admin', icon: <Settings className="size-4.5" />,
+    roles: ['mfy_operator', 'elektroset_manager', 'admin'],
+  },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation();
-  const { theme, toggleTheme, sidebarOpen, toggleSidebar, user, setUser, period } = useUi();
+  const { theme, toggleTheme, sidebarOpen, toggleSidebar, user, setUser, period, setAiOpen } = useUi();
   const { data: boot } = useBootstrap();
   const efficiency = useEfficiency(period ?? undefined);
   const location = useLocation();
@@ -161,7 +165,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {efficiency.data.advice && (
               <AdviceCard
                 advice={efficiency.data.advice}
-                onOpen={() => void navigate('/energy-balance')}
+                onOpen={() => setAiOpen(true)}
               />
             )}
           </div>

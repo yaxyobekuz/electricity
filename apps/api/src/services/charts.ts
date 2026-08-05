@@ -599,3 +599,176 @@ export async function renderChart(
   const stamp = params.period ?? new Date().toISOString().slice(0, 10);
   return { buffer, filename: `${kind}_${stamp}.png` };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AI yordamchi uchun erkin chizish — `render_table` / `render_custom_chart`
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Yuqoridagi 4 ta quruvchidan farqli o'laroq bular DB ga murojaat qilmaydi:
+// model o'zi bergan (chatda hisoblangan yoki aytgan) raqamlarni sinxron
+// ravishda rasmga aylantiradi — shuning uchun `async` emas va `AppContext`
+// qabul qilmaydi. `ai-tools.ts` natijani darhol `buffer.toString('base64')`
+// bilan ishlatadi.
+
+/** Ko'p seriyali/ko'p tilimli chizmalarda ranglarni tartib bilan taqsimlash uchun. */
+const CATEGORICAL_COLORS = [COLORS.primary, COLORS.green, COLORS.amber, COLORS.danger, COLORS.gray];
+
+const MAX_TABLE_ROWS = 30;
+const MAX_TABLE_COLS = 8;
+const MAX_CUSTOM_CHART_ITEMS = 60;
+
+/** Katakcha matni: raqamlar `n()` bilan (kWh uslubidagi bo'shliqli minglik), qolgani — matn sifatida. */
+function formatTableCell(v: string | number): string {
+  if (typeof v === 'number') {
+    return Number.isFinite(v) ? n(v, Number.isInteger(v) ? 0 : 2) : '—';
+  }
+  return v === null || v === undefined ? '' : String(v);
+}
+
+/**
+ * Oddiy, toza jadval: sarlavha zolotasi (rangli fon) + qatorlar (bir
+ * qatordan keyin och chiziq). Ustunlar `PLOT_W` bo'ylab teng taqsimlanadi —
+ * xuddi boshqa 4 diagramma bilan bir xil chegaralardan foydalanadi.
+ * Qiymatlar matn bo'lsa chapga, raqam bo'lsa o'ngga tekislanadi.
+ *
+ * Chaqiruvchi (`ai-tools.ts`) allaqachon 8 ustun / 30 qatorgacha qisqartirib
+ * beradi, lekin bu funksiya QANDAY chaqirilishidan qat'iy nazar hech qachon
+ * qulamasligi kerak — shuning uchun chegaralar shu yerda ham majburlanadi.
+ */
+export function renderTable(title: string, columns: string[], rows: (string | number)[][]): Buffer {
+  const { canvas, ctx: c } = newCanvas();
+
+  const cols = columns.slice(0, MAX_TABLE_COLS);
+  const clampedRows = rows.slice(0, MAX_TABLE_ROWS).map((r) => r.slice(0, cols.length));
+
+  if (tryDrawEmpty(c, title, cols.length === 0 || clampedRows.length === 0, 'Ma\'lumot yo\'q')) {
+    return canvas.toBuffer('image/png');
+  }
+
+  const colWidth = PLOT_W / cols.length;
+  // Ustun ko'p bo'lsa matn sig'may qolmasligi uchun shrift kichrayadi.
+  const fontSize = colWidth < 70 ? 10 : colWidth < 100 ? 11 : colWidth < 140 ? 12 : 13;
+  const headerH = 32;
+  const rowH = Math.min(28, (PLOT_H - headerH) / clampedRows.length);
+  const tableH = headerH + rowH * clampedRows.length;
+  const startY = PLOT_Y + Math.max(0, (PLOT_H - tableH) / 2);
+
+  // Sarlavha zolotasi.
+  c.fillStyle = COLORS.primary;
+  c.fillRect(PLOT_X, startY, PLOT_W, headerH);
+  c.font = `bold ${fontSize}px sans-serif`;
+  c.fillStyle = '#ffffff';
+  c.textAlign = 'left';
+  c.textBaseline = 'middle';
+  cols.forEach((col, ci) => {
+    const x = PLOT_X + ci * colWidth;
+    c.save();
+    c.beginPath();
+    c.rect(x + 2, startY, colWidth - 4, headerH);
+    c.clip();
+    c.fillText(col, x + 8, startY + headerH / 2);
+    c.restore();
+  });
+
+  // Qatorlar — juft indekslarda och-kulrang zolota o'qishni osonlashtiradi.
+  clampedRows.forEach((row, ri) => {
+    const y = startY + headerH + ri * rowH;
+    if (ri % 2 === 1) {
+      c.globalAlpha = 0.5;
+      c.fillStyle = COLORS.grid;
+      c.fillRect(PLOT_X, y, PLOT_W, rowH);
+      c.globalAlpha = 1;
+    }
+    c.font = `${fontSize}px sans-serif`;
+    c.fillStyle = COLORS.ink;
+    c.textBaseline = 'middle';
+    row.forEach((cell, ci) => {
+      const x = PLOT_X + ci * colWidth;
+      const isNum = typeof cell === 'number';
+      c.textAlign = isNum ? 'right' : 'left';
+      const tx = isNum ? x + colWidth - 8 : x + 8;
+      c.save();
+      c.beginPath();
+      c.rect(x + 2, y, colWidth - 4, rowH);
+      c.clip();
+      c.fillText(formatTableCell(cell), tx, y + rowH / 2);
+      c.restore();
+    });
+  });
+
+  c.strokeStyle = COLORS.grid;
+  c.lineWidth = 1;
+  c.strokeRect(PLOT_X, startY, PLOT_W, tableH);
+
+  return canvas.toBuffer('image/png');
+}
+
+/**
+ * Modelning erkin {label, value[, series]} ma'lumotini MAVJUD chizish
+ * primitivlariga (`drawLineChart` / `drawHorizontalBarChart` /
+ * `drawDonutChart`) mos shaklga keltirib, shularni chaqiradi — bu yerda
+ * yangi chizish mantig'i YO'Q, faqat qayta shakllantirish.
+ */
+export function renderCustomChart(
+  title: string,
+  chartType: 'line' | 'bar' | 'donut',
+  items: { series?: string; label: string; value: number }[],
+): Buffer {
+  const { canvas, ctx: c } = newCanvas();
+  const capped = items.slice(0, MAX_CUSTOM_CHART_ITEMS);
+  const emptyMessage = 'Ma\'lumot yo\'q';
+
+  if (chartType === 'line') {
+    // Seriyalarga guruhlash — dastlabki paydo bo'lish tartibi saqlanadi.
+    const seriesOrder: string[] = [];
+    const seriesPoints = new Map<string, { label: string; value: number }[]>();
+    for (const it of capped) {
+      const key = it.series ?? '__default__';
+      let pts = seriesPoints.get(key);
+      if (!pts) {
+        pts = [];
+        seriesOrder.push(key);
+        seriesPoints.set(key, pts);
+      }
+      pts.push({ label: it.label, value: it.value });
+    }
+
+    // X o'qi kategoriyalari — eng uzun seriyaning yorliqlaridan olinadi.
+    let categories: string[] = [];
+    for (const key of seriesOrder) {
+      const pts = seriesPoints.get(key)!;
+      if (pts.length > categories.length) categories = pts.map((p) => p.label);
+    }
+
+    const series: LineSeries[] = seriesOrder.map((key, i) => ({
+      labelUz: key === '__default__' ? title : key,
+      color: CATEGORICAL_COLORS[i % CATEGORICAL_COLORS.length]!,
+      values: seriesPoints.get(key)!.map((p) => p.value),
+    }));
+
+    drawLineChart(c, { title, categories, series, emptyMessage });
+    return canvas.toBuffer('image/png');
+  }
+
+  if (chartType === 'bar') {
+    drawHorizontalBarChart(c, {
+      title,
+      color: COLORS.primary,
+      items: capped.map((it) => ({ label: it.label, value: it.value })),
+      emptyMessage,
+    });
+    return canvas.toBuffer('image/png');
+  }
+
+  // 'donut'
+  drawDonutChart(c, {
+    title,
+    slices: capped.map((it, i) => ({
+      label: it.label,
+      value: it.value,
+      color: CATEGORICAL_COLORS[i % CATEGORICAL_COLORS.length]!,
+    })),
+    emptyMessage,
+  });
+  return canvas.toBuffer('image/png');
+}

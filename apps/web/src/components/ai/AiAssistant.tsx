@@ -65,10 +65,13 @@ export function AiAssistant() {
   const period = useUi((s) => s.period);
   const setPeriod = useUi((s) => s.setPeriod);
   const setAsOfDate = useUi((s) => s.setAsOfDate);
+  const open = useUi((s) => s.aiOpen);
+  const setOpen = useUi((s) => s.setAiOpen);
+  const pendingPrompt = useUi((s) => s.aiPendingPrompt);
+  const clearPendingPrompt = useUi((s) => s.clearAiPendingPrompt);
   const navigate = useNavigate();
 
   const [enabled, setEnabled] = useState(false);
-  const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ChatItem[]>(readStore);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
@@ -155,7 +158,15 @@ export function AiAssistant() {
 
       case 'chart': {
         const url = String(p['url'] ?? '');
-        if (!url.startsWith('/')) break;
+        /*
+         * `url` ikki xil kelishi mumkin: 4 ta tayyor diagramma turi uchun
+         * API-nisbiy yo'l ('/report/chart/...'), yoki erkin jadval/diagramma
+         * asboblari ('render_table', 'render_custom_chart') uchun o'zida
+         * rasmni olib yuruvchi 'data:image/png;base64,...' — bunga HTTP
+         * so'rov shart emas, brauzer uni to'g'ridan-to'g'ri chizadi.
+         */
+        const isDataUri = url.startsWith('data:');
+        if (!isDataUri && !url.startsWith('/')) break;
         /*
          * Rasm hozir oqib kelayotgan matn pufagiga QO'SHILMAYDI — o'sha
          * pufak hali `onDelta` bilan to'ldirilmoqda, amal esa oqim
@@ -165,7 +176,7 @@ export function AiAssistant() {
         setItems((prev) => [...prev, {
           role: 'assistant',
           content: '',
-          imageUrl: apiUrl(url),
+          imageUrl: isDataUri ? url : apiUrl(url),
         }]);
         break;
       }
@@ -266,6 +277,18 @@ export function AiAssistant() {
       }
     })();
   };
+
+  /*
+   * Panel tashqarisidan (masalan "AI tavsiya" tugmasidan) kelgan savol —
+   * `askAi()` panelni ochadi VA shu matnni bu yerda avtomatik yuboradi.
+   * Navbat darhol tozalanadi: aks holda panel qayta ochilganda (yoki
+   * boshqa `aiOpen` o'zgarishida) o'sha savol qayta yuborilib qolardi.
+   */
+  useEffect(() => {
+    if (!pendingPrompt) return;
+    clearPendingPrompt();
+    send(pendingPrompt);
+  }, [pendingPrompt]);
 
   if (!enabled) return null;
 

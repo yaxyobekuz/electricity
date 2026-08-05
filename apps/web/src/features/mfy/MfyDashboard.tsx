@@ -13,38 +13,82 @@
  * bo'sh joyni to'ldirish uchun cho'zilmaydi. Shu sababli panellar soni ko'p,
  * balandligi past.
  */
-import { energy, kva, kw, money, monthShort, num, pct, pieces, volts } from '@beap/shared';
-import { Chip, ListBox, Select } from '@heroui/react';
 import {
-  Activity, ArrowRight, Building2, CircleDollarSign, Gauge as GaugeIcon, Leaf, PowerOff,
-  TrendingDown, TrendingUp, Users, UsersRound, Zap, ZapOff,
-} from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useParams } from 'react-router';
+  energy,
+  kva,
+  kw,
+  money,
+  monthShort,
+  num,
+  pct,
+  pieces,
+  volts,
+} from "@beap/shared";
+import { Chip, ListBox, Select } from "@heroui/react";
+import {
+  Activity,
+  ArrowRight,
+  Building2,
+  CircleDollarSign,
+  Gauge as GaugeIcon,
+  Leaf,
+  Phone,
+  PowerOff,
+  TrendingDown,
+  TrendingUp,
+  User,
+  Users,
+  UsersRound,
+  Zap,
+  ZapOff,
+} from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useNavigate, useParams } from "react-router";
 
-import { Donut } from '../../components/charts/Donut.tsx';
-import { Gauge } from '../../components/charts/Gauge.tsx';
-import { TrendLine, type TrendBucket } from '../../components/charts/TrendLine.tsx';
-import { ErrorState, FooterNote, LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
-import { CountUp } from '../../components/ui/CountUp.tsx';
-import { MotionStage } from '../../components/ui/MotionStage.tsx';
-import { EmptyPanel, Panel } from '../../components/ui/Panel.tsx';
-import { ReportMenu } from '../../components/ui/ReportMenu.tsx';
-import { ReportShortcuts } from '../../components/ui/ReportShortcuts.tsx';
+import { Donut } from "../../components/charts/Donut.tsx";
+import { Gauge } from "../../components/charts/Gauge.tsx";
 import {
-  MiniStat, QuickMetric, StatTile, type Tone,
-} from '../../components/ui/StatTile.tsx';
-import { PeriodPicker } from '../district/panels/PeriodPicker.tsx';
-import { TpMonitorPanel } from '../district/panels/TpMonitorPanel.tsx';
+  TrendLine,
+  type TrendBucket,
+} from "../../components/charts/TrendLine.tsx";
 import {
-  useBootstrap, useFeederMonthly, useMfyConsumers, useMfyDebt, useMfyDynamics,
-  useMfyLossStructure, useMfyOverview, useMfyResults, useMfyTpMonthly,
-  useMfyViolations, useMfyWorks,
-} from '../../lib/queries.ts';
-import { ViolationsPanel } from '../violations/ViolationsPanel.tsx';
-import { useUi } from '../../lib/ui-store.ts';
-import { WorkTimeline } from './WorkTimeline.tsx';
+  ErrorState,
+  FooterNote,
+  LoadingState,
+  PageHeader,
+} from "../../components/layout/AppShell.tsx";
+import { CountUp } from "../../components/ui/CountUp.tsx";
+import { MotionStage } from "../../components/ui/MotionStage.tsx";
+import { EmptyPanel, Panel } from "../../components/ui/Panel.tsx";
+import { ReportMenu } from "../../components/ui/ReportMenu.tsx";
+import { ReportShortcuts } from "../../components/ui/ReportShortcuts.tsx";
+import {
+  MiniStat,
+  QuickMetric,
+  StatTile,
+  type Tone,
+} from "../../components/ui/StatTile.tsx";
+import { PeriodPicker } from "../district/panels/PeriodPicker.tsx";
+import { TpMonitorPanel } from "../district/panels/TpMonitorPanel.tsx";
+import {
+  useBootstrap,
+  useFeederMonthly,
+  useMfyConsumers,
+  useMfyDebt,
+  useMfyDynamics,
+  useMfyLossStructure,
+  useMfyOverview,
+  useMfyResponsible,
+  useMfyResults,
+  useMfyTpMonthly,
+  useMfyViolations,
+  useMfyWorks,
+} from "../../lib/queries.ts";
+import { ViolationsPanel } from "../violations/ViolationsPanel.tsx";
+import { useUi } from "../../lib/ui-store.ts";
+import { WorkTimeline } from "./WorkTimeline.tsx";
+import { AskAiButton } from "../../components/ai/AskAiButton.tsx";
 
 const TILE_ICONS: Record<string, React.ReactNode> = {
   kwhIn: <Zap className="size-4" />,
@@ -58,14 +102,14 @@ const TILE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const TILE_TONES: Record<string, Tone> = {
-  kwhIn: 'blue',
-  kwhSold: 'green',
-  lossPct: 'orange',
-  naturalPct: 'purple',
-  consumersTotal: 'pink',
-  consumersActive: 'sky',
-  consumersDisconnected: 'amber',
-  tpCount: 'cyan',
+  kwhIn: "blue",
+  kwhSold: "green",
+  lossPct: "orange",
+  naturalPct: "purple",
+  consumersTotal: "pink",
+  consumersActive: "sky",
+  consumersDisconnected: "amber",
+  tpCount: "cyan",
 };
 
 export default function MfyDashboard() {
@@ -78,17 +122,22 @@ export default function MfyDashboard() {
    * Manzilda id bo'lmasa (bosh sahifa) — registrdagi YAGONA fider olinadi.
    * Tizim qamrovi bitta fider, shuning uchun "qaysi biri?" degan savol yo'q.
    */
-  const paramId = Number(params['mfyId']);
-  const mfyId = Number.isFinite(paramId) && paramId > 0
-    ? paramId
-    : (boot.data?.mfys[0]?.id ?? 0);
+  const paramId = Number(params["mfyId"]);
+  const mfyId =
+    Number.isFinite(paramId) && paramId > 0
+      ? paramId
+      : (boot.data?.mfys[0]?.id ?? 0);
   const period = useUi((s) => s.period);
   // Tanlangan sana — kunlik grafik AYNAN shu kunda tugaydi.
   const asOfDate = useUi((s) => s.asOfDate);
-  const [bucket, setBucket] = useState<TrendBucket>('day');
+  const [bucket, setBucket] = useState<TrendBucket>("day");
 
   const overview = useMfyOverview(mfyId, period ?? undefined);
-  const dynamics = useMfyDynamics(mfyId, { bucket, last: 7, ...(asOfDate ? { to: asOfDate } : {}) });
+  const dynamics = useMfyDynamics(mfyId, {
+    bucket,
+    last: 7,
+    ...(asOfDate ? { to: asOfDate } : {}),
+  });
   const consumers = useMfyConsumers(mfyId, period ?? undefined);
   const lossStructure = useMfyLossStructure(mfyId, period ?? undefined);
   const debt = useMfyDebt(mfyId, period ?? undefined);
@@ -97,14 +146,20 @@ export default function MfyDashboard() {
   const violations = useMfyViolations(mfyId, period ?? undefined);
   const feeder = useFeederMonthly(mfyId, period ?? undefined);
   const tpMonthly = useMfyTpMonthly(mfyId, period ?? undefined);
+  const responsible = useMfyResponsible(mfyId);
 
-  if (boot.isLoading || (mfyId === 0 && !boot.isError)) return <LoadingState rows={6} />;
+  if (boot.isLoading || (mfyId === 0 && !boot.isError))
+    return <LoadingState rows={6} />;
   if (mfyId === 0) return <ErrorState message="Fider registrda topilmadi" />;
   if (overview.isLoading) return <LoadingState rows={6} />;
   if (overview.isError || !overview.data) {
     return (
       <ErrorState
-        message={overview.error instanceof Error ? overview.error.message : 'Ma’lumot topilmadi'}
+        message={
+          overview.error instanceof Error
+            ? overview.error.message
+            : "Ma’lumot topilmadi"
+        }
         onRetry={() => void overview.refetch()}
       />
     );
@@ -117,19 +172,29 @@ export default function MfyDashboard() {
 
   // Yon xulosa qutilarining sarlavhasi tanlangan davrga ergashadi —
   // oylik ko'rinishda "Bugun" deb yozish noto'g'ri bo'lardi.
-  const periodWord = bucket === 'day' ? 'Bugun' : bucket === 'week' ? 'Shu hafta' : 'Shu oy';
-  const prevWord = bucket === 'day' ? 'Kecha' : bucket === 'week' ? 'O‘tgan hafta' : 'O‘tgan oy';
+  const periodWord =
+    bucket === "day" ? "Bugun" : bucket === "week" ? "Shu hafta" : "Shu oy";
+  const prevWord =
+    bucket === "day"
+      ? "Kecha"
+      : bucket === "week"
+        ? "O‘tgan hafta"
+        : "O‘tgan oy";
 
   const daysInMonth = 30;
   // Taxminiy tarif — "tejalgan energiya" ni so'mga o'girish uchun.
   const TARIFF_SUM_PER_KWH = 1000;
   const avgPerConsumer =
-    totals.consumersActive > 0 ? totals.kwhSold / totals.consumersActive / daysInMonth : 0;
+    totals.consumersActive > 0
+      ? totals.kwhSold / totals.consumersActive / daysInMonth
+      : 0;
   // Taxminiy tarif — hisob-kitob markazidan aniq tarif kelguncha.
   const avgBillSum = avgPerConsumer * daysInMonth * 450;
-  const technological = lossStructure.data?.parts.find((p) => p.key === 'technological');
+  const technological = lossStructure.data?.parts.find(
+    (p) => p.key === "technological",
+  );
 
-  const completed = (works.data ?? []).filter((w) => w.status === 'COMPLETED');
+  const completed = (works.data ?? []).filter((w) => w.status === "COMPLETED");
   /*
    * Reja ro'yxati YAQIN sanadan boshlanadi.
    *
@@ -138,8 +203,10 @@ export default function MfyDashboard() {
    * muddat ko'rinib qolardi.
    */
   const planned = (works.data ?? [])
-    .filter((w) => w.status !== 'COMPLETED')
-    .sort((a, b) => (a.plannedEnd ?? '9999').localeCompare(b.plannedEnd ?? '9999'));
+    .filter((w) => w.status !== "COMPLETED")
+    .sort((a, b) =>
+      (a.plannedEnd ?? "9999").localeCompare(b.plannedEnd ?? "9999"),
+    );
 
   /*
    * Tezkor ko'rsatkichlar HISOBOTDAN hisoblanadi.
@@ -153,12 +220,15 @@ export default function MfyDashboard() {
     (mx, r) => Math.max(mx, r.kwhMonth / (days * 24)),
     0,
   );
-  const offShare = totals.consumersTotal > 0
-    ? (totals.consumersDisconnected / totals.consumersTotal) * 100
-    : 0;
+  const offShare =
+    totals.consumersTotal > 0
+      ? (totals.consumersDisconnected / totals.consumersTotal) * 100
+      : 0;
 
   return (
-    <MotionStage className={overview.isFetching ? 'opacity-70 transition-opacity' : ''}>
+    <MotionStage
+      className={overview.isFetching ? "opacity-70 transition-opacity" : ""}
+    >
       <PageHeader
         actions={
           <>
@@ -167,7 +237,7 @@ export default function MfyDashboard() {
           </>
         }
         breadcrumbs={[
-          { label: 'НИМ станция Чинобод', to: '/dashboard' },
+          { label: "НИМ станция Чинобод", to: "/dashboard" },
           { label: mfy.elektrosetName },
           { label: mfy.nameUz },
         ]}
@@ -181,7 +251,7 @@ export default function MfyDashboard() {
             key={tile.key}
             icon={TILE_ICONS[tile.key]}
             tile={tile}
-            tone={TILE_TONES[tile.key] ?? 'blue'}
+            tone={TILE_TONES[tile.key] ?? "blue"}
           />
         ))}
       </div>
@@ -231,7 +301,7 @@ export default function MfyDashboard() {
               </div>
             </div>
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message={t("common.noData")} />
           )}
         </Panel>
 
@@ -277,11 +347,14 @@ export default function MfyDashboard() {
               <div
                 className="mt-auto flex items-baseline justify-center gap-2 rounded-lg px-3 py-3"
                 style={{
-                  background: 'color-mix(in oklab, var(--viz-good) 10%, transparent)',
-                  color: 'var(--viz-good)',
+                  background:
+                    "color-mix(in oklab, var(--viz-good) 10%, transparent)",
+                  color: "var(--viz-good)",
                 }}
               >
-                <span className="text-[11px] font-medium">TP larda qayd etilgan</span>
+                <span className="text-[11px] font-medium">
+                  TP larda qayd etilgan
+                </span>
                 <CountUp
                   className="tabular text-[19px] font-bold leading-none"
                   format={(v) => num(energy(v).value, 1)}
@@ -293,7 +366,7 @@ export default function MfyDashboard() {
               </div>
             </div>
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message={t("common.noData")} />
           )}
         </Panel>
 
@@ -302,17 +375,56 @@ export default function MfyDashboard() {
           plitkalarida allaqachon bor, tekshiruv natijasi esa hech qayerda
           ko'rinmasdi.
         */}
-        <Panel className="xl:col-span-3" title="Aniqlangan qoidabuzarliklar">
-          {violations.data ? (
-            <ViolationsPanel
-              from={violations.data.from}
-              rows={violations.data.rows}
-              to={violations.data.to}
-            />
-          ) : (
-            <EmptyPanel message={t('common.noData')} />
-          )}
-        </Panel>
+        <div className="flex flex-col gap-2 xl:col-span-3">
+          <Panel title="Aniqlangan qoidabuzarliklar">
+            {violations.data ? (
+              <ViolationsPanel
+                from={violations.data.from}
+                rows={violations.data.rows}
+                to={violations.data.to}
+              />
+            ) : (
+              <EmptyPanel message={t("common.noData")} />
+            )}
+          </Panel>
+
+          <Panel
+            className="grow"
+            footerAction={{ label: "Sozlash", to: "/settings/responsible" }}
+            title="Ma'sul shaxs"
+          >
+            {responsible.data ? (
+              <div className="flex flex-col gap-2 px-1 py-1">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    <User className="size-4.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-bold leading-tight">
+                      {responsible.data.fullName}
+                    </p>
+                    {responsible.data.position && (
+                      <p className="truncate text-[11px] leading-tight text-muted">
+                        {responsible.data.position}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {responsible.data.phone && (
+                  <a
+                    className="flex items-center gap-1.5 text-[12px] font-semibold text-accent hover:underline"
+                    href={`tel:${responsible.data.phone}`}
+                  >
+                    <Phone className="size-3.5" />
+                    {responsible.data.phone}
+                  </a>
+                )}
+              </div>
+            ) : (
+              <EmptyPanel message="Ma'sul shaxs belgilanmagan" />
+            )}
+          </Panel>
+        </div>
 
         {/*
           4 ta ko'rsatkich — BITTA USTUNDA, to'rt qator.
@@ -375,7 +487,10 @@ export default function MfyDashboard() {
           }
           className="md:col-span-2 xl:col-span-4"
           flush
-          footerAction={{ label: 'Barcha transformatorlar', to: '/transformers' }}
+          footerAction={{
+            label: "Barcha transformatorlar",
+            to: "/transformers",
+          }}
           title="Transformatorlar holati"
         >
           {/* Eng ko'p iste'mol qilgan 5 ta TP — server shu tartibda qaytaradi. */}
@@ -388,7 +503,7 @@ export default function MfyDashboard() {
 
         <Panel
           className="xl:col-span-3"
-          footerAction={{ label: 'Batafsil tahlil', to: '/losses' }}
+          footerAction={{ label: "Batafsil tahlil", to: "/losses" }}
           title="Yo‘qotishlar tuzilmasi"
         >
           {lossStructure.data ? (
@@ -408,13 +523,13 @@ export default function MfyDashboard() {
               }))}
             />
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message={t("common.noData")} />
           )}
         </Panel>
 
         <Panel
           className="xl:col-span-3"
-          footerAction={{ label: 'Qarzdorlar ro‘yxati', to: '/debt' }}
+          footerAction={{ label: "Qarzdorlar ro‘yxati", to: "/debt" }}
           title="Qarzdorlik tuzilmasi"
         >
           {debt.data ? (
@@ -434,15 +549,15 @@ export default function MfyDashboard() {
               }))}
             />
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message={t("common.noData")} />
           )}
         </Panel>
 
         <Panel
           className="xl:col-span-2"
           footerAction={{
-            label: 'Batafsil texnik ma’lumot',
-            to: '/transformers',
+            label: "Batafsil texnik ma’lumot",
+            to: "/transformers",
           }}
           title="Tezkor ko‘rsatkichlar"
         >
@@ -474,12 +589,12 @@ export default function MfyDashboard() {
               <QuickMetric
                 icon={<PowerOff className="size-3.5" />}
                 label="Aloqada emas"
-                tone={offShare >= 5 ? 'critical' : 'good'}
+                tone={offShare >= 5 ? "critical" : "good"}
                 value={`${pieces(totals.consumersDisconnected)} · ${pct(offShare, 1)}`}
               />
             </div>
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message={t("common.noData")} />
           )}
         </Panel>
       </div>
@@ -493,9 +608,15 @@ export default function MfyDashboard() {
         */}
         <Panel
           actions={
-            <Link className="text-[11.5px] font-semibold text-accent hover:underline" to="/works">
-              Barchasi ({completed.length})
-            </Link>
+            <>
+              <AskAiButton prompt="Bajarilgan ishlar natijasi qanday, qisqacha xulosa ber" />
+              <Link
+                className="text-[11.5px] font-semibold text-accent hover:underline"
+                to="/works"
+              >
+                Barchasi ({completed.length})
+              </Link>
+            </>
           }
           className="xl:col-span-3"
           flush
@@ -506,9 +627,15 @@ export default function MfyDashboard() {
 
         <Panel
           actions={
-            <Link className="text-[11.5px] font-semibold text-accent hover:underline" to="/works">
-              Barchasi ({planned.length})
-            </Link>
+            <>
+              <AskAiButton prompt="Qanday ish tavsiya qilasan?" />
+              <Link
+                className="text-[11.5px] font-semibold text-accent hover:underline"
+                to="/works"
+              >
+                Barchasi ({planned.length})
+              </Link>
+            </>
           }
           className="xl:col-span-3"
           flush
@@ -545,11 +672,11 @@ export default function MfyDashboard() {
                     <ArrowRight
                       aria-hidden="true"
                       className="size-3.5 shrink-0 self-center"
-                      style={{ color: 'var(--viz-good)' }}
+                      style={{ color: "var(--viz-good)" }}
                     />
                     <span
                       className="tabular text-[19px] font-bold leading-none"
-                      style={{ color: 'var(--viz-good)' }}
+                      style={{ color: "var(--viz-good)" }}
                     >
                       {pct(results.data.lossPctEnd ?? 0, 1)}
                     </span>
@@ -569,12 +696,13 @@ export default function MfyDashboard() {
                     className="mt-3 rounded-lg px-2.5 py-1.5 text-center text-[11.5px] font-semibold"
                     style={{
                       background: `color-mix(in oklab, var(--viz-${
-                        results.data.improvementPp > 0 ? 'good' : 'critical'
+                        results.data.improvementPp > 0 ? "good" : "critical"
                       }) 10%, transparent)`,
-                      color: `var(--viz-${results.data.improvementPp > 0 ? 'good' : 'critical'})`,
+                      color: `var(--viz-${results.data.improvementPp > 0 ? "good" : "critical"})`,
                     }}
                   >
-                    Yaxshilanish: {Math.abs(results.data.improvementPp).toFixed(1)} p.p.
+                    Yaxshilanish:{" "}
+                    {Math.abs(results.data.improvementPp).toFixed(1)} p.p.
                   </p>
                 )}
               </div>
@@ -589,7 +717,7 @@ export default function MfyDashboard() {
                   <Zap
                     aria-hidden="true"
                     className="size-6 shrink-0"
-                    style={{ color: 'var(--viz-good)', fill: 'currentColor' }}
+                    style={{ color: "var(--viz-good)", fill: "currentColor" }}
                   />
                   {/*
                     To'liq raqam — `energy()` uni "128.6 ming kWh" ga
@@ -597,7 +725,9 @@ export default function MfyDashboard() {
                   */}
                   <span className="tabular min-w-0 truncate text-[15px] font-bold leading-tight">
                     {num(results.data.savedKwh)}
-                    <span className="ml-1 text-[10.5px] font-medium text-muted">kWh</span>
+                    <span className="ml-1 text-[10.5px] font-medium text-muted">
+                      kWh
+                    </span>
                   </span>
                 </div>
 
@@ -608,19 +738,23 @@ export default function MfyDashboard() {
                   chiqdi?" deb so'raganda javob kartaning o'zida turadi.
                 */}
                 <p className="mt-1.5 pl-8.5 text-[12.5px] font-semibold leading-tight">
-                  ≈ {money((results.data.savedKwh * TARIFF_SUM_PER_KWH) / 1e6).text}
+                  ≈{" "}
+                  {
+                    money((results.data.savedKwh * TARIFF_SUM_PER_KWH) / 1e6)
+                      .text
+                  }
                 </p>
 
                 <p
                   className="mt-1.5 pl-8.5 text-[10.5px] leading-tight"
-                  style={{ color: 'var(--viz-good)' }}
+                  style={{ color: "var(--viz-good)" }}
                 >
                   (so‘nggi 12 oy · {num(TARIFF_SUM_PER_KWH)} so‘m/kWh)
                 </p>
               </div>
             </div>
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message={t("common.noData")} />
           )}
         </Panel>
 
@@ -632,11 +766,11 @@ export default function MfyDashboard() {
       {/* Izoh sahifa oxirida emas, PASTKI CHIZIQDA — bitta qatorda. */}
       <FooterNote>
         <Activity className="size-3.5 shrink-0" />
-        Ma’lumotlar har 10 daqiqada avtomatik yangilanadi ·{' '}
+        Ma’lumotlar har 10 daqiqada avtomatik yangilanadi ·{" "}
         <button
           className="font-semibold text-accent hover:underline"
           type="button"
-          onClick={() => void navigate('/transformers')}
+          onClick={() => void navigate("/transformers")}
         >
           Transformatorlar kesimi
         </button>
@@ -653,7 +787,11 @@ export default function MfyDashboard() {
  * ekani bir qarashda ko'rinadi.
  */
 function SummaryBox({
-  label, value, extra, tone, muted,
+  label,
+  value,
+  extra,
+  tone,
+  muted,
 }: {
   label: string;
   value: string;
@@ -662,12 +800,19 @@ function SummaryBox({
   muted?: boolean;
 }) {
   return (
-    <div className={muted ? 'rounded-lg bg-surface-secondary px-3 py-2' : 'px-1 py-1'}>
+    <div
+      className={
+        muted ? "rounded-lg bg-surface-secondary px-3 py-2" : "px-1 py-1"
+      }
+    >
       <p className="truncate text-[10.5px] leading-tight text-muted">{label}</p>
       <p className="mt-1 flex items-baseline gap-1">
         <span
           className="truncate text-[15px] font-bold leading-none"
-          style={{ fontVariantNumeric: 'tabular-nums', color: muted ? undefined : tone }}
+          style={{
+            fontVariantNumeric: "tabular-nums",
+            color: muted ? undefined : tone,
+          }}
         >
           {value}
         </span>
@@ -675,7 +820,7 @@ function SummaryBox({
         {extra && (
           <span
             className="shrink-0 text-[10.5px] font-semibold"
-            style={{ color: muted ? 'var(--viz-muted)' : tone }}
+            style={{ color: muted ? "var(--viz-muted)" : tone }}
           >
             ({extra})
           </span>
@@ -687,7 +832,8 @@ function SummaryBox({
 
 /** Diagramma davri — Kunlik / Haftalik / Oylik. */
 export function BucketPicker({
-  value, onChange,
+  value,
+  onChange,
 }: {
   value: TrendBucket;
   onChange: (v: TrendBucket) => void;
@@ -729,7 +875,9 @@ function MeterCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <dt className="truncate text-[11px] leading-tight text-muted">{label}</dt>
-      <dd className="tabular truncate text-[15px] font-bold leading-tight">{value}</dd>
+      <dd className="tabular truncate text-[15px] font-bold leading-tight">
+        {value}
+      </dd>
     </div>
   );
 }

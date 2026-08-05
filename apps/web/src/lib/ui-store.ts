@@ -23,6 +23,15 @@ interface UiState {
   sidebarOpen: boolean;
   user: AuthUser | null;
   script: 'latn' | 'cyrl';
+  /** AI yordamchi paneli ochiqmi — boshqa joylardan (masalan tavsiya kartasi) ham ochilishi kerak. */
+  aiOpen: boolean;
+  /**
+   * AI panelga TASHQARIDAN yuborilishi kerak bo'lgan savol — masalan
+   * "Rejalashtirilgan ishlar" panelidagi "AI tavsiya" tugmasidan. `null` =
+   * navbatda hech narsa yo'q. `AiAssistant` buni o'qib darhol yuboradi va
+   * tozalaydi — shu bilan bir xil savol ikki marta yuborilmaydi.
+   */
+  aiPendingPrompt: string | null;
 
   setTheme: (t: ThemeName) => void;
   toggleTheme: () => void;
@@ -31,6 +40,11 @@ interface UiState {
   toggleSidebar: () => void;
   setUser: (u: AuthUser | null) => void;
   setScript: (s: 'latn' | 'cyrl') => void;
+  setAiOpen: (open: boolean) => void;
+  /** AI panelni ochadi va shu savolni avtomatik yuboradi (panel ichidagi "AI tavsiya" tugmalari uchun). */
+  askAi: (prompt: string) => void;
+  /** `AiAssistant` savolni yuborib bo'lgach navbatni bo'shatadi. */
+  clearAiPendingPrompt: () => void;
 }
 
 const THEME_KEY = 'beap.theme';
@@ -64,6 +78,8 @@ export const useUi = create<UiState>((set, get) => ({
   sidebarOpen: true,
   user: null,
   script: currentScript(),
+  aiOpen: false,
+  aiPendingPrompt: null,
 
   setTheme: (theme) => {
     applyTheme(theme);
@@ -86,4 +102,7 @@ export const useUi = create<UiState>((set, get) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setUser: (user) => set({ user }),
   setScript: (script) => set({ script }),
+  setAiOpen: (aiOpen) => set({ aiOpen }),
+  askAi: (prompt) => set({ aiOpen: true, aiPendingPrompt: prompt }),
+  clearAiPendingPrompt: () => set({ aiPendingPrompt: null }),
 }));
