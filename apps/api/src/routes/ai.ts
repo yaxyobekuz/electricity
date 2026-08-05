@@ -21,6 +21,7 @@ import { config } from '../config.ts';
 import type { ToolContext } from '../services/ai-tools.ts';
 import { AiError, aiEnabled, buildSnapshot, runAgent } from '../services/ai.ts';
 import { getCachedDigest } from '../services/alerts.ts';
+import { googleSttEnabled, transcribeUzbek } from '../services/google-stt.ts';
 
 const chatBody = z.object({
   messages: z.array(z.object({
@@ -214,6 +215,23 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const buf = await file.toBuffer();
+
+    /*
+     * Google Cloud Speech-to-Text (Chirp 2) - BOSH yo'l, sozlangan bo'lsa.
+     * `languageCodes: ['uz-UZ']` ANIQ berilishi mumkin (OpenAI'da bo'lgani
+     * kabi taxmin/prompt-hiyla shart emas). Google sozlanmagan yoki so'rov
+     * muvaffaqiyatsiz bo'lsa (masalan billing o'chirilgan) - pastdagi
+     * OpenAI yo'liga JIMGINA qaytiladi, xato ko'rsatilmaydi: foydalanuvchi
+     * uchun "ishlamayapti" dan ko'ra "sekinroq lekin ishlaydi" yaxshiroq.
+     */
+    if (googleSttEnabled()) {
+      try {
+        const text = await transcribeUzbek(buf);
+        return reply.send({ text });
+      } catch (err) {
+        req.log.warn({ err }, 'Google STT xatosi - OpenAI yo‘liga qaytildi');
+      }
+    }
 
     /*
      * Node 24 ning o'rnatilgan FormData/Blob obyektlaridan foydalaniladi -
