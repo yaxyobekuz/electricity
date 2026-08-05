@@ -19,7 +19,9 @@ import { z } from 'zod';
 
 import { config } from '../config.ts';
 import type { ToolContext } from '../services/ai-tools.ts';
-import { AiError, aiEnabled, buildSnapshot, runAgent } from '../services/ai.ts';
+import {
+  AiError, aiEnabled, buildSnapshot, runAgent, suggestFollowUps,
+} from '../services/ai.ts';
 import { getCachedDigest } from '../services/alerts.ts';
 import { googleSttEnabled, transcribeUzbek } from '../services/google-stt.ts';
 
@@ -30,6 +32,8 @@ const chatBody = z.object({
     content: z.string().min(1).max(4000),
   })).min(1).max(24),
   period: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  /** Telegram bot "oddiy klaviatura" tugmalari uchun so'raydi - veb chat bermaydi. */
+  suggestFollowUps: z.boolean().optional().default(false),
 });
 
 const aiRoutes: FastifyPluginAsync = async (app) => {
@@ -151,14 +155,23 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
     try {
       send('meta', { period: snapshot?.period ?? null, model: config.ai.model });
 
+      let assistantText = '';
       for await (const ev of runAgent(parsed.data.messages, snapshot, tools, abort.signal)) {
-        if (ev.type === 'delta') send('delta', { text: ev.text });
-        else if (ev.type === 'tool') {
+        if (ev.type === 'delta') {
+          assistantText += ev.text;
+          send('delta', { text: ev.text });
+        } else if (ev.type === 'tool') {
           send('tool', { name: ev.name, label: ev.label, status: ev.status, ok: ev.ok ?? true });
         } else {
           send('action', { type: ev.action.type, payload: ev.action.payload });
         }
       }
+
+      if (parsed.data.suggestFollowUps) {
+        const questions = await suggestFollowUps(parsed.data.messages, assistantText, snapshot);
+        if (questions.length > 0) send('suggestions', { questions });
+      }
+
       send('done', {});
     } catch (err) {
       const message = err instanceof AiError

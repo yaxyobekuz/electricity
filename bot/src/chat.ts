@@ -31,6 +31,8 @@ export interface ChatStreamHandlers {
   onAction?: (action: ChatAction) => void;
   /** Server xatoni oqim ichida yuboradi (sarlavha allaqachon ketgan) yoki tarmoq yiqilgan. */
   onError?: (message: string) => void;
+  /** Keyingi savol takliflari (`suggestFollowUps: true` so'ralganda keladi). */
+  onSuggestions?: (questions: string[]) => void;
 }
 
 /**
@@ -50,7 +52,9 @@ export async function streamChat(
     res = await fetch(`${apiBaseUrl}/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-      body: JSON.stringify({ messages }),
+      // `suggestFollowUps` FAQAT bot so'raydi - veb chatda "oddiy klaviatura"
+      // tugmalari yo'q, qo'shimcha AI chaqiruvi u yerda behuda xarajat bo'lardi.
+      body: JSON.stringify({ messages, suggestFollowUps: true }),
     });
   } catch (err) {
     // Tarmoq yo'q / API ishlamayapti.
@@ -106,6 +110,10 @@ export async function streamChat(
           });
         } else if (event === 'error') {
           handlers.onError?.(String(parsed['message'] ?? 'Noma’lum xato'));
+        } else if (event === 'suggestions' && Array.isArray(parsed['questions'])) {
+          handlers.onSuggestions?.(
+            parsed['questions'].filter((qq): qq is string => typeof qq === 'string'),
+          );
         }
         // 'meta', 'tool', 'done' - bu klientga kerak emas, jimgina o'tkazib yuboriladi.
       } catch {

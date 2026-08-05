@@ -14,7 +14,7 @@
  * so'rov" tarmoq modeliga mos (`apps/api/src/services/ai.ts`dagi OpenAI
  * chaqiruvi kabi, `config.ts` da izohlangan).
  */
-import { Bot } from 'grammy';
+import { Bot, Keyboard } from 'grammy';
 import type { Context } from 'grammy';
 
 import { type ChatAction, type ChatMessage, streamChat } from './chat.ts';
@@ -80,6 +80,7 @@ async function respondToText(ctx: Context, chatId: number, text: string): Promis
   let acc = '';
   let lastEditAt = 0;
   let hadError = false;
+  let suggestions: string[] = [];
 
   const editNow = async (body: string): Promise<void> => {
     const clipped = body.length > MAX_MESSAGE_LEN ? `${body.slice(0, MAX_MESSAGE_LEN)}…` : body;
@@ -142,12 +143,30 @@ async function respondToText(ctx: Context, chatId: number, text: string): Promis
       hadError = true;
       void editNow(`Xatolik: ${message}`);
     },
+    onSuggestions: (questions) => {
+      suggestions = questions;
+    },
   });
 
   if (hadError) return;
 
   await editNow(acc || 'Javob bo‘sh keldi.');
   pushHistory(chatId, { role: 'assistant', content: acc });
+
+  /*
+   * Oddiy (reply) klaviatura - butun suhbatga bog'lanadi, alohida xabarga
+   * emas (Telegram API'da `editMessageText` bunday tugmani qo'llab-
+   * quvvatlamaydi, faqat INLINE klaviaturani). Shu sabab yakuniy javobni
+   * tahrirlash bilan bir vaqtda emas, YANGI qisqa xabar bilan yuboriladi.
+   * Bosilgan tugma matni oddiy foydalanuvchi xabari sifatida qaytadi -
+   * `bot.on('message:text', ...)` uni farqlamasdan qabul qiladi.
+   */
+  if (suggestions.length > 0) {
+    const keyboard = new Keyboard();
+    for (const question of suggestions) keyboard.text(question).row();
+    keyboard.resized().oneTime();
+    await ctx.reply('Yana nima haqida so‘ramoqchisiz?', { reply_markup: keyboard });
+  }
 }
 
 bot.on('message:text', async (ctx) => {

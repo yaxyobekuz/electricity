@@ -632,3 +632,69 @@ export async function* runAgent(
     }
   }
 }
+
+// ─── Keyingi savol takliflari ───────────────────────────────────────────────
+
+/**
+ * Yordamchi javob berganidan keyin so'ralishi mumkin bo'lgan 3 ta qisqa
+ * savol - Telegram botning "oddiy klaviatura"sida tugma sifatida chiqadi
+ * (`bot/src/index.ts`), foydalanuvchi qayta yozmasdan tanlab yubora oladi.
+ *
+ * ALOHIDA, OQIMSIZ chaqiruv: `runAgent`ning asosiy javobiga aralashtirilsa,
+ * model ba'zan takliflarni matn ICHIGA yozib yuboradi (formatni buzadi).
+ * Veb chat buni SO'RAMAYDI (`routes/ai.ts`dagi `suggestFollowUps` bayrog'i
+ * berilmasa) - u yerda bunday tugmalar yo'q, qo'shimcha chaqiruv behuda
+ * xarajat bo'lardi.
+ */
+export async function suggestFollowUps(
+  messages: ChatMessage[], assistantReply: string, snapshot: Snapshot | null,
+): Promise<string[]> {
+  if (!aiEnabled() || !assistantReply.trim()) return [];
+
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
+
+  const prompt = [
+    'Quyida BEAP (elektr energiya nazorat tizimi) AI yordamchisi bilan',
+    'foydalanuvchi suhbatining oxirgi bosqichi berilgan. Foydalanuvchi keyin',
+    'so‘rashi mumkin bo‘lgan 3 ta QISQA (har biri ~6 so‘zdan oshmasin),',
+    'TABIIY savol/buyruqni O‘ZBEK tilida (lotin yozuvida) taklif qil - shu',
+    'tizimda haqiqatan ham javob topsa bo‘ladigan narsalar haqida (masalan',
+    'boshqa transformator, boshqa oy, ishlar ro‘yxati, hisobot, muammolar).',
+    'Har birini ALOHIDA qatorga yoz - raqamlash, tire, tirnoq yoki boshqa',
+    'izoh QO‘SHMA, faqat 3 ta qator matn.',
+    '',
+    `Foydalanuvchi savoli: ${lastUser.slice(0, 500)}`,
+    `Yordamchi javobi: ${assistantReply.slice(0, 800)}`,
+    snapshot ? `\nMavjud ma'lumot mavzulari (qisqacha): ${snapshot.text.slice(0, 400)}` : '',
+  ].join('\n');
+
+  try {
+    const res = await fetch(`${config.ai.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.ai.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.ai.model,
+        stream: false,
+        temperature: 0.7,
+        max_tokens: 150,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: AbortSignal.timeout(config.ai.timeoutMs),
+    });
+    if (!res.ok) return [];
+
+    const data = await res.json() as { choices?: { message?: { content?: string | null } }[] };
+    const text = data.choices?.[0]?.message?.content ?? '';
+    return text
+      .split('\n')
+      .map((line) => line.replace(/^[\s\-·*\d.)]+/, '').trim())
+      .filter(Boolean)
+      .slice(0, 3);
+  } catch {
+    // Takliflar ikkinchi darajali - xato bo'lsa asosiy javobga ta'sir qilmasin.
+    return [];
+  }
+}
