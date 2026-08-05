@@ -12,6 +12,9 @@ dist/
 .env
 .env.local
 
+# maxfiy kalitlar (masalan Google xizmat hisobi JSON fayli)
+apps/api/secrets/
+
 # generated artifacts
 artifacts/
 # yuklangan fayllar (dalolatnoma rasmlari)

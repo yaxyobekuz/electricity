@@ -114,6 +114,33 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
   );
   lines.push('');
 
+  if (overview) {
+    /*
+     * `q.districtOverview()`dagi bilan AYNAN bir xil manba - dashboard
+     * kartalarida ko'ringan solishtirish shu yerda ham takrorlanadi. Joriy
+     * oy hali tugamagan bo'lsa, `daysCompared` bor tilslarda oldingi oy ham
+     * FAQAT shuncha kunlik qismi bilan solishtirilgan (adolatli taqqoslash) -
+     * model buni tushuntirmasa, "keskin kamaydi" kabi noto'g'ri xulosa
+     * chiqarishi mumkin.
+     */
+    lines.push(`OYLIK TAQQOSLASH (${overview.prevPeriod} → ${resolved}):`);
+    if (overview.tiles.some((tl) => tl.daysCompared !== null)) {
+      lines.push(
+        `  Eslatma: "${resolved}" oyi hali to‘liq tugamagan - energiya ko‘rsatkichlari`
+        + ' adolatli bo‘lishi uchun oldingi oyning FAQAT mos kunlari bilan solishtirilgan.',
+      );
+    }
+    for (const tl of overview.tiles) {
+      const deltaStr = tl.deltaPct === null ? '-' : `${tl.deltaPct > 0 ? '+' : ''}${tl.deltaPct.toFixed(1)}%`;
+      const prevLabel = tl.daysCompared ? `${tl.prevPeriod}, dastlabki ${tl.daysCompared} kuni` : tl.prevPeriod;
+      lines.push(
+        `  ${tl.labelUz}: ${n(tl.value)} ${tl.unit} (oldingi - ${prevLabel}: ${n(tl.prevValue)} ${tl.unit},`
+        + ` o‘zgarish: ${deltaStr})`,
+      );
+    }
+    lines.push('');
+  }
+
   if (feederMonthly) {
     lines.push('ENERGIYA BALANSI (fider boshidagi hisoblagich bo‘yicha):');
     lines.push(`  Kirgan energiya: ${n(feederMonthly.kwhIn)} kWh`);
@@ -342,6 +369,16 @@ function systemPrompt(snapshot: Snapshot | null): string {
     '    ko‘p) fizik jihatdan mumkin emas - buni har doim aniq tushuntir va',
     '    tekshiruv tavsiya qil, o‘zing "o‘g‘irlik" deb xulosa chiqarma (bu -',
     '    faqat signal, aniqlangan xulosa emas).',
+    '16. Foydalanuvchi "o‘tgan oyga nisbatan", "o‘sdimi/tushdimi", "dinamika',
+    '    qanday" kabi savol bersa - MA’LUMOT SURATIDAGI "OYLIK TAQQOSLASH"',
+    '    bo‘limidan foydalan, o‘zgarish foizini o‘zing qayta hisoblama. Agar u',
+    '    yerda "hali to‘liq tugamagan" eslatmasi bo‘lsa - buni albatta ayt',
+    '    (masalan, "avgustning dastlabki 5 kuni, iyulning ham shu kunlari',
+    '    bilan solishtirilgan"), aks holda qisqa oyni to‘liq oy bilan',
+    '    taqqoslab noto‘g‘ri ("keskin kamaydi/o‘sdi") xulosa chiqarish xavfi',
+    '    bor. Ketma-ket bo‘lmagan ikkita ixtiyoriy davrni solishtirish uchun',
+    '    compare_periods asbobini ishlat - u ham xuddi shu tarzda kun sonini',
+    '    moslashtiradi.',
     '',
     GUIDE,
     '',

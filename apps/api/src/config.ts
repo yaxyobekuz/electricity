@@ -109,6 +109,20 @@ export const config = {
     alertChatId: str('TELEGRAM_ALERT_CHAT_ID', ''),
   },
 
+  /*
+   * Google Cloud Speech-to-Text (Chirp 2) - ovozli xabar transkripsiyasi.
+   *
+   * OpenAI'ning `language` maydoni "uz"ni qabul qilmaydi (sinovda aniqlandi),
+   * Google esa aniq `uz-UZ` tilini qo'llab-quvvatlaydi - taxmin/prompt-hiyla
+   * shart emas. Kalit fayl berilmasa bu xususiyat BUTUNLAY o'chgan holatda
+   * qoladi va `/transcribe` OpenAI yo'liga qaytadi (`ai.ts`dagi zaxira).
+   */
+  googleStt: {
+    credentialsFile: str('GOOGLE_APPLICATION_CREDENTIALS', ''),
+    projectId: str('GOOGLE_CLOUD_PROJECT_ID', ''),
+    region: str('GOOGLE_STT_REGION', 'us-central1'),
+  },
+
   paths: {
     migrations: resolve(API_ROOT, 'migrations'),
     sql: resolve(API_ROOT, 'src/db/sql'),
