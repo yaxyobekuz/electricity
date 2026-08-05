@@ -128,6 +128,12 @@ export interface KpiTile {
   prevValue: number | null;
   /** Solishtirish davri, masalan `2026-05` - "o'tgan oy" degani. */
   prevPeriod: string;
+  /**
+   * Joriy oy hali tugamagan bo'lsa, `prevValue` o'tgan oyning TO'LIQ jami
+   * emas - shu kunlar soni bo'yicha (1-kundan) olingan. `null` bo'lsa,
+   * `prevValue` o'tgan oyning to'liq jami (odatiy holat).
+   */
+  daysCompared: number | null;
   /** O'sish yaxshimi yoki yomonmi - rangni shu belgilaydi. */
   goodDirection: 'up' | 'down';
   /** Sparkline nuqtalari. */

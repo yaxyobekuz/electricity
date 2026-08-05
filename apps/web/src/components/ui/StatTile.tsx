@@ -156,7 +156,9 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
 
       {/* O'tgan oyning ANIQ qiymati - raqam o'z-o'zini izohlaydi */}
       <p className="truncate text-[10px] leading-tight text-muted">
-        {periodLabel(tile.prevPeriod)}: <span className="font-medium">{prevText}</span>
+        {periodLabel(tile.prevPeriod)}
+        {tile.daysCompared ? ` (dastlabki ${tile.daysCompared} kun)` : ''}:{' '}
+        <span className="font-medium">{prevText}</span>
       </p>
 
       {/*

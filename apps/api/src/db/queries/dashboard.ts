@@ -98,6 +98,8 @@ interface PeriodTotals {
   tp_total: number; tp_overloaded: number; meters_offline_cnt: number;
   capacity_kva: number; used_kva: number;
   natural_norm_pct: number | null; technical_std_pct: number | null;
+  /** Shu davrda kunlik ma'lumot kiritilgan kunlar soni - oy hali tugamagan bo'lishi mumkin. */
+  days_filled: number;
 }
 
 const TOTALS_SELECT = `
@@ -127,7 +129,8 @@ const TOTALS_SELECT = `
   coalesce(sum(a.capacity_kva), 0)           AS capacity_kva,
   coalesce(sum(a.used_kva), 0)               AS used_kva,
   max(a.natural_norm_pct)                    AS natural_norm_pct,
-  max(a.technical_std_pct)                   AS technical_std_pct
+  max(a.technical_std_pct)                   AS technical_std_pct,
+  max(a.days_filled)::int                    AS days_filled
 `;
 
 async function periodTotals(
@@ -239,6 +242,49 @@ async function sparklines(
 const pctDelta = (cur: number, prev: number): number | null =>
   prev === 0 || !Number.isFinite(prev) ? null : Number((((cur - prev) / prev) * 100).toFixed(2));
 
+/** Berilgan "YYYY-MM" davrida necha kun borligi. */
+export function daysInMonth(period: string): number {
+  const [y, m] = period.split('-').map(Number);
+  return new Date(Date.UTC(y!, m!, 0)).getUTCDate();
+}
+
+/**
+ * Berilgan davrning boshidan `days` kunlik energiya yig'indisi.
+ *
+ * "O'tgan oyga nisbatan" solishtirish uchun: joriy oy hali tugamagan bo'lsa
+ * (masalan, 5-kun), o'tgan oyning TO'LIQ jamini emas - xuddi shuncha kunlik
+ * (1-kundan boshlab) qismini olish kerak, aks holda solishtirish adolatsiz
+ * bo'ladi (31 kun vs 5 kun deyarli har doim "keskin kamaydi" ko'rsatadi).
+ */
+export async function dayAlignedEnergyTotals(
+  ctx: AppContext, period: string, days: number, mfyId: number | null, elektrosetId: number | null,
+): Promise<{ kwh_in: number; kwh_sold: number; kwh_loss_total: number; kwh_loss_technical: number }> {
+  const scopeClause = mfyId !== null ? 'AND a.mfy_id = $3' : elektrosetId !== null ? 'AND a.elektroset_id = $3' : '';
+  const params: unknown[] = [period, days];
+  if (mfyId !== null) params.push(mfyId);
+  else if (elektrosetId !== null) params.push(elektrosetId);
+
+  const row = await queryOne<{
+    kwh_in: number; kwh_sold: number; kwh_loss_total: number; kwh_loss_technical: number;
+  }>(
+    `SELECT coalesce(sum(a.kwh_in), 0)             AS kwh_in,
+            coalesce(sum(a.kwh_sold), 0)           AS kwh_sold,
+            coalesce(sum(a.kwh_loss_total), 0)     AS kwh_loss_total,
+            coalesce(sum(a.kwh_loss_technical), 0) AS kwh_loss_technical
+       FROM agg.mfy_daily a
+      WHERE a.biz_date >= ($1 || '-01')::date
+        AND a.biz_date <  ($1 || '-01')::date + make_interval(days => $2::int)
+        ${scopeClause}`,
+    params, ctx,
+  );
+  return {
+    kwh_in: Number(row?.kwh_in ?? 0),
+    kwh_sold: Number(row?.kwh_sold ?? 0),
+    kwh_loss_total: Number(row?.kwh_loss_total ?? 0),
+    kwh_loss_technical: Number(row?.kwh_loss_technical ?? 0),
+  };
+}
+
 export interface OverviewResult {
   period: string;
   prevPeriod: string;
@@ -258,6 +304,23 @@ export async function districtOverview(
   if (!cur) return null;
   const p = prev ?? cur;
 
+  /*
+   * Joriy davr hali TUGAMAGAN bo'lishi mumkin (masalan, oyning 5-kuni) -
+   * bunday paytda o'tgan OYNING TO'LIQ jamini solishtirish adolatsiz (31 kun
+   * vs 5 kun deyarli har doim "keskin kamaydi" ko'rsatadi). Shu sababli
+   * KUNLIK yig'iladigan energiya ko'rsatkichlari uchun o'tgan davrdan ham
+   * FAQAT shuncha kunlik (1-kundan boshlab) qism olinadi - ikkalasi bir xil
+   * "oyna" bilan solishtiriladi. Abonent/qarz/TP kabi OYLIK suratlar bunga
+   * muhtoj emas - ular kun sayin yig'ilmaydi, oy davomida bir xil qoladi.
+   */
+  const curDays = cur.days_filled || daysInMonth(period);
+  const prevMonthLen = daysInMonth(prevPeriod);
+  const alignDays = Math.min(curDays, prevMonthLen);
+  const isPartial = prev !== null && alignDays < prevMonthLen;
+  const alignedPrev = isPartial
+    ? await dayAlignedEnergyTotals(ctx, prevPeriod, alignDays, mfyId, elektrosetId)
+    : null;
+
   /**
    * Kartani bir joyda quramiz - `prevValue` va `deltaPct` DOIM bitta
    * manbadan chiqadi. Ilgari har biri alohida yozilgani uchun solishtirish
@@ -269,6 +332,7 @@ export async function districtOverview(
       prev: number | null;
       spark: number[];
       sparkBucket: 'day' | 'month';
+      daysCompared?: number | null;
     },
   ): KpiTile => ({
     key: t.key,
@@ -282,18 +346,21 @@ export async function districtOverview(
     goodDirection: t.goodDirection,
     spark: t.spark,
     sparkBucket: t.sparkBucket,
+    daysCompared: t.daysCompared ?? null,
   });
 
   const tiles: KpiTile[] = [
     tile({
       key: 'kwhIn', metric: 'kwhIn', labelUz: 'Jami iste’mol', unit: 'kWh',
-      value: cur.kwh_in, prev: p.kwh_in,
+      value: cur.kwh_in, prev: alignedPrev?.kwh_in ?? p.kwh_in,
       goodDirection: 'down', spark: spark.kwhIn, sparkBucket: 'day',
+      daysCompared: isPartial ? alignDays : null,
     }),
     tile({
       key: 'kwhSold', metric: 'kwhSold', labelUz: 'Sotilgan elektr energiyasi', unit: 'kWh',
-      value: cur.kwh_sold, prev: p.kwh_sold,
+      value: cur.kwh_sold, prev: alignedPrev?.kwh_sold ?? p.kwh_sold,
       goodDirection: 'up', spark: spark.kwhSold, sparkBucket: 'day',
+      daysCompared: isPartial ? alignDays : null,
     }),
     /*
      * Yo'qotish MIQDORDA beriladi, foizda emas.
@@ -305,13 +372,15 @@ export async function districtOverview(
      */
     tile({
       key: 'kwhLossTotal', metric: 'kwhLossTotal', labelUz: 'Jami yo’qotish', unit: 'kWh',
-      value: cur.kwh_loss_total, prev: p.kwh_loss_total,
+      value: cur.kwh_loss_total, prev: alignedPrev?.kwh_loss_total ?? p.kwh_loss_total,
       goodDirection: 'down', spark: spark.kwhLoss, sparkBucket: 'day',
+      daysCompared: isPartial ? alignDays : null,
     }),
     tile({
       key: 'kwhLossTechnical', metric: 'kwhLossTechnical', labelUz: 'Texnologik yo‘qotish', unit: 'kWh',
-      value: cur.kwh_loss_technical, prev: p.kwh_loss_technical,
+      value: cur.kwh_loss_technical, prev: alignedPrev?.kwh_loss_technical ?? p.kwh_loss_technical,
       goodDirection: 'down', spark: spark.kwhLossTechnical, sparkBucket: 'day',
+      daysCompared: isPartial ? alignDays : null,
     }),
     /*
      * Qarzdorlik o'rniga UMUMIY ABONENTLAR.

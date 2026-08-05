@@ -32,40 +32,31 @@ function n(v: number | null | undefined, digits = 0): string {
   }).replace(/,/g, ' ');
 }
 
-/**
- * `dashboard.ts`dagi xususiy `shiftMonth`ning nusxasi.
- *
- * U yerdan eksport qilinmagan - bu yerga alohida ma'lumot manbasi (oldingi
- * kalendar oyi) kerak bo'lgani uchun shu yerda mustaqil hisoblanadi.
- */
-function shiftMonth(period: string, delta: number): string {
-  const [y, m] = period.split('-').map(Number);
-  const d = new Date(Date.UTC(y!, m! - 1 + delta, 1));
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
 // ─── Davr raqamlarini matnga keltirish ──────────────────────────────────────
 
-function formatTotals(period: string, t: OverviewResult['totals']): string {
-  return [
-    `  ${period}:`,
-    `    Kirgan energiya: ${n(t.kwh_in)} kWh`,
-    `    Sotilgan energiya: ${n(t.kwh_sold)} kWh`,
-    `    Jami yo‘qotish: ${n(t.kwh_loss_total)} kWh`
-    + ` (${t.loss_pct === null ? '-' : `${t.loss_pct.toFixed(1)}%`})`,
-    `    Texnologik yo‘qotish: ${n(t.kwh_loss_technical)} kWh`,
-    `    Iste'molchilar: jami ${n(t.consumers_total)}, faol ${n(t.consumers_active)},`
-    + ` uzilgan ${n(t.consumers_disconnected)}`,
-    `    Transformator punktlari: ${n(t.tp_total)} ta`,
-  ].join('\n');
+/**
+ * Har bir KPI plitkasini "joriy | oldingi | o'zgarish" ko'rinishida matnga
+ * keltiradi. `dashboard.ts`dagi `districtOverview()`dan keladi - solishtirish
+ * qiymati AYNAN dashboardda ko'ringani bilan bir xil (kun-song jihatidan
+ * moslashtirilgan, agar joriy oy hali tugamagan bo'lsa).
+ */
+function formatTileComparison(tiles: OverviewResult['tiles']): string {
+  return tiles.map((t) => {
+    const deltaStr = t.deltaPct === null ? '-' : `${t.deltaPct > 0 ? '+' : ''}${t.deltaPct.toFixed(1)}%`;
+    const prevLabel = t.daysCompared ? `${t.prevPeriod}, dastlabki ${t.daysCompared} kuni` : t.prevPeriod;
+    return `    ${t.labelUz}: ${n(t.value)} ${t.unit} | oldingi (${prevLabel}): ${n(t.prevValue)} ${t.unit}`
+      + ` | o‘zgarish: ${deltaStr}`;
+  }).join('\n');
 }
 
 /**
  * Turga qarab qo'shimcha asoslovchi kontekst yig'adi:
  *   · haftalik - kunlik dinamika (hafta ichidagi harakatni ko'rsatish uchun,
  *     oylik jamlanma buni bermaydi);
- *   · oylik - joriy va oldingi kalendar oyining xom jamlanmasi (model o'zi
- *     taqqoslasin, farqni oldindan hisoblab bermaymiz).
+ *   · oylik - joriy va oldingi kalendar oyning taqqoslashi (`districtOverview`
+ *     bilan bir xil manba - joriy oy hali tugamagan bo'lsa, oldingi oy ham
+ *     shuncha kunlik qismi bilan solishtiriladi, aks holda model dashboarddagi
+ *     kartalarga zid, chalg'ituvchi "keskin kamaydi" xulosasi chiqarishi mumkin).
  */
 async function gatherContext(
   ctx: AppContext, feederId: number | null, kind: 'weekly' | 'monthly', period: string,
@@ -74,14 +65,17 @@ async function gatherContext(
   const parts: string[] = ['═══ OGOHLANTIRISHLAR XULOSASI ═══', alertsReport.summaryText, ''];
 
   if (kind === 'monthly') {
-    const prevPeriod = shiftMonth(period, -1);
-    const [cur, prev] = await Promise.all([
-      q.districtOverview(ctx, period, feederId),
-      q.districtOverview(ctx, prevPeriod, feederId),
-    ]);
-    parts.push(`═══ OYLIK TAQQOSLASH (${prevPeriod} → ${period}) ═══`);
-    if (prev) parts.push(formatTotals(prevPeriod, prev.totals));
-    if (cur) parts.push(formatTotals(period, cur.totals));
+    const cur = await q.districtOverview(ctx, period, feederId);
+    if (cur) {
+      parts.push(`═══ OYLIK TAQQOSLASH (${cur.prevPeriod} → ${period}) ═══`);
+      if (cur.tiles.some((t) => t.daysCompared !== null)) {
+        parts.push(
+          `Eslatma: "${period}" oyi hali to‘liq tugamagan - energiya ko‘rsatkichlari`
+          + ' adolatli taqqoslash uchun oldingi oyning FAQAT mos kunlari bilan solishtirilgan.',
+        );
+      }
+      parts.push(formatTileComparison(cur.tiles));
+    }
     parts.push('');
   } else {
     const range = await q.dataRange(ctx);

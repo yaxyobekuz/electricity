@@ -777,16 +777,48 @@ export async function runTool(
           result: { ok: false, reason: `Ma’lumot yo‘q: ${!ra ? a : b}` },
         };
       }
+
+      /*
+       * Ikkala davr ham TO'LIQ oy bo'lmasligi mumkin (masalan, biri joriy,
+       * hali tugamagan oy) - bunday holda energiya ko'rsatkichlari har
+       * ikkala davrning ham FAQAT boshidan bir xil kunlar soni bilan
+       * solishtiriladi, aks holda qisqaroq davr doim "keskin kamaydi"
+       * ko'rsatadi (`districtOverview`dagi bilan bir xil mantiq).
+       */
+      const alignDays = Math.min(
+        ra.totals.days_filled || q.daysInMonth(a), q.daysInMonth(a),
+        rb.totals.days_filled || q.daysInMonth(b), q.daysInMonth(b),
+      );
+      const needsAlign = alignDays < q.daysInMonth(a) || alignDays < q.daysInMonth(b);
+      const [alignedA, alignedB] = needsAlign
+        ? await Promise.all([
+          q.dayAlignedEnergyTotals(tc.ctx, a, alignDays, null, null),
+          q.dayAlignedEnergyTotals(tc.ctx, b, alignDays, null, null),
+        ])
+        : [null, null];
+
+      const kwhInA = alignedA?.kwh_in ?? ra.totals.kwh_in;
+      const kwhInB = alignedB?.kwh_in ?? rb.totals.kwh_in;
+      const kwhSoldA = alignedA?.kwh_sold ?? ra.totals.kwh_sold;
+      const kwhSoldB = alignedB?.kwh_sold ?? rb.totals.kwh_sold;
+      const kwhLossA = alignedA?.kwh_loss_total ?? ra.totals.kwh_loss_total;
+      const kwhLossB = alignedB?.kwh_loss_total ?? rb.totals.kwh_loss_total;
+
       const delta = (x: number, y: number): number | null =>
         y === 0 ? null : Number((((x - y) / y) * 100).toFixed(1));
       return {
         kind: 'data',
         result: {
           [a]: ra.totals, [b]: rb.totals,
+          daysCompared: needsAlign ? alignDays : null,
+          note: needsAlign
+            ? `Energiya ko‘rsatkichlari (kwhIn/kwhSold/kwhLossTotal) har ikkala davrning ham`
+              + ` dastlabki ${alignDays} kuni bo‘yicha solishtirildi - biri to‘liq tugamagan.`
+            : null,
           deltaPct: {
-            kwhIn: delta(ra.totals.kwh_in, rb.totals.kwh_in),
-            kwhSold: delta(ra.totals.kwh_sold, rb.totals.kwh_sold),
-            kwhLossTotal: delta(ra.totals.kwh_loss_total, rb.totals.kwh_loss_total),
+            kwhIn: delta(kwhInA, kwhInB),
+            kwhSold: delta(kwhSoldA, kwhSoldB),
+            kwhLossTotal: delta(kwhLossA, kwhLossB),
             consumersTotal: delta(ra.totals.consumers_total, rb.totals.consumers_total),
           },
         },
