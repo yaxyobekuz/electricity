@@ -9,7 +9,7 @@
  * ajratiladi (`analytics.detectTpLossAnomalies()` natijasi).
  */
 import type { TpLossAnomalyItem, TpLossDailyRow } from '@beap/shared';
-import { num, pct } from '@beap/shared';
+import { dateLabel, num, pct, periodLabel } from '@beap/shared';
 import { Chip } from '@heroui/react';
 
 import { EmptyPanel } from '../../../components/ui/Panel.tsx';
@@ -45,7 +45,10 @@ export function TpLossPanel({
             return (
               <tr key={r.tpId}>
                 <td className="truncate font-semibold text-accent">{r.code}</td>
-                <td className="text-muted">{r.bizDate}</td>
+                {/* `bizDate` "YYYY-MM" (davr jamlanmasi) yoki to'liq sana bo'lishi mumkin. */}
+                <td className="text-muted">
+                  {r.bizDate.length === 7 ? periodLabel(r.bizDate) : dateLabel(r.bizDate)}
+                </td>
                 <td className="num">{num(r.kwhBalanceMeter)}</td>
                 <td className="num">{num(r.kwhConsumersAttached)}</td>
                 <td className="num font-semibold">{num(r.kwhLoss)}</td>

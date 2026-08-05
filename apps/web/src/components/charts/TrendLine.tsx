@@ -31,6 +31,13 @@ interface TrendLineProps {
   bucket?: TrendBucket;
   /** Diagramma ustidagi qo'shimcha boshqaruv (masalan davr tanlagich). */
   actions?: React.ReactNode;
+  /**
+   * `SERIES_META` standart yorliqlarini bekor qiladi - masalan TP balans
+   * grafigida "Tarmoqqa kirgan/Sotilgan" o'rniga "Balans hisoblagichi/
+   * Bириктирилган iste'molchilar" ko'rsatish uchun. Berilmasa hozirgi
+   * standart yorliqlar ishlatiladi - mavjud chaqiruvlarga ta'sir qilmaydi.
+   */
+  labels?: Partial<Record<keyof typeof SERIES_META, string>>;
 }
 
 /*
@@ -51,9 +58,11 @@ const SERIES_META = {
 
 export function TrendLine({
   points, height = 260, series = ['kwhIn', 'kwhSold', 'kwhLoss'],
-  title, subtitle, csvName = 'dinamika', bucket = 'day', actions,
+  title, subtitle, csvName = 'dinamika', bucket = 'day', actions, labels,
 }: TrendLineProps) {
   const t = useVizTokens();
+
+  const labelFor = (key: keyof typeof SERIES_META): string => labels?.[key] ?? SERIES_META[key].label;
 
   const { data, colors, legend, soldId } = useMemo(() => {
     const cols: string[] = [];
@@ -63,7 +72,7 @@ export function TrendLine({
     const d = series.map((key) => {
       const meta = SERIES_META[key];
       const color = t.series[meta.slot]!;
-      const id = `${meta.label} (${meta.unit})`;
+      const id = `${labelFor(key)} (${meta.unit})`;
       if (key === 'kwhSold') sold = id;
       cols.push(color);
       leg.push({ label: id, color });
@@ -71,16 +80,16 @@ export function TrendLine({
     });
 
     return { data: d, colors: cols, legend: leg, soldId: sold };
-  }, [points, series, t]);
+  }, [points, series, t, labels]);
 
   const isPct = series.length === 1 && series[0] === 'lossPct';
 
   const columns: TableColumn<TimeSeriesPoint>[] = [
     { key: 'date', label: 'Sana', render: (r) => dateLabel(r.date), raw: (r) => dateLabel(r.date) },
-    { key: 'in', label: 'Kirgan (kWh)', align: 'right', render: (r) => num(r.kwhIn, 0), raw: (r) => r.kwhIn },
-    { key: 'sold', label: 'Sotilgan (kWh)', align: 'right', render: (r) => num(r.kwhSold, 0), raw: (r) => r.kwhSold },
-    { key: 'loss', label: 'Yo‘qotish (kWh)', align: 'right', render: (r) => num(r.kwhLoss, 0), raw: (r) => r.kwhLoss },
-    { key: 'pct', label: 'Yo‘qotish %', align: 'right', render: (r) => pct(r.lossPct, 2), raw: (r) => r.lossPct },
+    { key: 'in', label: `${labelFor('kwhIn')} (kWh)`, align: 'right', render: (r) => num(r.kwhIn, 0), raw: (r) => r.kwhIn },
+    { key: 'sold', label: `${labelFor('kwhSold')} (kWh)`, align: 'right', render: (r) => num(r.kwhSold, 0), raw: (r) => r.kwhSold },
+    { key: 'loss', label: `${labelFor('kwhLoss')} (kWh)`, align: 'right', render: (r) => num(r.kwhLoss, 0), raw: (r) => r.kwhLoss },
+    { key: 'pct', label: `${labelFor('lossPct')} %`, align: 'right', render: (r) => pct(r.lossPct, 2), raw: (r) => r.lossPct },
   ];
 
   if (points.length === 0) {

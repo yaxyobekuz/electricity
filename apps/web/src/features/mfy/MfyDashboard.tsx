@@ -85,6 +85,7 @@ import {
   useMfyResults,
   useMfyTpLoss,
   useMfyTpLossAnomalies,
+  useMfyTpLossSeries,
   useMfyTpMonthly,
   useMfyViolations,
   useMfyWorks,
@@ -135,6 +136,7 @@ export default function MfyDashboard() {
   // Tanlangan sana - kunlik grafik AYNAN shu kunda tugaydi.
   const asOfDate = useUi((s) => s.asOfDate);
   const [bucket, setBucket] = useState<TrendBucket>("day");
+  const [tpLossBucket, setTpLossBucket] = useState<TrendBucket>("day");
 
   const overview = useMfyOverview(mfyId, period ?? undefined);
   const dynamics = useMfyDynamics(mfyId, {
@@ -151,8 +153,9 @@ export default function MfyDashboard() {
   const feeder = useFeederMonthly(mfyId, period ?? undefined);
   const tpMonthly = useMfyTpMonthly(mfyId, period ?? undefined);
   const responsible = useMfyResponsible(mfyId);
-  const tpLoss = useMfyTpLoss(mfyId);
+  const tpLoss = useMfyTpLoss(mfyId, { period: period ?? undefined });
   const tpLossAnomalies = useMfyTpLossAnomalies(mfyId);
+  const tpLossSeries = useMfyTpLossSeries(mfyId, { bucket: tpLossBucket, last: 30 });
 
   if (boot.isLoading || (mfyId === 0 && !boot.isError))
     return <LoadingState rows={6} />;
@@ -777,6 +780,7 @@ export default function MfyDashboard() {
         <Panel
           actions={
             <>
+              <BucketPicker onChange={setTpLossBucket} value={tpLossBucket} />
               <AskAiButton prompt="TP balans hisoblagichida anomaliya bormi?" />
               <Link
                 className="text-[11.5px] font-semibold text-accent hover:underline"
@@ -788,8 +792,28 @@ export default function MfyDashboard() {
           }
           className="xl:col-span-12"
           flush
+          subtitle={
+            period
+              ? `${monthShort(`${period}-01`)} bo‘yicha jamlanma`
+              : "So‘nggi o‘qish · davr tanlagichda oyni belgilang"
+          }
           title="TP balans hisoblagichi - kunlik"
         >
+          {tpLossSeries.data && tpLossSeries.data.length > 0 && (
+            <div className="px-4 pt-3">
+              <TrendLine
+                bucket={tpLossBucket}
+                csvName={`${mfy.code}-tp-balans`}
+                height={180}
+                labels={{
+                  kwhIn: "Balans hisoblagichi",
+                  kwhSold: "Bириктирилган iste’molchilar",
+                  kwhLoss: "Yo‘qotish",
+                }}
+                points={tpLossSeries.data}
+              />
+            </div>
+          )}
           <TpLossPanel anomalies={tpLossAnomalies.data?.anomalies ?? []} rows={tpLoss.data ?? []} />
         </Panel>
       </div>

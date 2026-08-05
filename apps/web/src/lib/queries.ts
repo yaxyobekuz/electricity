@@ -258,10 +258,25 @@ export function useMfyWorks(id: number) {
 }
 
 /** TP darajasidagi kunlik chiziqli yo'qotish - har bir TP uchun eng so'nggi o'qish. */
-export function useMfyTpLoss(id: number, limit = 60) {
+/**
+ * `period` berilsa - shu OY uchun HAR BIR TP yig'indisi (global davr
+ * tanlagich bilan birga o'zgaradi). Berilmasa - eng so'nggi o'qish.
+ */
+export function useMfyTpLoss(id: number, params: { period?: string; limit?: number } = {}) {
   return useQuery({
-    queryKey: keys.mfy(id, 'tp-loss', { limit }),
-    queryFn: ({ signal }) => api.get<TpLossDailyRow[]>(`/dash/mfy/${id}/tp-loss${qs({ limit })}`, signal),
+    queryKey: keys.mfy(id, 'tp-loss', params),
+    queryFn: ({ signal }) => api.get<TpLossDailyRow[]>(`/dash/mfy/${id}/tp-loss${qs(params)}`, signal),
+    ...DASH_OPTIONS,
+  });
+}
+
+/** Fider bo'ylab TP balans hisoblagichi trendi - kunlik/haftalik/oylik. */
+export function useMfyTpLossSeries(
+  id: number, params: { from?: string; to?: string; bucket?: 'day' | 'week' | 'month'; last?: number } = {},
+) {
+  return useQuery({
+    queryKey: keys.mfy(id, 'tp-loss-series', params),
+    queryFn: ({ signal }) => api.get<TimeSeriesPoint[]>(`/dash/mfy/${id}/tp-loss-series${qs(params)}`, signal),
     ...DASH_OPTIONS,
   });
 }

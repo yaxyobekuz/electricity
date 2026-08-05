@@ -347,17 +347,39 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return q.works(req.ctx, id, status ?? null, 60);
   });
 
-  /** TP darajasidagi kunlik chiziqli yo'qotish - har bir TP uchun eng so'nggi o'qish. */
+  /**
+   * TP darajasidagi kunlik chiziqli yo'qotish.
+   *
+   * `period` berilsa - shu OY uchun HAR BIR TP yig'indisi (global davr
+   * tanlagich bilan birga o'zgaradi). Berilmasa - eng so'nggi o'qish
+   * (AI/anomaliya aniqlagich shu holatni ishlatadi - davrga bog'liq emas).
+   */
   app.get('/mfy/:id/tp-loss', async (req) => {
     const { id } = idParam.parse(req.params);
-    const { limit } = z.object({ limit: z.coerce.number().int().min(1).max(500).default(60) })
-      .parse(req.query);
-    return tq.tpLossLatestByTp(req.ctx, id, limit);
+    const { limit, period } = z.object({
+      limit: z.coerce.number().int().min(1).max(500).default(60),
+      period: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+    }).parse(req.query);
+    return period ? tq.tpLossByPeriod(req.ctx, id, period) : tq.tpLossLatestByTp(req.ctx, id, limit);
   });
 
   app.get('/mfy/:id/tp-loss-anomalies', async (req) => {
     const { id } = idParam.parse(req.params);
     return analytics.detectTpLossAnomalies(req.ctx, id);
+  });
+
+  /** Fider bo'ylab TP balans hisoblagichi trendi - kunlik/haftalik/oylik. */
+  app.get('/mfy/:id/tp-loss-series', async (req) => {
+    const { id } = idParam.parse(req.params);
+    const { from, to, bucket, last } = seriesQ.parse(req.query);
+
+    const end = to ?? new Date().toISOString().slice(0, 10);
+    const startDefault = new Date(`${end}T00:00:00Z`);
+    startDefault.setUTCDate(startDefault.getUTCDate() - 89);
+    const rows = await tq.tpLossSeries(
+      req.ctx, id, from ?? startDefault.toISOString().slice(0, 10), end, bucket,
+    );
+    return last ? rows.slice(-last) : rows;
   });
 
   app.get('/mfy/:id/results', async (req) => {

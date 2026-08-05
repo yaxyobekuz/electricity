@@ -4,7 +4,7 @@
  * Submission oqimiga o'ralmagan: to'g'ridan-to'g'ri UPSERT (`(tp_id, biz_date)`
  * yagona). Sabab va sxema - `apps/api/migrations/0016_tp_loss_daily.sql`.
  */
-import type { TpLossDailyRow } from '@beap/shared';
+import type { TimeSeriesPoint, TpLossDailyRow } from '@beap/shared';
 
 import { type AppContext, query, queryOne, withTransaction } from '../pool.ts';
 
@@ -43,6 +43,77 @@ export async function tpLossLatestByTp(
     [mfyId, limit], ctx,
   );
   return rows.map(mapRow);
+}
+
+/**
+ * Berilgan OY uchun HAR BIR TP bo'yicha yig'indi - `tpLossLatestByTp()`ning
+ * davr-bog'liq varianti. Dashboard jadvali global davr tanlagich bilan
+ * birga o'zgarishi uchun shundan foydalanadi (`tpLossLatestByTp()` esa
+ * har doim "joriy holat" - AI va anomaliya aniqlagich uchun o'zgarishsiz qoladi).
+ *
+ * `id` maydoni sintetik (TP ID qayta ishlatiladi) - bu qatorlar bitta
+ * haqiqiy `fact.tp_loss_daily` yozuviga emas, ko'p kunlik yig'indiga mos
+ * keladi; `id` React key sifatidan boshqa joyda ishlatilmaydi.
+ */
+export async function tpLossByPeriod(
+  ctx: AppContext, mfyId: number, period: string,
+): Promise<TpLossDailyRow[]> {
+  const rows = await query<Record<string, unknown>>(
+    `SELECT t.id, t.id AS tp_id, t.code, t.mfy_id, m.name_uz AS mfy_name,
+            $2 AS biz_date,
+            sum(d.kwh_balance_meter) AS kwh_balance_meter,
+            sum(d.kwh_consumers_attached) AS kwh_consumers_attached,
+            sum(d.kwh_balance_meter) - sum(d.kwh_consumers_attached) AS kwh_loss,
+            CASE WHEN sum(d.kwh_balance_meter) > 0
+                 THEN round(100 * (sum(d.kwh_balance_meter) - sum(d.kwh_consumers_attached))
+                            / sum(d.kwh_balance_meter), 2)
+            END AS loss_pct,
+            NULL::text AS inspection_note,
+            'MANUAL' AS source
+       FROM fact.tp_loss_daily d
+       JOIN ref.tp t ON t.id = d.tp_id
+       JOIN ref.mfy m ON m.id = t.mfy_id
+      WHERE t.mfy_id = $1
+        AND d.biz_date >= ($2 || '-01')::date
+        AND d.biz_date <  (($2 || '-01')::date + INTERVAL '1 month')
+      GROUP BY t.id, t.code, t.mfy_id, m.name_uz
+      ORDER BY loss_pct ASC NULLS LAST`,
+    [mfyId, period], ctx,
+  );
+  return rows.map(mapRow);
+}
+
+/**
+ * Fider bo'ylab kunlik/haftalik/oylik trend - `q.timeSeries()` (dashboard.ts)
+ * bilan AYNAN bir xil naqsh, faqat `fact.tp_loss_daily` ustidan. Natija turi
+ * `TimeSeriesPoint` - `kwhIn`=balans yig'indisi, `kwhSold`=iste'molchi
+ * yig'indisi, shunda mavjud `TrendLine` komponenti to'g'ridan-to'g'ri ishlaydi.
+ */
+export async function tpLossSeries(
+  ctx: AppContext, mfyId: number | null, from: string, to: string, bucket: 'day' | 'week' | 'month',
+): Promise<TimeSeriesPoint[]> {
+  const rows = await query<{
+    d: string; kwh_in: number; kwh_sold: number; kwh_loss: number; loss_pct: number | null;
+  }>(
+    `SELECT date_trunc($3, d.biz_date)::date::text AS d,
+            sum(d.kwh_balance_meter) AS kwh_in,
+            sum(d.kwh_consumers_attached) AS kwh_sold,
+            sum(d.kwh_balance_meter) - sum(d.kwh_consumers_attached) AS kwh_loss,
+            CASE WHEN sum(d.kwh_balance_meter) > 0
+                 THEN round(100 * (sum(d.kwh_balance_meter) - sum(d.kwh_consumers_attached))
+                            / sum(d.kwh_balance_meter), 2)
+            END AS loss_pct
+       FROM fact.tp_loss_daily d
+       JOIN ref.tp t ON t.id = d.tp_id
+      WHERE d.biz_date BETWEEN $1::date AND $2::date
+        AND ($4::int IS NULL OR t.mfy_id = $4)
+      GROUP BY 1 ORDER BY 1`,
+    [from, to, bucket, mfyId], ctx,
+  );
+  return rows.map((r) => ({
+    date: r.d, kwhIn: Number(r.kwh_in), kwhSold: Number(r.kwh_sold),
+    kwhLoss: Number(r.kwh_loss), lossPct: Number(r.loss_pct ?? 0),
+  }));
 }
 
 /** Fider uchun texnologik yo'qotish normasi (%) - anomaliya chegarasi shundan hisoblanadi. */

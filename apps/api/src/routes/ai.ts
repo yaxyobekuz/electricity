@@ -172,12 +172,21 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
   });
 
   /**
-   * Ovozli xabarni matnga aylantirish (Whisper).
+   * Ovozli xabarni matnga aylantirish.
    *
    * Telegram bot ovozli xabarlarni ogg/opus formatida shu yo'lga yuboradi -
    * bot o'zi OpenAI kalitini bilmaydi, faqat shu API'ga ko'prik. `chat/
    * completions` uchun ishlatiladigan `config.ai.model` bu yerga MOS
-   * KELMAYDI (u - matn modeli), shuning uchun `whisper-1` qattiq yozilgan.
+   * KELMAYDI (u - matn modeli), shuning uchun transkripsiya modeli qattiq
+   * yozilgan.
+   *
+   * `gpt-4o-transcribe` ishlatiladi - eskiroq `whisper-1` EMAS. Sinovda
+   * aniqlandi: `whisper-1` sokin/tushunarsiz audioda tasodifiy TILDA
+   * gallyutsinatsiya qiladi (masalan turkcha "Altyazı M.K." kabi bema'ni
+   * matn chiqargan), `gpt-4o-transcribe` esa xuddi shu holatda ham
+   * `prompt`dagi tilga (o'zbekchaga) sodiq qoladi - OpenAI'ning eng aniq
+   * transkripsiya modeli, xato darajasi va ko'p tillarni tushunishda
+   * `whisper-1`dan sezilarli ustun.
    */
   app.post('/transcribe', {
     config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
@@ -213,15 +222,31 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
      * tanasi uchun to'g'ri `boundary`ni o'zi qo'shadi, qo'lda yozilsa buziladi.
      */
     /*
-     * `language` maydoni ATAYLAB berilmaydi: OpenAI'ning `whisper-1`i faqat
-     * o'zi tan olgan ISO-639-1 kodlar ro'yxatini qabul qiladi va "uz" o'sha
-     * ro'yxatda YO'Q - berilsa `400 unsupported_language` bilan butun so'rov
-     * qulaydi (sinovda aniqlandi). Til hinti bo'lmasa Whisper ovozdan o'zi
-     * aniqlaydi - bu qattiq xatodan ancha yaxshi.
+     * `language` maydoni ATAYLAB berilmaydi: OpenAI'ning `whisper-1`i (va
+     * yangiroq `gpt-4o-*-transcribe` modellari ham) faqat o'zi tan olgan
+     * ISO-639-1 kodlar ro'yxatini qabul qiladi va "uz" o'sha ro'yxatda
+     * YO'Q - berilsa `400 unsupported_language`/`invalid_value` bilan butun
+     * so'rov qulaydi (sinovda aniqlandi, uchala model ham rad etadi).
+     *
+     * Buning o'rniga til `prompt` orqali "majburlanadi": OpenAI'ning o'zi
+     * xato xabarida aynan shuni maslahat beradi - "Try adding the language
+     * name to your prompt". `prompt` - modelga transkripsiya USLUBI va
+     * lug'atini ko'rsatuvchi namuna matn; shu yerda o'zbekcha so'z va tizim
+     * atamalari bilan boshlansa, Whisper talaffuzi yaqin tillarga (rus,
+     * qozoq) chalg'imasdan, aynan o'zbekcha (lotin yozuvida) transkripsiya
+     * qiladi. Bu hech qachon 400 bermaydi - eng yomon holatda shunchaki
+     * e'tiborga olinmaydi.
      */
+    const UZBEK_TRANSCRIBE_PROMPT =
+      "Quyidagi audio o'zbek tilida, lotin yozuvida yozib olinadi. Mavzu - "
+      + "elektr energiyasi, transformator, fider, mahalla, yo'qotish foizi, "
+      + 'hisobot va ish holati: "Assalomu alaykum, TP-067 dagi yo\'qotish darajasi '
+      + 'qancha, qaysi mahallada ish rejalashtirilgan?"';
+
     const form = new FormData();
     form.append('file', new Blob([buf], { type: file.mimetype || 'audio/ogg' }), 'voice.ogg');
-    form.append('model', 'whisper-1');
+    form.append('model', 'gpt-4o-transcribe');
+    form.append('prompt', UZBEK_TRANSCRIBE_PROMPT);
 
     let res: Response;
     try {
