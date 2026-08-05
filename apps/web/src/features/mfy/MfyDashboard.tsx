@@ -388,11 +388,7 @@ export default function MfyDashboard() {
             )}
           </Panel>
 
-          <Panel
-            className="grow"
-            footerAction={{ label: "Sozlash", to: "/settings/responsible" }}
-            title="Ma'sul shaxs"
-          >
+          <Panel className="grow" title="Ma'sul shaxs">
             {responsible.data ? (
               <div className="flex flex-col gap-2 px-1 py-1">
                 <div className="flex items-center gap-2.5">
