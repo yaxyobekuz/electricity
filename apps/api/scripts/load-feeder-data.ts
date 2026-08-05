@@ -2,10 +2,10 @@
  * Xaqulobod fideri ma'lumotini yuklash.
  *
  * Ikkita manba fayl bir-birini to'ldiradi:
- *   • `data/umumiy_hisobot.xlsx` — fider BOSHIDAGI balans: hisoblagich
+ *   • `data/umumiy_hisobot.xlsx` - fider BOSHIDAGI balans: hisoblagich
  *     ko'rsatkichi, koeffitsienti, kirgan energiya, TP lar o'lchagani,
  *     texnologik va tijoriy yo'qotish;
- *   • `data/toliq_hisobot.xlsx` (`0108` varaq) — TP KESIMI: har bir TP ning
+ *   • `data/toliq_hisobot.xlsx` (`0108` varaq) - TP KESIMI: har bir TP ning
  *     hisoblagichi, koeffitsienti, ko'rsatkichlari, oylik iste'moli va
  *     iste'molchilari.
  *
@@ -18,8 +18,8 @@
  * natija bir xil (idempotent).
  *
  * NIMA HISOBLANMAYDI: TP quvvati (kVA), masofasi, yuklama foizi, kuchlanish,
- * qarzdorlik, ishlar — bu ma'lumotlar hisobotlarda YO'Q va o'ylab topilmaydi.
- * Interfeys ularni «—» yoki «ma'lumot yo'q» deb ko'rsatadi.
+ * qarzdorlik, ishlar - bu ma'lumotlar hisobotlarda YO'Q va o'ylab topilmaydi.
+ * Interfeys ularni «-» yoki «ma'lumot yo'q» deb ko'rsatadi.
  */
 import { join } from 'node:path';
 
@@ -31,7 +31,7 @@ import { num } from '@beap/shared';
 import { config } from '../src/config.ts';
 
 /**
- * Texnologik yo'qotish normasi — fiderga kirgan energiyaning 12% i.
+ * Texnologik yo'qotish normasi - fiderga kirgan energiyaning 12% i.
  *
  * «Умумий ҳисобот» dagi barcha fiderlar uchun shu nisbat aynan bajariladi
  * (Хақулобод 1 048 000 → 125 760; Камолий 822 000 → 98 640 va h.k.), ya'ni
@@ -39,7 +39,7 @@ import { config } from '../src/config.ts';
  */
 const TECH_LOSS_RATE = 0.12;
 
-/** Yuklanadigan fider — nomi ikkala faylda ham shu ko'rinishda. */
+/** Yuklanadigan fider - nomi ikkala faylda ham shu ko'rinishda. */
 const FEEDER = {
   code: 'FIDER-XAQULOBOD',
   nameUz: 'Xaqulobod fideri',
@@ -55,9 +55,9 @@ const FEEDER = {
 const PERIOD = '2026-07';
 const DAYS = 31;
 
-/** Kunlik ritm — hafta oxiri pastroq. Tasodif yo'q, natija takrorlanadi. */
+/** Kunlik ritm - hafta oxiri pastroq. Tasodif yo'q, natija takrorlanadi. */
 const DAY_WEIGHTS = Array.from({ length: DAYS }, (_, i) => {
-  const dow = (i + 3) % 7; // 2026-07-01 — chorshanba
+  const dow = (i + 3) % 7; // 2026-07-01 - chorshanba
   return dow === 5 || dow === 6 ? 0.92 : 1.03;
 });
 
@@ -91,7 +91,7 @@ interface FeederBalance {
   commercialLoss: number;
 }
 
-/** «Умумий ҳисобот» — fider qatorini topadi va ustunlarni o'qiydi. */
+/** «Умумий ҳисобот» - fider qatorini topadi va ustunlarni o'qiydi. */
 async function readSummary(): Promise<FeederBalance> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(join(DATA_DIR, 'umumiy_hisobot.xlsx'));
@@ -100,7 +100,7 @@ async function readSummary(): Promise<FeederBalance> {
   let input = '';
   for (let r = 1; r <= ws.rowCount; r += 1) {
     const row = ws.getRow(r);
-    // 3-ustunda «ВВОД Т1/Т2 …» — undan keyingi fiderlar shu vvodga tegishli.
+    // 3-ustunda «ВВОД Т1/Т2 …» - undan keyingi fiderlar shu vvodga tegishli.
     const c3 = String(val(row.getCell(3).value)).trim();
     if (/ВВОД/i.test(c3)) input = c3;
 
@@ -133,7 +133,7 @@ interface TpRow {
   kwh: number;
 }
 
-/** «Тўлиқ ҳисобот» — shu fiderga tegishli TP qatorlari. */
+/** «Тўлиқ ҳисобот» - shu fiderga tegishli TP qatorlari. */
 async function readTps(): Promise<TpRow[]> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(join(DATA_DIR, 'toliq_hisobot.xlsx'));
@@ -148,7 +148,7 @@ async function readTps(): Promise<TpRow[]> {
     const prev = numOf(row.getCell(11).value);
     const curr = numOf(row.getCell(12).value);
     /*
-     * Ba'zi kataklarda formula bor, lekin keshlangan qiymati yo'q — bunday
+     * Ba'zi kataklarda formula bor, lekin keshlangan qiymati yo'q - bunday
      * qatorda oylik iste'mol ko'rsatkichlar farqidan qayta hisoblanadi.
      */
     const kwh = numOf(row.getCell(14).value) || Math.abs(curr - prev) * coef;
@@ -187,14 +187,14 @@ async function main(): Promise<void> {
   const [summary, tps] = await Promise.all([readSummary(), readTps()]);
 
   /*
-   * BALANS SHU YERDA QURILADI — ikki fayl ikki xil «sotilgan» beradi:
+   * BALANS SHU YERDA QURILADI - ikki fayl ikki xil «sotilgan» beradi:
    *
-   *   • «Умумий ҳисобот» dagi «Elektr oqimi» — yaxlitlangan xulosa raqam;
-   *   • «Тўлиқ ҳисобот» dagi TP hisoblagichlari yig'indisi — HAR BIR TP
+   *   • «Умумий ҳисобот» dagi «Elektr oqimi» - yaxlitlangan xulosa raqam;
+   *   • «Тўлиқ ҳисобот» dagi TP hisoblagichlari yig'indisi - HAR BIR TP
    *     ko'rsatkichidan chiqadigan, tekshirib bo'ladigan raqam.
    *
    * Ikkinchisi olinadi: u hujjat bilan qator-ma-qator solishtiriladi.
-   * Texnologik yo'qotish — kirgan energiyaning normativ 12% i, tijoriy esa
+   * Texnologik yo'qotish - kirgan energiyaning normativ 12% i, tijoriy esa
    * QOLDIQ: kirgan − sotilgan − texnologik. Shunda balans o'z-o'zidan
    * yopiladi va hech qanday raqam "ikki marta" hisoblanmaydi.
    */
@@ -208,14 +208,14 @@ async function main(): Promise<void> {
   console.log(`\nFider: ${FEEDER.nameUz} · ${balance.substation} · ${balance.input}`);
   console.log(`  hisoblagich: ${balance.meterPrev} → ${balance.meterCurr} (koef ${balance.coef})`);
   console.log(`  kirgan ${num(kwhIn)} kWh`);
-  console.log(`  sotilgan ${num(kwhSold)} kWh — ${tps.length} ta TP hisoblagichi yig‘indisi`);
+  console.log(`  sotilgan ${num(kwhSold)} kWh - ${tps.length} ta TP hisoblagichi yig‘indisi`);
   console.log(`  texnologik yo‘qotish ${num(techLoss)} kWh (kirganning ${TECH_LOSS_RATE * 100}% i)`);
   console.log(`  tijoriy yo‘qotish ${num(commercialLoss)} kWh (qoldiq)`);
   console.log(`  jami yo‘qotish ${num(techLoss + commercialLoss)} kWh`
-    + ` — ${(((techLoss + commercialLoss) / kwhIn) * 100).toFixed(1)}%`);
+    + ` - ${(((techLoss + commercialLoss) / kwhIn) * 100).toFixed(1)}%`);
 
   if (commercialLoss < 0) {
-    throw new Error('Tijoriy yo‘qotish manfiy chiqdi — manba fayllarni tekshiring');
+    throw new Error('Tijoriy yo‘qotish manfiy chiqdi - manba fayllarni tekshiring');
   }
   if (Math.abs(kwhSold - summary.kwhTpSum) > 1) {
     console.log(
@@ -229,7 +229,7 @@ async function main(): Promise<void> {
   const c = await pool.connect();
 
   try {
-    // Ommaviy yozuvda audit triggerlari o'chiriladi — seed ham shunday qiladi.
+    // Ommaviy yozuvda audit triggerlari o'chiriladi - seed ham shunday qiladi.
     const trg = await c.query<{ sch: string; tbl: string }>(`
       SELECT n.nspname AS sch, c.relname AS tbl
       FROM pg_trigger t
@@ -270,7 +270,7 @@ async function main(): Promise<void> {
 
     const tpIds = new Map<string, number>();
     for (const t of tps) {
-      // rated_kva va avg_distance_m — NULL: hisobotlarda bu ma'lumot yo'q.
+      // rated_kva va avg_distance_m - NULL: hisobotlarda bu ma'lumot yo'q.
       const ins = await c.query<{ id: number }>(
         `INSERT INTO ref.tp (mfy_id, code, voltage_class) VALUES ($1, $2, '10/0.4') RETURNING id`,
         [mfyId, t.code],
@@ -315,7 +315,7 @@ async function main(): Promise<void> {
     /*
      * Kunlik balans: oylik jam 31 kunga taqsimlanadi, yig'indisi AYNAN
      * fayldagi songa teng bo'lib qoladi. Yo'qotish har kuni fayldagi
-     * nisbatda (texnologik / tijoriy) bo'linadi — kunlik ayniyat buzilmaydi.
+     * nisbatda (texnologik / tijoriy) bo'linadi - kunlik ayniyat buzilmaydi.
      */
     const inDaily = split(balance.kwhIn, DAY_WEIGHTS);
     const soldDaily = split(balance.kwhTpSum, DAY_WEIGHTS);
@@ -352,7 +352,7 @@ async function main(): Promise<void> {
     const off = tps.reduce((a, t) => a + t.disconnected, 0);
 
     /*
-     * Aholi / yuridik ajratmasi hisobotlarda YO'Q — hammasi ajratilmagan
+     * Aholi / yuridik ajratmasi hisobotlarda YO'Q - hammasi ajratilmagan
      * holda «aholi» ustuniga yoziladi, yuridik 0. Qarzdorlik ham yo'q.
      */
     await c.query(

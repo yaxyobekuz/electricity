@@ -6,7 +6,7 @@ import './i18n/index.ts';
 import './styles/globals.css';
 import { applyTheme, useUi } from './lib/ui-store.ts';
 
-// Temani birinchi renderdan OLDIN qo'llaymiz — chaqnash bo'lmasin.
+// Temani birinchi renderdan OLDIN qo'llaymiz - chaqnash bo'lmasin.
 applyTheme(useUi.getState().theme);
 
 const root = document.getElementById('root');

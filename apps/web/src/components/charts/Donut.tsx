@@ -2,10 +2,10 @@
  * Donut diagramma.
  *
  * QOIDA: 3 ta kategorik rangdan OSHMAYDI (palitra validatsiyasidan kelib
- * chiqadi — 3 slotli to'plam barcha juftliklar bo'yicha CVD ΔE ≥ 9 beradi).
+ * chiqadi - 3 slotli to'plam barcha juftliklar bo'yicha CVD ΔE ≥ 9 beradi).
  * Ko'proq bo'lsa, qolganlari "Boshqa" ga yig'iladi.
  *
- * Segmentlar orasidagi ajratish — 2px SURFACE RANGLI bo'shliq (`borderColor`),
+ * Segmentlar orasidagi ajratish - 2px SURFACE RANGLI bo'shliq (`borderColor`),
  * hech qachon kontur (stroke) emas.
  */
 import { ResponsivePie } from '@nivo/pie';
@@ -18,12 +18,12 @@ export interface DonutSlice {
   id: string;
   label: string;
   value: number;
-  /** Ixtiyoriy — belgilanmasa palitradan olinadi. */
+  /** Ixtiyoriy - belgilanmasa palitradan olinadi. */
   color?: string;
   /** Formatlanган ko'rinish (tooltip va jadval uchun). */
   display?: string;
   /**
-   * Bu bo'lak JAMINING qismi EMAS — legendada foizsiz ko'rsatiladi va
+   * Bu bo'lak JAMINING qismi EMAS - legendada foizsiz ko'rsatiladi va
    * halqada chizilmaydi. Oqim ko'rsatkichlari uchun (masalan «davr
    * ichida uzilgan»), ular zaxira bilan bir shkalada emas.
    */
@@ -32,7 +32,7 @@ export interface DonutSlice {
 
 interface DonutProps {
   slices: DonutSlice[];
-  /** Markazdagi katta raqam — BIRLIKSIZ. */
+  /** Markazdagi katta raqam - BIRLIKSIZ. */
   centerValue?: string;
   /** Birlik alohida qatorda: aks holda «17.4 ming kWh» teshikka sig'maydi. */
   centerUnit?: string;
@@ -44,7 +44,7 @@ interface DonutProps {
   maxColors?: number;
   formatValue?: (v: number) => string;
   /**
-   * Legendani diagramma YONIDA (o'ngda) ko'rsatish — mockupdagi ko'rinish.
+   * Legendani diagramma YONIDA (o'ngda) ko'rsatish - mockupdagi ko'rinish.
    * Har bir band: rangli nuqta, yorliq, qiymat va ulush.
    */
   legendSide?: boolean;
@@ -62,7 +62,7 @@ export function Donut({
    * Markazdagi matn O'LCHAMI diagramma balandligidan kelib chiqadi.
    *
    * Qat'iy `text-lg` da «17.4 ming kWh» halqaning teshigidan kengroq
-   * bo'lib, segmentlar ustiga chiqib ketardi. Teshik diametri —
+   * bo'lib, segmentlar ustiga chiqib ketardi. Teshik diametri -
    * `innerRadius` 0.68, ya'ni diagrammaning ~68% i.
    */
   const valueFs = Math.max(12, Math.min(20, Math.round(height * 0.115)));
@@ -78,7 +78,7 @@ export function Donut({
       return sorted.map((s, i) => ({ ...s, color: s.color ?? palette[i] ?? t.muted }));
     }
 
-    // 3 tadan ko'p bo'lsa — qolganlarini "Boshqa" ga yig'amiz.
+    // 3 tadan ko'p bo'lsa - qolganlarini "Boshqa" ga yig'amiz.
     const head = sorted.slice(0, palette.length - 1);
     const tail = sorted.slice(palette.length - 1);
     const rest = tail.reduce((a, s) => a + s.value, 0);
@@ -100,14 +100,14 @@ export function Donut({
     },
     {
       key: 'pct', label: 'Ulushi', align: 'right',
-      // Oqim bandlarida ulush ma'nosiz — jamining qismi emas.
+      // Oqim bandlarida ulush ma'nosiz - jamining qismi emas.
       render: (r) =>
-        r.noShare || total === 0 ? '—' : `${((r.value / total) * 100).toFixed(1)}%`,
+        r.noShare || total === 0 ? '-' : `${((r.value / total) * 100).toFixed(1)}%`,
       raw: (r) => (r.noShare || total === 0 ? 0 : Number(((r.value / total) * 100).toFixed(1))),
     },
   ];
 
-  /** Jadval-egizak va CSV — legendadagi HAMMA band, oqimlar bilan birga. */
+  /** Jadval-egizak va CSV - legendadagi HAMMA band, oqimlar bilan birga. */
   const tableRows: DonutSlice[] = [...prepared, ...extras];
 
   if (prepared.length === 0) {
@@ -115,7 +115,7 @@ export function Donut({
   }
 
   /**
-   * Yon legenda — rangli nuqta + yorliq, ostida qiymat va ulush.
+   * Yon legenda - rangli nuqta + yorliq, ostida qiymat va ulush.
    *
    * Halqadagi bo'laklardan keyin `noShare` bandlari qo'shiladi: ular
    * jamining qismi emas, shuning uchun foizsiz beriladi.
@@ -174,7 +174,7 @@ export function Donut({
 
         Nivo `ResponsivePie` o'z ichida `height: 100%` li div chizadi va uni
         o'lchaydi. `display: contents` li ota-elementdan foizli balandlik
-        ishonchli hisoblanmaydi — o'lcham 0 chiqadi va halqa umuman
+        ishonchli hisoblanmaydi - o'lcham 0 chiqadi va halqa umuman
         chizilmaydi. Markazdagi raqam esa `absolute inset-0` bo'lgani uchun
         ko'rinib turaveradi: natijada "raqam bor, diagramma yo'q".
       */}
@@ -184,7 +184,7 @@ export function Donut({
           activeOuterRadiusOffset={5}
           arcLabel={() => ''}
           borderColor={t.surface}
-          /* 2px surface rangli bo'shliq — kontur EMAS */
+          /* 2px surface rangli bo'shliq - kontur EMAS */
           borderWidth={2}
           colors={{ datum: 'data.color' }}
           cornerRadius={2}
@@ -219,7 +219,7 @@ export function Donut({
         />
           {(centerValue || centerLabel) && (
             /*
-              `px-[17%]` — mazmun halqaning TESHIGI ichida qoladi.
+              `px-[17%]` - mazmun halqaning TESHIGI ichida qoladi.
               `innerRadius` 0.68 bo'lgani uchun har tomondan ~16% chetlash
               kerak; usiz uzun qiymat segmentlar ustiga chiqib ketadi.
             */

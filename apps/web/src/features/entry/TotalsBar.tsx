@@ -1,11 +1,11 @@
 /**
- * Nazorat qatori — formaning pastida yopishib turadi.
+ * Nazorat qatori - formaning pastida yopishib turadi.
  *
  * Bu tizimning eng muhim UI elementi: xodim raqam yozayotgan paytda
  * "Yo'qotish" va "Tarkib" ustunlari jonli hisoblanadi. Yig'indi ajralgan
  * ZAHOTI belgi qizil chipga aylanadi va aniq farqni ko'rsatadi.
  *
- * Jami qiymat HECH QACHON kiritilmaydi — u shu yerda hisoblanib turadi.
+ * Jami qiymat HECH QACHON kiritilmaydi - u shu yerda hisoblanib turadi.
  */
 import { balanceTolerance, num, timeLabel } from '@beap/shared';
 import { Button, Chip } from '@heroui/react';
@@ -120,7 +120,7 @@ export function SaveIndicator({
     return <span className="text-[11px] text-muted">Saqlanmoqda…</span>;
   }
   if (state === 'error') {
-    return <span className="text-[11px] font-medium text-danger">Xatolik — qayta urinish</span>;
+    return <span className="text-[11px] font-medium text-danger">Xatolik - qayta urinish</span>;
   }
   if (state === 'saved' && savedAt) {
     return (

@@ -1,5 +1,5 @@
 /*
- * BEAP dizayn tizimi — ikki tema.
+ * BEAP dizayn tizimi - ikki tema.
  *
  *   gov       → yorug'  (ASOSIY): yumshoq ko'k-oq fon, oq kartalar,
  *                chegara emas SOYA bilan ajratilgan, katta radius
@@ -7,7 +7,7 @@
  *
  * DIQQAT: HeroUI v3 da brend rangi `--accent`. `--primary` MAVJUD EMAS.
  *
- * `--viz-*` — diagramma qatlami. `--tone-*` — KPI kartalarining rangli
+ * `--viz-*` - diagramma qatlami. `--tone-*` - KPI kartalarining rangli
  * variantlari (har bir ko'rsatkich o'z tusiga ega).
  */
 
@@ -19,7 +19,7 @@
 
     --radius: 0.5rem;
 
-    /* Fon — sof oq emas, yumshoq ko'k-kulrang. Oq kartalar shunda "suzadi". */
+    /* Fon - sof oq emas, yumshoq ko'k-kulrang. Oq kartalar shunda "suzadi". */
     --background: #f2f6fc;
     --foreground: #0f172a;
 
@@ -33,7 +33,7 @@
 
     --muted: #64748b;
 
-    /* Chegaralar deyarli ko'rinmaydi — ajratish SOYA bilan qilinadi. */
+    /* Chegaralar deyarli ko'rinmaydi - ajratish SOYA bilan qilinadi. */
     --border: #e9eff8;
     --separator: #eff4fa;
 
@@ -54,7 +54,7 @@
     --field-border: transparent;
     --field-radius: 0.75rem;
 
-    /* Yumshoq, ko'k tusli soyalar — kartalarni fondan ko'taradi. */
+    /* Yumshoq, ko'k tusli soyalar - kartalarni fondan ko'taradi. */
     --surface-shadow:
       0 1px 2px rgba(15, 23, 42, 0.04),
       0 4px 12px rgba(37, 99, 235, 0.06);
@@ -153,7 +153,7 @@
     --overlay-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
     --field-shadow: none;
 
-    /* Qorong'ida tus foni to'yingan emas — rangning shaffof qatlami. */
+    /* Qorong'ida tus foni to'yingan emas - rangning shaffof qatlami. */
     --tone-blue-bg: #16264a;    --tone-blue-solid: #3b82f6;
     --tone-green-bg: #10301f;   --tone-green-solid: #22c55e;
     --tone-orange-bg: #341f10;  --tone-orange-solid: #f97316;

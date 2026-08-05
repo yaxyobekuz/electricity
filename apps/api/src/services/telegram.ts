@@ -1,18 +1,18 @@
 /**
- * Telegram Bot API ga ko'prik — mustaqil, tashqi paketsiz HTTP yordamchisi.
+ * Telegram Bot API ga ko'prik - mustaqil, tashqi paketsiz HTTP yordamchisi.
  *
  * Bu yerda INTERAKTIV bot YO'Q (buyruqlarni tinglash, uzun so'rov/long
- * polling va h.k.) — u alohida bot/ ish maydonida yashaydi va o'z holicha
+ * polling va h.k.) - u alohida bot/ ish maydonida yashaydi va o'z holicha
  * ishlaydi. Shu modul esa faqat BITTALIK xabar/fayl YUBORISH uchun: uni
  * serverning kunlik ogohlantirish push'i (apps/api/src/server.ts, keyingi
  * bosqichda qo'shiladi) chaqiradi, lekin istalgan joydan foydalanish mumkin.
  *
  * NEGA config.ts IMPORT QILINMAYDI: bu modul global sozlamalardan mustaqil
- * qolishi kerak — parallel bajarilayotgan boshqa bosqichlar bilan yuklanish
+ * qolishi kerak - parallel bajarilayotgan boshqa bosqichlar bilan yuklanish
  * tartibiga bog'liqlik bo'lmasin. Shuning uchun bot tokeni har bir
  * funksiyaga ochiq parametr sifatida beriladi (config'dan o'zi o'qilmaydi).
  *
- * Ikkala funksiya ham HECH QACHON xato TASHLAMAYDI (throw qilmaydi) — bular
+ * Ikkala funksiya ham HECH QACHON xato TASHLAMAYDI (throw qilmaydi) - bular
  * "eng yaxshi urinish" (best-effort) bildirishnomalar: Telegram tarmog'i
  * ishlamay qolsa ham chaqiruvchi (masalan, cron job) yiqilib qolmasligi
  * shart.
@@ -24,17 +24,17 @@ const API_ROOT = 'https://api.telegram.org';
  * Model javobini Telegram HTML formatiga o'giradi.
  *
  * Bu yerdagi mantiq `bot/src/format.ts`dagi `toTelegramHtml()` bilan BIR
- * XIL — lekin u alohida ish maydonida (bot/), shu modul esa apps/api
+ * XIL - lekin u alohida ish maydonida (bot/), shu modul esa apps/api
  * ish maydonida yashaydi, ular bir-birini import qila olmaydi (workspace
- * chegarasi). Shu sababli kichik dublikat qasddan qilingan — xuddi
+ * chegarasi). Shu sababli kichik dublikat qasddan qilingan - xuddi
  * .env o'qish mantig'i `config.ts` va `bot/src/env.ts` orasida
  * takrorlanganidek.
  *
  * NEGA MarkdownV2 EMAS: u ".", "-", "!", "(", ")" kabi juda ko'p belgini
- * qochirishni (escape) talab qiladi — o'zbekcha matn va raqamlarda ular
+ * qochirishni (escape) talab qiladi - o'zbekcha matn va raqamlarda ular
  * doim uchraydi (masalan "58 680.5 kWh"), bitta unutilgan belgi butun
  * xabarni Telegram xatosi bilan yiqitadi. HTML rejimida faqat uchta belgi
- * (&, <, >) qochiriladi — ancha ishonchli.
+ * (&, <, >) qochiriladi - ancha ishonchli.
  */
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -59,7 +59,7 @@ function toTelegramHtml(text: string): string {
 /**
  * Oddiy matnli xabar yuboradi.
  *
- * `botToken` yoki `chatId` bo'sh bo'lsa — so'rov umuman yuborilmaydi va
+ * `botToken` yoki `chatId` bo'sh bo'lsa - so'rov umuman yuborilmaydi va
  * darhol `false` qaytadi (masalan, hali Telegram sozlanmagan foydalanuvchi
  * uchun bildirishnoma jimgina o'tkazib yuboriladi).
  */
@@ -80,7 +80,7 @@ export async function sendMessage(
     });
     return res.ok;
   } catch {
-    // Tarmoq yo'q / Telegram ishlamayapti — bu ham muvaffaqiyatsizlik, lekin
+    // Tarmoq yo'q / Telegram ishlamayapti - bu ham muvaffaqiyatsizlik, lekin
     // chaqiruvchini yiqitmaymiz, shunchaki "yuborilmadi" deb qaytamiz.
     return false;
   }
@@ -89,7 +89,7 @@ export async function sendMessage(
 /**
  * Faylni (masalan, kunlik Excel hisobotni) hujjat sifatida yuboradi.
  *
- * Node 24 ning o'rnatilgan FormData/Blob obyektlaridan foydalaniladi —
+ * Node 24 ning o'rnatilgan FormData/Blob obyektlaridan foydalaniladi -
  * multipart/form-data so'rovi uchun qo'shimcha npm paketi shart emas.
  */
 export async function sendDocument(

@@ -1,10 +1,10 @@
 /**
- * Vaqt qatori — ko'p seriyali chiziqli diagramma.
+ * Vaqt qatori - ko'p seriyali chiziqli diagramma.
  *
  * Mark spetsifikatsiyasi (bir marta, `nivoTheme` bilan birga):
  *   • chiziq 2px, yumaloq uchli
  *   • nuqta faqat NUQTALAR KAM bo'lganda (90 kunlik qatorda har biri
- *     ko'rinsa shovqin bo'ladi) — surface rangli halqa bilan
+ *     ko'rinsa shovqin bo'ladi) - surface rangli halqa bilan
  *   • maydon to'ldirish faqat "Sotilgan" seriyasida, gradient bilan
  *   • panjara faqat gorizontal, yupqa, TUTASH
  *   • o'q yorliqlari qisqartirilgan: `1.5M`, `900k`, `17-may`
@@ -27,14 +27,14 @@ interface TrendLineProps {
   title?: string;
   subtitle?: string;
   csvName?: string;
-  /** Nuqtalar qanday guruhlangan — o'q yorliqlari shunga qarab yoziladi. */
+  /** Nuqtalar qanday guruhlangan - o'q yorliqlari shunga qarab yoziladi. */
   bucket?: TrendBucket;
   /** Diagramma ustidagi qo'shimcha boshqaruv (masalan davr tanlagich). */
   actions?: React.ReactNode;
 }
 
 /*
- * Rang biriktirilishi — MAKETDAGIDEK:
+ * Rang biriktirilishi - MAKETDAGIDEK:
  *   tarmoqqa kirgan → ko'k   (--viz-1)
  *   sotilgan        → yashil (--viz-3)
  *   yo'qotish       → qizil  (--viz-5)
@@ -87,11 +87,11 @@ export function TrendLine({
     return <div className="flex h-40 items-center justify-center text-sm text-muted">Ma’lumot yo‘q</div>;
   }
 
-  // O'q belgilarini siyraklashtirish — 90 kunda taxminan har 10-kun.
+  // O'q belgilarini siyraklashtirish - 90 kunda taxminan har 10-kun.
   const tickStep = Math.max(1, Math.ceil(points.length / 9));
   const tickValues = points.filter((_, i) => i % tickStep === 0).map((p) => p.date);
 
-  /** Nuqtalar faqat qator qisqa bo'lganda — aks holda chiziq shovqinga aylanadi. */
+  /** Nuqtalar faqat qator qisqa bo'lganda - aks holda chiziq shovqinga aylanadi. */
   const showPoints = points.length <= 14;
 
   const axisFormat = (v: string): string =>
@@ -123,7 +123,7 @@ export function TrendLine({
         axisTop={null}
         colors={colors}
         /*
-         * `linear` — maketdagidek to'g'ri segmentlar.
+         * `linear` - maketdagidek to'g'ri segmentlar.
          *
          * `monotoneX` silliq egri chizadi va nuqtalar orasida MAVJUD
          * BO'LMAGAN oraliq qiymatlarni ko'rsatib qo'yadi. Kunlik o'lchov
@@ -135,14 +135,14 @@ export function TrendLine({
          * Maydon to'ldirish FAQAT "Sotilgan" ostida.
          *
          * Nivo'da `enableArea` butun diagrammaga tegishli, shuning uchun
-         * qolgan seriyalarga SHAFFOF gradient beramiz — aks holda uchala
+         * qolgan seriyalarga SHAFFOF gradient beramiz - aks holda uchala
          * chiziq ostidagi to'ldirishlar bir-birini bosib, loyqa bo'lardi.
          */
         defs={[
           {
             id: 'areaSold',
             type: 'linearGradient',
-            // Maketdagidek TEKIS och yashil — pastga qarab so'nmaydi.
+            // Maketdagidek TEKIS och yashil - pastga qarab so'nmaydi.
             colors: [
               { offset: 0, color: t.series[2]!, opacity: 0.14 },
               { offset: 100, color: t.series[2]!, opacity: 0.14 },
@@ -172,12 +172,12 @@ export function TrendLine({
         pointBorderColor={t.surface}
         pointBorderWidth={2}
         /*
-         * `series.color` — NUQTALI yo'l, va u shart.
+         * `series.color` - NUQTALI yo'l, va u shart.
          *
          * Nivo `pointColor` ni nuqtaning O'ZIGA emas, `{ series, point }`
          * konteksti bo'yicha hisoblaydi (`PointColorContext`). Shuning uchun
          * `'color'` ham, `'seriesColor'` ham topilmaydi va rang `undefined`
-         * bo'lib, nuqtalar QORA chiziladi. TypeScript buni ushlamaydi —
+         * bo'lib, nuqtalar QORA chiziladi. TypeScript buni ushlamaydi -
          * `from` oddiy `string`.
          *
          * `pointBorderColor` esa boshqacha: u nuqtaning o'ziga nisbatan

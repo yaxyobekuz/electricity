@@ -1,5 +1,5 @@
 /**
- * Dashboard "sahnasi" — sahifadagi barcha kartalarni jonlantiruvchi qatlam.
+ * Dashboard "sahnasi" - sahifadagi barcha kartalarni jonlantiruvchi qatlam.
  *
  * Uchta ishni qiladi, uchalasini ham CSS yolg'iz uddalay olmaydi:
  *
@@ -8,24 +8,24 @@
  *      pastidagi 20 ta panel foydalanuvchi ularni ko'rmagan holda "o'ynab"
  *      bo'lardi va pastga tushganda sahifa jonsiz ko'rinardi.
  *   2. Kursor yorug'ligi. Sichqoncha kartaning QAYERIDA turgani `--mx/--my`
- *      o'zgaruvchilariga yoziladi — CSS shu nuqtaga radial yorug'lik qo'yadi.
+ *      o'zgaruvchilariga yoziladi - CSS shu nuqtaga radial yorug'lik qo'yadi.
  *   3. 3D egilish. Kursor chetga surilganda KPI kartasi shu tomonga
  *      qiyshayadi (`--rx/--ry`). Panellarga TEGILMAYDI: ichida diagramma
  *      bor, qiyshaygan diagramma o'qilmaydi.
  *
- * Hammasi bitta konteynerdagi BITTA hodisa tinglovchisi orqali (delegatsiya) —
+ * Hammasi bitta konteynerdagi BITTA hodisa tinglovchisi orqali (delegatsiya) -
  * 40 ta kartaga 40 ta listener osilmaydi. Koordinatalar `requestAnimationFrame`
  * ichida yoziladi, ya'ni bir kadrda ko'pi bilan bir marta.
  */
 import { useEffect, useRef, type ReactNode } from 'react';
 
-/** Jonlanadigan elementlar — Panel primitivi va KPI kartasi. */
+/** Jonlanadigan elementlar - Panel primitivi va KPI kartasi. */
 const CARD = '.panel, .kpi';
 
 /** Navbat qadami: bir kadrda ekranga kirgan kartalar shu farq bilan chiqadi. */
 const STAGGER_MS = 55;
 
-/** Navbat 8 tadan keyin qaytadan boshlanadi — aks holda oxirgi karta juda kech chiqadi. */
+/** Navbat 8 tadan keyin qaytadan boshlanadi - aks holda oxirgi karta juda kech chiqadi. */
 const STAGGER_LOOP = 8;
 
 /** Egilish burchagi (daraja). Bundan kattasi o'yinchoqdek ko'rinadi. */
@@ -51,7 +51,7 @@ export function MotionStage({ children, className }: { children: ReactNode; clas
       el.classList.add('is-in');
     };
 
-    // Kuzatuvchi yo'q brauzerda hamma narsa DARHOL ko'rinadi — yashirin
+    // Kuzatuvchi yo'q brauzerda hamma narsa DARHOL ko'rinadi - yashirin
     // qolgandan ko'ra animatsiyasiz chiqqani yaxshi.
     if (typeof IntersectionObserver === 'undefined') {
       root.querySelectorAll(CARD).forEach(reveal);
@@ -73,7 +73,7 @@ export function MotionStage({ children, className }: { children: ReactNode; clas
             io.unobserve(e.target);
           });
       },
-      // Karta to'liq ko'rinmasdan oldinroq boshlansin — chiqish "kechikkandek"
+      // Karta to'liq ko'rinmasdan oldinroq boshlansin - chiqish "kechikkandek"
       // tuyulmasligi uchun ekran pastidan 8% ichkariga surilgan.
       { rootMargin: '0px 0px -8% 0px', threshold: 0.06 },
     );
@@ -88,7 +88,7 @@ export function MotionStage({ children, className }: { children: ReactNode; clas
     /*
      * Panellar so'rov tugagach paydo bo'ladi, shuning uchun DOM kuzatiladi.
      * Diagrammalar (Nivo/ECharts) ham tugun qo'shib-o'chiradi, ya'ni bu
-     * kuzatuvchi tez-tez uyg'onadi — shu sababli qayta skanerlash bir kadrda
+     * kuzatuvchi tez-tez uyg'onadi - shu sababli qayta skanerlash bir kadrda
      * bir martaga cheklangan.
      */
     let scheduled = 0;
@@ -113,7 +113,7 @@ export function MotionStage({ children, className }: { children: ReactNode; clas
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    // Harakat kamaytirilgan bo'lsa — kuzatuvning o'zi ortiqcha.
+    // Harakat kamaytirilgan bo'lsa - kuzatuvning o'zi ortiqcha.
     if (media('(prefers-reduced-motion: reduce)')) return;
     // Sensorli ekranda "hover" yo'q: barmoq tekkan joyda karta qiyshaysa g'alati.
     if (!media('(hover: hover)')) return;
@@ -139,7 +139,7 @@ export function MotionStage({ children, className }: { children: ReactNode; clas
       el.style.setProperty('--mx', `${(px * 100).toFixed(1)}%`);
       el.style.setProperty('--my', `${(py * 100).toFixed(1)}%`);
 
-      // Egilish faqat KPI kartasida — panel ichidagi diagramma tik turishi kerak.
+      // Egilish faqat KPI kartasida - panel ichidagi diagramma tik turishi kerak.
       if (el.classList.contains('kpi')) {
         el.style.setProperty('--ry', `${((px - 0.5) * 2 * TILT_DEG).toFixed(2)}deg`);
         el.style.setProperty('--rx', `${((0.5 - py) * 2 * TILT_DEG).toFixed(2)}deg`);

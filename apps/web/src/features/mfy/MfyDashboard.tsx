@@ -1,15 +1,16 @@
 /**
  * MFY boshqaruv paneli.
  *
- * JOYLASHUV — mijoz bergan maketning aynan o'zi:
+ * JOYLASHUV - mijoz bergan maketning aynan o'zi:
  *
  *   yuqori chiziq │ sarlavha + yo'l ····· davr tanlagich · hisobot · global
  *   1-qator       │ 8 ta KPI kartasi (bir xil o'lchamda, rangli fon bilan)
  *   2-qator       │ Dinamika (4) │ Quvvat (3) │ Abonentlar (3) │ 4 ko'rsatkich (2)
  *   3-qator       │ Transformatorlar (4) │ Yo'qotish (3) │ Qarzdorlik (3) │ Tezkor (2)
  *   4-qator       │ Bajarilgan (3) │ Reja (3) │ Natijadorlik (3) │ Hisobotlar (3)
+ *   5-qator       │ TP balans hisoblagichi - kunlik (12, to'liq kenglik)
  *
- * ZICHLIK QOIDASI: har bir panel o'z mazmuniga yetadigan balandlikda —
+ * ZICHLIK QOIDASI: har bir panel o'z mazmuniga yetadigan balandlikda -
  * bo'sh joyni to'ldirish uchun cho'zilmaydi. Shu sababli panellar soni ko'p,
  * balandligi past.
  */
@@ -70,6 +71,7 @@ import {
   type Tone,
 } from "../../components/ui/StatTile.tsx";
 import { PeriodPicker } from "../district/panels/PeriodPicker.tsx";
+import { TpLossPanel } from "../district/panels/TpLossPanel.tsx";
 import { TpMonitorPanel } from "../district/panels/TpMonitorPanel.tsx";
 import {
   useBootstrap,
@@ -81,6 +83,8 @@ import {
   useMfyOverview,
   useMfyResponsible,
   useMfyResults,
+  useMfyTpLoss,
+  useMfyTpLossAnomalies,
   useMfyTpMonthly,
   useMfyViolations,
   useMfyWorks,
@@ -119,7 +123,7 @@ export default function MfyDashboard() {
   const boot = useBootstrap();
 
   /*
-   * Manzilda id bo'lmasa (bosh sahifa) — registrdagi YAGONA fider olinadi.
+   * Manzilda id bo'lmasa (bosh sahifa) - registrdagi YAGONA fider olinadi.
    * Tizim qamrovi bitta fider, shuning uchun "qaysi biri?" degan savol yo'q.
    */
   const paramId = Number(params["mfyId"]);
@@ -128,7 +132,7 @@ export default function MfyDashboard() {
       ? paramId
       : (boot.data?.mfys[0]?.id ?? 0);
   const period = useUi((s) => s.period);
-  // Tanlangan sana — kunlik grafik AYNAN shu kunda tugaydi.
+  // Tanlangan sana - kunlik grafik AYNAN shu kunda tugaydi.
   const asOfDate = useUi((s) => s.asOfDate);
   const [bucket, setBucket] = useState<TrendBucket>("day");
 
@@ -147,6 +151,8 @@ export default function MfyDashboard() {
   const feeder = useFeederMonthly(mfyId, period ?? undefined);
   const tpMonthly = useMfyTpMonthly(mfyId, period ?? undefined);
   const responsible = useMfyResponsible(mfyId);
+  const tpLoss = useMfyTpLoss(mfyId);
+  const tpLossAnomalies = useMfyTpLossAnomalies(mfyId);
 
   if (boot.isLoading || (mfyId === 0 && !boot.isError))
     return <LoadingState rows={6} />;
@@ -170,7 +176,7 @@ export default function MfyDashboard() {
   const today = series.at(-1);
   const yesterday = series.at(-2);
 
-  // Yon xulosa qutilarining sarlavhasi tanlangan davrga ergashadi —
+  // Yon xulosa qutilarining sarlavhasi tanlangan davrga ergashadi -
   // oylik ko'rinishda "Bugun" deb yozish noto'g'ri bo'lardi.
   const periodWord =
     bucket === "day" ? "Bugun" : bucket === "week" ? "Shu hafta" : "Shu oy";
@@ -182,13 +188,13 @@ export default function MfyDashboard() {
         : "O‘tgan oy";
 
   const daysInMonth = 30;
-  // Taxminiy tarif — "tejalgan energiya" ni so'mga o'girish uchun.
+  // Taxminiy tarif - "tejalgan energiya" ni so'mga o'girish uchun.
   const TARIFF_SUM_PER_KWH = 1000;
   const avgPerConsumer =
     totals.consumersActive > 0
       ? totals.kwhSold / totals.consumersActive / daysInMonth
       : 0;
-  // Taxminiy tarif — hisob-kitob markazidan aniq tarif kelguncha.
+  // Taxminiy tarif - hisob-kitob markazidan aniq tarif kelguncha.
   const avgBillSum = avgPerConsumer * daysInMonth * 450;
   const technological = lossStructure.data?.parts.find(
     (p) => p.key === "technological",
@@ -198,7 +204,7 @@ export default function MfyDashboard() {
   /*
    * Reja ro'yxati YAQIN sanadan boshlanadi.
    *
-   * Server javobi eng yangi sanadan beradi — bajarilgan ishlar uchun to'g'ri
+   * Server javobi eng yangi sanadan beradi - bajarilgan ishlar uchun to'g'ri
    * ("oxirgi nima qilindi"), reja uchun teskari: birinchi navbatda eng uzoq
    * muddat ko'rinib qolardi.
    */
@@ -211,7 +217,7 @@ export default function MfyDashboard() {
   /*
    * Tezkor ko'rsatkichlar HISOBOTDAN hisoblanadi.
    *
-   * Eng yuklangan TP — uning oylik energiyasi soatlarga bo'linadi, ya'ni bu
+   * Eng yuklangan TP - uning oylik energiyasi soatlarga bo'linadi, ya'ni bu
    * O'RTACHA yuklama. Cho'qqi yuklamani bilish uchun soatlik profil kerak,
    * u hisobotda yo'q.
    */
@@ -308,10 +314,10 @@ export default function MfyDashboard() {
         {/*
           Tarmoq quvvati O'RNIGA fider hisoblagichi.
 
-          Quvvat (kVA) TP pasportidan keladi va hozircha tizimda yo'q — bo'sh
+          Quvvat (kVA) TP pasportidan keladi va hozircha tizimda yo'q - bo'sh
           gauge o'rniga hisobotda BOR raqam ko'rsatiladi: fider boshidagi
           hisoblagich va uning TP hisoblagichlari bilan solishtiruvi. Halqa
-          esa "qancha energiya hisobga olindi" degan savolga javob beradi —
+          esa "qancha energiya hisobga olindi" degan savolga javob beradi -
           bu fider uchun asosiy sifat ko'rsatkichi.
         */}
         <Panel className="xl:col-span-3" title="Fider hisoblagichi">
@@ -343,7 +349,7 @@ export default function MfyDashboard() {
                 />
               </dl>
 
-              {/* TP hisoblagichlarida qayd etilgan energiya — xulosa qiymat */}
+              {/* TP hisoblagichlarida qayd etilgan energiya - xulosa qiymat */}
               <div
                 className="mt-auto flex items-baseline justify-center gap-2 rounded-lg px-3 py-3"
                 style={{
@@ -423,7 +429,7 @@ export default function MfyDashboard() {
         </div>
 
         {/*
-          4 ta ko'rsatkich — BITTA USTUNDA, to'rt qator.
+          4 ta ko'rsatkich - BITTA USTUNDA, to'rt qator.
           `flex-1` bilan har biri teng balandlikda va ustun qatordagi
           boshqa panellar bilan bir xil bo'yga yetadi.
         */}
@@ -489,7 +495,7 @@ export default function MfyDashboard() {
           }}
           title="Transformatorlar holati"
         >
-          {/* Eng ko'p iste'mol qilgan 5 ta TP — server shu tartibda qaytaradi. */}
+          {/* Eng ko'p iste'mol qilgan 5 ta TP - server shu tartibda qaytaradi. */}
           <TpMonitorPanel
             days={feeder.data?.days ?? 31}
             rows={(tpMonthly.data ?? []).slice(0, 5)}
@@ -560,11 +566,11 @@ export default function MfyDashboard() {
           {/*
             Hammasi HISOBOTDAGI raqamlardan hisoblanadi:
             kuchlanish va o'chirishlar TP o'lchovlaridan kelishi kerak edi,
-            ular hozircha yo'q — o'rniga fider energiyasi va TP kesimidan
+            ular hozircha yo'q - o'rniga fider energiyasi va TP kesimidan
             chiqadigan real ko'rsatkichlar turadi.
           */}
           {feeder.data ? (
-            /* Bitta ustun — karta tor (2/12), yorliqlar to'liq ko'rinadi. */
+            /* Bitta ustun - karta tor (2/12), yorliqlar to'liq ko'rinadi. */
             <div className="flex flex-col gap-3.5">
               <QuickMetric
                 icon={<Zap className="size-3.5" />}
@@ -643,7 +649,7 @@ export default function MfyDashboard() {
         <Panel className="xl:col-span-3" title="Natijadorlik ko‘rsatkichlari">
           {results.data ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:divide-x sm:divide-separator">
-              {/* Chap ustun — yo'qotish darajasining davr boshi va oxiri */}
+              {/* Chap ustun - yo'qotish darajasining davr boshi va oxiri */}
               <div className="min-w-0 sm:pr-4">
                 <p className="text-[11px] font-medium leading-tight text-muted">
                   Yo‘qotish darajasi
@@ -684,7 +690,7 @@ export default function MfyDashboard() {
 
                 {results.data.improvementPp !== null && (
                   /*
-                    "p.p." — FOIZ PUNKTI. 11.2% dan 5.0% ga tushish "6.2%"
+                    "p.p." - FOIZ PUNKTI. 11.2% dan 5.0% ga tushish "6.2%"
                     emas: foizda o'lchansa bu 55% bo'lardi. Maketda "%" yozilgan,
                     lekin raqamning ma'nosi p.p.
                   */
@@ -703,7 +709,7 @@ export default function MfyDashboard() {
                 )}
               </div>
 
-              {/* O'ng ustun — o'sha ishlarning natijasi: tejalgan energiya */}
+              {/* O'ng ustun - o'sha ishlarning natijasi: tejalgan energiya */}
               <div className="min-w-0 sm:pl-4">
                 <p className="text-[11px] font-medium leading-tight text-muted">
                   Iqtisod qilingan energiya
@@ -716,7 +722,7 @@ export default function MfyDashboard() {
                     style={{ color: "var(--viz-good)", fill: "currentColor" }}
                   />
                   {/*
-                    To'liq raqam — `energy()` uni "128.6 ming kWh" ga
+                    To'liq raqam - `energy()` uni "128.6 ming kWh" ga
                     yaxlitlardi, bu yerda esa aniq qiymat muhim.
                   */}
                   <span className="tabular min-w-0 truncate text-[15px] font-bold leading-tight">
@@ -728,7 +734,7 @@ export default function MfyDashboard() {
                 </div>
 
                 {/*
-                  Pul ekvivalenti — TAXMINIY: 1 kWh = 1000 so'm.
+                  Pul ekvivalenti - TAXMINIY: 1 kWh = 1000 so'm.
                   Aniq tarif toifaga qarab farq qiladi, shuning uchun raqam
                   "≈" bilan beriladi va tarif ochiq yoziladi: hokim "bu qayerdan
                   chiqdi?" deb so'raganda javob kartaning o'zida turadi.
@@ -759,7 +765,36 @@ export default function MfyDashboard() {
         </Panel>
       </div>
 
-      {/* Izoh sahifa oxirida emas, PASTKI CHIZIQDA — bitta qatorda. */}
+      {/*
+        ═══ 5-QATOR: TP balans hisoblagichi (kunlik) ═══
+
+        Mijoz maketida yo'q - YANGI, alohida qator: fider oylik balansidan
+        farqli, TP darajasidagi kunlik ma'lumot (elektroset "хатlov"
+        hisobotidan). Faqat balans hisoblagichi ishlaydigan TP lar uchun
+        mavjud - 51 tadan bir nechtasi, shu sababli EmptyPanel odatiy holat.
+      */}
+      <div className="grid grid-cols-1 gap-3 mt-4 xl:grid-cols-12">
+        <Panel
+          actions={
+            <>
+              <AskAiButton prompt="TP balans hisoblagichida anomaliya bormi?" />
+              <Link
+                className="text-[11.5px] font-semibold text-accent hover:underline"
+                to="/tp-loss"
+              >
+                Yuklash
+              </Link>
+            </>
+          }
+          className="xl:col-span-12"
+          flush
+          title="TP balans hisoblagichi - kunlik"
+        >
+          <TpLossPanel anomalies={tpLossAnomalies.data?.anomalies ?? []} rows={tpLoss.data ?? []} />
+        </Panel>
+      </div>
+
+      {/* Izoh sahifa oxirida emas, PASTKI CHIZIQDA - bitta qatorda. */}
       <FooterNote>
         <Activity className="size-3.5 shrink-0" />
         Ma’lumotlar har 10 daqiqada avtomatik yangilanadi ·{" "}
@@ -776,7 +811,7 @@ export default function MfyDashboard() {
 }
 
 /**
- * Chiziqli grafik yonidagi xulosa qutisi — maketdagi ko'rinish.
+ * Chiziqli grafik yonidagi xulosa qutisi - maketdagi ko'rinish.
  *
  * Joriy davr qiymatlari fonsiz va o'z rangida; solishtirish qatori
  * (o'tgan davr) kulrang fon ustida, ya'ni u boshqa toifadagi ma'lumot
@@ -826,7 +861,7 @@ function SummaryBox({
   );
 }
 
-/** Diagramma davri — Kunlik / Haftalik / Oylik. */
+/** Diagramma davri - Kunlik / Haftalik / Oylik. */
 export function BucketPicker({
   value,
   onChange,
@@ -866,7 +901,7 @@ export function BucketPicker({
 }
 
 /** Quvvat panelidagi uchta ustunli qiymat. */
-/** Fider hisoblagichi kartasidagi katak — yorliq ustida, qiymat ostida. */
+/** Fider hisoblagichi kartasidagi katak - yorliq ustida, qiymat ostida. */
 function MeterCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">

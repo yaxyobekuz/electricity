@@ -1,14 +1,14 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Davr ichida UZILGAN abonentlar soni
 --
--- `consumers_disconnected` — bu ZAXIRA (stock): hozirda uzilgan holatda
+-- `consumers_disconnected` - bu ZAXIRA (stock): hozirda uzilgan holatda
 -- turgan abonentlar soni. U «shu davrda nechta abonent uzildi?» degan
 -- savolga javob BERMAYDI: 16 ta uzilgan bo'lsa ham, ular o'tgan yili
 -- uzilgan bo'lishi mumkin.
 --
 -- Dashboarddagi «Uzilgan (bugun)» ko'rsatkichi aynan OQIM (flow) qiymati,
 -- shuning uchun alohida ustun kerak. `consumers_new` ham xuddi shunday
--- oqim — u allaqachon mavjud, ya'ni ikkalasi juft bo'lib to'liq manzara
+-- oqim - u allaqachon mavjud, ya'ni ikkalasi juft bo'lib to'liq manzara
 -- beradi: davr ichida nechta ulandi va nechta uzildi.
 -- ═══════════════════════════════════════════════════════════════════════════
 
@@ -31,7 +31,7 @@ ALTER TABLE fact.mfy_monthly_return
 -- ── Mavjud DEMO qatorlarini to'ldirish ─────────────────────────────────────
 --
 -- DIQQAT: bu FAQAT demo ma'lumot uchun. Haqiqiy tizimda bu ustun xodim
--- tomonidan kiritiladi — hech qanday taxminiy hisob-kitob qilinmaydi.
+-- tomonidan kiritiladi - hech qanday taxminiy hisob-kitob qilinmaydi.
 -- Taqsimot deterministik (mfy_id va oyga bog'liq), shuning uchun har bir
 -- mashinada bir xil chiqadi.
 UPDATE fact.mfy_monthly_return
@@ -43,4 +43,4 @@ SET consumers_disconnected_new = LEAST(
 WHERE consumers_disconnected_new = 0;
 
 COMMENT ON COLUMN fact.mfy_monthly_return.consumers_disconnected_new IS
-  'Davr ichida uzilgan abonentlar soni (oqim). consumers_disconnected — zaxira.';
+  'Davr ichida uzilgan abonentlar soni (oqim). consumers_disconnected - zaxira.';

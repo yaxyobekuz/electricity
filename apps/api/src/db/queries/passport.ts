@@ -1,8 +1,8 @@
 /**
- * Pasport — hisoblanadi, keyin muzlatiladi.
+ * Pasport - hisoblanadi, keyin muzlatiladi.
  *
  * Pasport HECH QACHON pasport sifatida kiritilmaydi. Har bir qator o'z
- * manbasidan hisoblanadi. Tuman pasporti — sof SUM(MFY).
+ * manbasidan hisoblanadi. Tuman pasporti - sof SUM(MFY).
  */
 import { createHash } from 'node:crypto';
 
@@ -10,7 +10,7 @@ import type { Passport, PassportReconcileRow, PassportRow } from '@beap/shared';
 
 import { type AppContext, query, queryOne, withTransaction } from '../pool.ts';
 
-/** Pasport qatorlarining ta'rifi — DB ustunlari bilan bog'lanish. */
+/** Pasport qatorlarining ta'rifi - DB ustunlari bilan bog'lanish. */
 interface RowSpec {
   no: number;
   labelUz: string;
@@ -207,7 +207,7 @@ export async function reconcile(ctx: AppContext, period: string): Promise<Passpo
   });
 }
 
-/** Kanonik JSON (kalitlar tartiblangan) — xesh barqaror bo'lishi uchun. */
+/** Kanonik JSON (kalitlar tartiblangan) - xesh barqaror bo'lishi uchun. */
 function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
@@ -222,7 +222,7 @@ export interface FreezeResult {
   alreadyFrozen: boolean;
 }
 
-/** Pasportni muzlatish — imzolanadigan rasmiy hujjat. Append-only. */
+/** Pasportni muzlatish - imzolanadigan rasmiy hujjat. Append-only. */
 export async function freeze(
   ctx: AppContext, scopeType: 'MFY' | 'TUMAN', scopeId: number | null, period: string,
 ): Promise<FreezeResult> {

@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0002_fact.sql — submission konverti va qo'lda kiritiladigan fakt jadvallari
+-- 0002_fact.sql - submission konverti va qo'lda kiritiladigan fakt jadvallari
 --
 -- ASOSIY QOIDA: har qanday "jami" va "shundan" qiymati HISOBLANADI
 -- (GENERATED ALWAYS AS ... STORED). Xodim faqat bo'laklarni kiritadi.
@@ -57,7 +57,7 @@ CREATE INDEX submission_queue  ON fact.submission (status, submitted_at DESC)
   WHERE status = 'submitted';
 
 COMMENT ON TABLE fact.submission IS
-  'Tasdiqlangan fakt hech qachon UPDATE qilinmaydi — supersedes_id bilan yangi revision ochiladi';
+  'Tasdiqlangan fakt hech qachon UPDATE qilinmaydi - supersedes_id bilan yangi revision ochiladi';
 
 
 -- Tasdiqlanganda oldingi revisionni "superseded" ga o'tkazadi.
@@ -107,7 +107,7 @@ CREATE TABLE fact.energy_balance_daily (
   CONSTRAINT eb_sold_le_in CHECK (kwh_sold <= kwh_in),
 
   -- DIQQAT: ataylab BAZAVIY ustunlar orqali yozilgan (kwh_in - kwh_sold),
-  -- generated ustun (kwh_loss_total) orqali emas — PostgreSQL bir jadvalning
+  -- generated ustun (kwh_loss_total) orqali emas - PostgreSQL bir jadvalning
   -- CHECK ifodasida o'sha jadvalning generated ustuniga murojaat qilishga
   -- ruxsat bermaydi. Bu shaklni O'ZGARTIRMANG.
   CONSTRAINT eb_components CHECK (
@@ -188,7 +188,7 @@ DECLARE
   v_total  numeric;
   v_share  numeric;
 BEGIN
-  -- Generated ustun BEFORE triggerda hali hisoblanmagan — qo'lda yig'amiz.
+  -- Generated ustun BEFORE triggerda hali hisoblanmagan - qo'lda yig'amiz.
   v_mine := NEW.debt_population_mln + NEW.debt_legal_mln + NEW.debt_budget_mln;
 
   IF v_mine <= 0 THEN
@@ -211,7 +211,7 @@ BEGIN
 
   IF v_share > 0.60 THEN
     RAISE EXCEPTION
-      'IMPLAUSIBLE_DEBT: MFY (id=%) qarzdorligi % mln so''m — bu tuman jamining % foizi',
+      'IMPLAUSIBLE_DEBT: MFY (id=%) qarzdorligi % mln so''m - bu tuman jamining % foizi',
       NEW.mfy_id, round(v_mine, 1), round(100 * v_share)
       USING ERRCODE = 'check_violation',
             HINT = 'district_paste_suspected',
@@ -252,7 +252,7 @@ CREATE INDEX        ts_tp ON fact.tp_status_monthly (tp_id, period_month DESC);
 -- ─── 4. TP KUNLIK KO'RSATKICHLARI (yillik partitsiya) ───────────────────────
 -- Bu yagona o'sish istiqboliga ega jadval: agar kelajakda hisoblagichlardan
 -- telemetriya kelsa, kuniga millionlab qator bo'ladi. Partitsiyalash qarorini
--- keyinroq qo'shish qimmat — shuning uchun hozir kiritamiz.
+-- keyinroq qo'shish qimmat - shuning uchun hozir kiritamiz.
 
 CREATE TABLE fact.tp_reading_daily (
   submission_id bigint NOT NULL REFERENCES fact.submission ON DELETE CASCADE,
@@ -320,7 +320,7 @@ CREATE INDEX dt_name_trgm ON fact.debt_top_entry USING gin (debtor_name gin_trgm
 CREATE INDEX dt_month ON fact.debt_top_entry (period_month DESC, amount_mln DESC);
 
 
--- ─── 7. ISHLAR (reja va bajarilgan — bitta obyekt, ikki holatda) ────────────
+-- ─── 7. ISHLAR (reja va bajarilgan - bitta obyekt, ikki holatda) ────────────
 
 CREATE TABLE fact.work (
   id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -358,7 +358,7 @@ CREATE INDEX work_status ON fact.work (status, planned_end);
 CREATE INDEX work_done    ON fact.work (actual_end DESC) WHERE status = 'COMPLETED';
 
 
--- ─── 8. DALOLATNOMALAR (pasport 10b — "shundan aniqlandi") ──────────────────
+-- ─── 8. DALOLATNOMALAR (pasport 10b - "shundan aniqlandi") ──────────────────
 
 CREATE TABLE fact.violation_act (
   id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -380,7 +380,7 @@ CREATE INDEX va_mfy_date ON fact.violation_act (mfy_id, act_date DESC);
 
 
 -- ─── PASPORT SNAPSHOT (muzlatilgan rasmiy hujjat) ───────────────────────────
--- Jonli view — dashboard uchun. Snapshot — imzolanadigan hujjat uchun.
+-- Jonli view - dashboard uchun. Snapshot - imzolanadigan hujjat uchun.
 -- Keyinchalik mart oyi tuzatilsa ham, imzolangan nusxa o'zgarmaydi.
 
 CREATE TABLE fact.passport_snapshot (
@@ -397,7 +397,7 @@ CREATE TABLE fact.passport_snapshot (
 );
 
 COMMENT ON COLUMN fact.passport_snapshot.content_sha256 IS
-  'Kanonik JSON ning sha256 xeshi — buzilmaganlik dalili. E-IMZO uchun ilgak';
+  'Kanonik JSON ning sha256 xeshi - buzilmaganlik dalili. E-IMZO uchun ilgak';
 
 -- Append-only: yozilgandan keyin o'zgartirib/o'chirib bo'lmaydi.
 CREATE RULE passport_snapshot_no_update AS ON UPDATE TO fact.passport_snapshot DO INSTEAD NOTHING;

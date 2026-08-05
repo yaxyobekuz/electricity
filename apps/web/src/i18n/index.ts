@@ -1,12 +1,12 @@
 /**
- * i18n — o'zbek lotin (asosiy) va kirill.
+ * i18n - o'zbek lotin (asosiy) va kirill.
  *
  * DIZAYN QARORI: kirill uchun alohida JSON fayl SAQLANMAYDI.
  * O'zbek lotin→kirill transliteratsiyasi deterministik, shuning uchun kirill
  * versiyasi i18next post-processori orqali ish vaqtida hosil qilinadi.
  *
  * Nima uchun shunday:
- *   • ikkita fayl orasida DRIFT bo'lmaydi (yangi kalit qo'shilsa — avtomatik)
+ *   • ikkita fayl orasida DRIFT bo'lmaydi (yangi kalit qo'shilsa - avtomatik)
  *   • tarjima xatosi imkoniyati nolga tushadi
  *   • ma'lumotlar bazasidan keladigan yorliqlar ham bir xil qoida bilan o'giriladi
  *
@@ -38,7 +38,7 @@ function initialLanguage(): LanguageCode {
   return 'uz-Latn';
 }
 
-/** Kirill uchun post-processor — barcha tarjimalarni transliteratsiya qiladi. */
+/** Kirill uchun post-processor - barcha tarjimalarni transliteratsiya qiladi. */
 const cyrillicPostProcessor = {
   type: 'postProcessor' as const,
   name: 'cyrillic',
@@ -68,7 +68,7 @@ export function setLanguage(code: LanguageCode): void {
   try {
     localStorage.setItem(STORAGE_KEY, code);
   } catch {
-    /* saqlab bo'lmadi — muhim emas */
+    /* saqlab bo'lmadi - muhim emas */
   }
   document.documentElement.lang = code === 'uz-Cyrl' ? 'uz-Cyrl' : 'uz';
 }

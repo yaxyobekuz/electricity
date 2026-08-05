@@ -1,7 +1,7 @@
 /**
  * Davr tanlagich.
  *
- * URL da emas, global holatda saqlanadi — barcha panellar bitta davrga
+ * URL da emas, global holatda saqlanadi - barcha panellar bitta davrga
  * bo'ysunadi. Filtr qatori u ta'sir qiladigan hamma narsadan YUQORIDA turadi.
  */
 import { periodLabel, shiftPeriod, toPeriod } from '@beap/shared';
@@ -23,7 +23,7 @@ export function PeriodPicker() {
     const max = toPeriod(boot.dataRange.maxDate);
     const out: string[] = [];
     let cur = max;
-    // 36 oydan ko'p bo'lmasin — ro'yxat cheksiz o'smasin.
+    // 36 oydan ko'p bo'lmasin - ro'yxat cheksiz o'smasin.
     for (let i = 0; i < 36 && cur >= min; i += 1) {
       out.push(cur);
       cur = shiftPeriod(cur, -1);

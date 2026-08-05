@@ -1,9 +1,9 @@
 /**
- * Diagramma temasi — CSS o'zgaruvchilaridan quriladi.
+ * Diagramma temasi - CSS o'zgaruvchilaridan quriladi.
  *
  * Nivo ham, ECharts ham AYNAN shu manbadan rang oladi, shuning uchun tema
  * almashganda ikkalasi ham birga o'zgaradi. Rang qiymatlari hech qayerda
- * takrorlanmaydi — faqat `theme-gov.css` da.
+ * takrorlanmaydi - faqat `theme-gov.css` da.
  */
 import { useSyncExternalStore } from 'react';
 
@@ -28,7 +28,7 @@ export interface VizTokens {
  * Diagrammalar uchun shrift stek.
  *
  * DIQQAT: Nivo SVG ga render qiladi va `inherit` ni tushunadi, lekin ECharts
- * CANVAS ga chizadi — u CSS shriftini MEROS QILIB OLMAYDI va `inherit` ni
+ * CANVAS ga chizadi - u CSS shriftini MEROS QILIB OLMAYDI va `inherit` ni
  * qabul qilmaydi. Shu sababli aniq stek kerak, aks holda gauge'dagi katta
  * raqam boshqa shriftda chiqadi.
  */
@@ -129,7 +129,7 @@ export function nivoTheme(t: VizTokens) {
       legend: { text: { fontSize: 11, fill: t.ink2, fontWeight: 500 } },
     },
     grid: {
-      // Panjara chizig'i doim yupqa va TUTASH — hech qachon punktir.
+      // Panjara chizig'i doim yupqa va TUTASH - hech qachon punktir.
       line: { stroke: t.grid, strokeWidth: 1 },
     },
     legends: {
@@ -139,7 +139,7 @@ export function nivoTheme(t: VizTokens) {
     labels: { text: { fontSize: 11, fill: t.ink, fontWeight: 500 } },
     tooltip: {
       /*
-       * Nivo konteyneri FAQAT pozitsiyalash uchun — ko'rinishni
+       * Nivo konteyneri FAQAT pozitsiyalash uchun - ko'rinishni
        * `.chart-tooltip` sinfi beradi. Aks holda ikki qavat quti hosil
        * bo'ladi va ichkidagi matn tor ustunga siqiladi.
        */

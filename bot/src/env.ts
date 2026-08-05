@@ -2,9 +2,9 @@
  * Bot uchun muhit sozlamalari.
  *
  * `apps/api/src/config.ts` dagi `loadEnvFile()` bilan BIR XIL naqsh, lekin
- * QAYTA YOZILGAN — import qilinmagan. Bot mustaqil `npm` ish maydoni
+ * QAYTA YOZILGAN - import qilinmagan. Bot mustaqil `npm` ish maydoni
  * (`@beap/bot`): alohida jarayon, alohida deploy, `apps/api/src` dan HECH
- * NARSA import qilmasligi kerak. `dotenv` qo'shishning hojati yo'q — bizga
+ * NARSA import qilmasligi kerak. `dotenv` qo'shishning hojati yo'q - bizga
  * faqat KEY=VALUE kerak.
  */
 import { readFileSync } from 'node:fs';
@@ -40,13 +40,13 @@ function loadEnvFile(path: string): void {
 }
 
 loadEnvFile(resolve(REPO_ROOT, '.env'));
-loadEnvFile(resolve(REPO_ROOT, '.env.example')); // zaxira — dev uchun
+loadEnvFile(resolve(REPO_ROOT, '.env.example')); // zaxira - dev uchun
 
 export const env = {
-  /** Bo'sh bo'lsa bot butunlay o'chgan holatda qoladi — `index.ts` shu yerda tekshiradi. */
+  /** Bo'sh bo'lsa bot butunlay o'chgan holatda qoladi - `index.ts` shu yerda tekshiradi. */
   botToken: (process.env['TELEGRAM_BOT_TOKEN'] ?? '').trim(),
   /**
-   * `apps/api`ning `/api` prefiksigacha bo'lgan to'liq manzili — veb
+   * `apps/api`ning `/api` prefiksigacha bo'lgan to'liq manzili - veb
    * klientidagi `resolveBase()` natijasiga mos (`apps/web/src/lib/api.ts`).
    * Oxiridagi `/` lar kesib olinadi, shunda yo'l qo'shilganda ikkitalab
    * qolmaydi.

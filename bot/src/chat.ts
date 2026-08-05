@@ -2,10 +2,10 @@
  * `POST /api/ai/chat` (SSE) ning Node-tomonlik klienti.
  *
  * `apps/web/src/lib/ai.ts` dagi `streamAiChat()` ni Telegram uchun qayta
- * yozgan nusxasi — protokol (so'rov tanasi, hodisa nomlari/tanalari)
+ * yozgan nusxasi - protokol (so'rov tanasi, hodisa nomlari/tanalari)
  * AYNAN o'sha: `{ messages: [{role, content}], period? }` yuboriladi,
  * `event: delta|tool|action|error` o'qiladi (`apps/api/src/routes/ai.ts`).
- * Bu yerda `period` UMUMAN yuborilmaydi — veb klient ham bermasa server
+ * Bu yerda `period` UMUMAN yuborilmaydi - veb klient ham bermasa server
  * joriy davrni o'zi tanlaydi (`buildSnapshot`), bot ham shu standartga
  * tayanadi.
  *
@@ -18,14 +18,14 @@ export interface ChatMessage {
   content: string;
 }
 
-/** `ai-tools.ts` dagi `ClientAction` bilan bir xil shakl — bot faqat `download` ni tushunadi. */
+/** `ai-tools.ts` dagi `ClientAction` bilan bir xil shakl - bot faqat `download` ni tushunadi. */
 export interface ChatAction {
   type: string;
   payload: Record<string, unknown>;
 }
 
 export interface ChatStreamHandlers {
-  /** Har bir yangi bo'lak — javob matniga qo'shiladi. */
+  /** Har bir yangi bo'lak - javob matniga qo'shiladi. */
   onDelta: (text: string) => void;
   /** Agent brauzerdan amal so'radi (navigate/set_period/download/...). */
   onAction?: (action: ChatAction) => void;
@@ -36,7 +36,7 @@ export interface ChatStreamHandlers {
 /**
  * Suhbatni yuboradi va javobni bo'lak-bo'lak qaytaradi.
  *
- * Node 24 ning o'rnatilgan `fetch`/`ReadableStream` bilan ishlaydi — qo'shimcha
+ * Node 24 ning o'rnatilgan `fetch`/`ReadableStream` bilan ishlaydi - qo'shimcha
  * HTTP klient kutubxonasi shart emas (`apps/api/src/services/ai.ts` OpenAI
  * oqimini xuddi shu usulda o'qiydi).
  */
@@ -64,7 +64,7 @@ export async function streamChat(
       const body = (await res.json()) as { message?: string };
       if (body.message) message = body.message;
     } catch {
-      /* JSON emas — standart xabar bilan qolamiz */
+      /* JSON emas - standart xabar bilan qolamiz */
     }
     handlers.onError?.(message);
     return;
@@ -107,9 +107,9 @@ export async function streamChat(
         } else if (event === 'error') {
           handlers.onError?.(String(parsed['message'] ?? 'Noma’lum xato'));
         }
-        // 'meta', 'tool', 'done' — bu klientga kerak emas, jimgina o'tkazib yuboriladi.
+        // 'meta', 'tool', 'done' - bu klientga kerak emas, jimgina o'tkazib yuboriladi.
       } catch {
-        /* buzilgan bo'lak — tashlab ketamiz */
+        /* buzilgan bo'lak - tashlab ketamiz */
       }
     }
   }

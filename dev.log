@@ -25,7 +25,7 @@
 [web]   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.132:[1m5173[22m/[39m  [2mEthernet 2[22m
 [api] [08:08:33] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
 [api] [08:08:33] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
-[api] [08:08:33] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[api] [08:08:33] [32mINFO[39m: [36mBEAP API tayyor - http://0.0.0.0:3001/api[39m
 [api] [08:08:36] [32mINFO[39m: [36mincoming request[39m
 [api]     [35mreqId[39m: "aaicuyaa17"
 [api]     [35mreq[39m: {

@@ -1,8 +1,8 @@
 /**
- * Ma'lumot kiritish paneli — bosh sahifa.
+ * Ma'lumot kiritish paneli - bosh sahifa.
  *
  * TO'LIQLIK MATRITSASI: MFY × domen. Hokim aynan shu panel bilan
- * korxonalarni nazorat qiladi — qaysi mahalla nimani yubormaganini
+ * korxonalarni nazorat qiladi - qaysi mahalla nimani yubormaganini
  * bir qarashda ko'rsatadi.
  */
 import type { CompletenessCell, Domain } from '@beap/shared';
@@ -136,7 +136,7 @@ export default function EntryPage() {
                         <Tooltip delay={300}>
                           <button
                             type="button"
-                            aria-label={`${m.nameUz} — ${DOMAIN_LABEL_UZ[d]}: ${meta.label}`}
+                            aria-label={`${m.nameUz} - ${DOMAIN_LABEL_UZ[d]}: ${meta.label}`}
                             className={cn(
                               'inline-flex size-8 items-center justify-center rounded-lg transition-transform',
                               canOpen ? 'cursor-pointer hover:scale-110' : 'cursor-default',
@@ -169,7 +169,7 @@ export default function EntryPage() {
       {!canWrite && (
         <Chip className="mt-3" size="sm" variant="soft">
           <Chip.Label>
-            Sizda ma’lumot kiritish huquqi yo‘q — faqat kuzatish rejimi
+            Sizda ma’lumot kiritish huquqi yo‘q - faqat kuzatish rejimi
           </Chip.Label>
         </Chip>
       )}

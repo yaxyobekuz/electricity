@@ -1,16 +1,16 @@
 /**
- * Ogohlantirishlar — tizimdagi 5 xil mustaqil manbani BITTA ro'yxatga yig'adi.
+ * Ogohlantirishlar - tizimdagi 6 xil mustaqil manbani BITTA ro'yxatga yig'adi.
  *
- * Bu fayl o'zi HECH QANDAY yangi SQL yozmaydi — faqat mavjud
+ * Bu fayl o'zi HECH QANDAY yangi SQL yozmaydi - faqat mavjud
  * `services/analytics.ts` va `db/queries/*` funksiyalarini chaqiradi va
  * natijalarni bitta umumiy shaklga ("severity/code/messageUz") keltiradi.
  * Sabab oddiy: har bir manba (anomaliya, qoidabuzarlik, muddati o'tgan ish,
  * to'ldirilmagan hisobot, pasport nomuvofiqligi) allaqachon o'z joyida to'g'ri
- * hisoblanadi — bu yerda faqat "buni ogohlantirish deb hisoblaymizmi va qanday
+ * hisoblanadi - bu yerda faqat "buni ogohlantirish deb hisoblaymizmi va qanday
  * darajada" degan qoida qo'shiladi.
  *
  * KIM CHAQIRADI: keyingi bosqichda qo'shiladigan CRON job (har kuni bir marta,
- * `SYSTEM_CONTEXT` bilan — foydalanuvchi sessiyasi yo'q) va AI agentning
+ * `SYSTEM_CONTEXT` bilan - foydalanuvchi sessiyasi yo'q) va AI agentning
  * o'z asbobi (so'ragan foydalanuvchi konteksti bilan). Shuning uchun
  * `AppContext` chaqiruvchidan PARAMETR sifatida keladi, bu yerda
  * qattiq yozilmaydi.
@@ -18,13 +18,13 @@
  * KESHLASH BU YERDA YO'Q: natijani keshlash chaqiruvchining ishi (cron o'z
  * natijasini saqlaydi, AI asbobi esa har safar joriy holatni ko'rishi kerak).
  */
-import { DOMAIN_LABEL_UZ, DOMAINS, type Domain } from '@beap/shared';
+import { DOMAIN_LABEL_UZ, DOMAINS, type Domain, workSchema, type Work } from '@beap/shared';
 
 import { type AppContext, queryOne } from '../db/pool.ts';
 import * as q from '../db/queries/dashboard.ts';
 import * as entry from '../db/queries/entry.ts';
 import * as passport from '../db/queries/passport.ts';
-import { detectAnomalies } from './analytics.ts';
+import { detectAnomalies, detectTpLossAnomalies } from './analytics.ts';
 
 // ─── Natija turlari ─────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ export type AlertSeverity = 'high' | 'medium' | 'low';
 
 export interface AlertItem {
   severity: AlertSeverity;
-  /** Barqaror qoida kodi — UI yoki Telegram xabarida filtr/ikonka uchun. */
+  /** Barqaror qoida kodi - UI yoki Telegram xabarida filtr/ikonka uchun. */
   code: string;
   messageUz: string;
   /** Bosilganda qayerga o'tish kerakligini bildiradi ('tp', 'work', 'day' ...). */
@@ -49,9 +49,9 @@ export interface AlertsReport {
 
 // ─── Yordamchilar ───────────────────────────────────────────────────────────
 
-/** 1048000 → "1 048 000" — Telegram xabarida ham, AI javobida ham bir xil ko'rinsin. */
+/** 1048000 → "1 048 000" - Telegram xabarida ham, AI javobida ham bir xil ko'rinsin. */
 function n(v: number | null | undefined, digits = 1): string {
-  if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+  if (v === null || v === undefined || !Number.isFinite(v)) return '-';
   return v.toLocaleString('en-US', {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
@@ -60,7 +60,7 @@ function n(v: number | null | undefined, digits = 1): string {
 
 const SEVERITY_RANK: Record<AlertSeverity, number> = { high: 0, medium: 1, low: 2 };
 
-/** Ish muddatidan shuncha kun o'tgan bo'lsa — 'medium' emas, 'high'. */
+/** Ish muddatidan shuncha kun o'tgan bo'lsa - 'medium' emas, 'high'. */
 const WORK_OVERDUE_HIGH_DAYS = 30;
 
 // ─── Asosiy funksiya ────────────────────────────────────────────────────────
@@ -74,12 +74,12 @@ export async function computeAlerts(
       period: '',
       generatedAt: new Date().toISOString(),
       items: [],
-      summaryText: 'Tizimda hali ma\'lumot yo\'q — ogohlantirishlarni tekshirib bo\'lmadi.',
+      summaryText: 'Tizimda hali ma\'lumot yo\'q - ogohlantirishlarni tekshirib bo\'lmadi.',
     };
   }
 
   /*
-   * Fider berilmagan bo'lsa — AI yordamchisi (`ai.ts` `buildSnapshot`) bilan
+   * Fider berilmagan bo'lsa - AI yordamchisi (`ai.ts` `buildSnapshot`) bilan
    * AYNAN BIR XIL qoidada yagona faol fiderni olamiz. Hozircha tizimda
    * amalda faqat bitta fider bor; kelajakda ko'payganda ikkala joy ham
    * birga o'zgaradi (izlash oson: bitta so'rov shakli).
@@ -97,18 +97,20 @@ export async function computeAlerts(
     resolvedFeederId = feeder?.id ?? null;
   }
 
-  const [anomalies, violationSummary, plannedWorks, completenessCells, reconcileRows] = await Promise.all([
-    detectAnomalies(ctx, resolvedFeederId, resolvedPeriod),
-    q.violations(ctx, resolvedPeriod, resolvedFeederId),
-    q.works(ctx, resolvedFeederId, 'PLANNED', 100),
-    entry.completeness(ctx, resolvedPeriod),
-    passport.reconcile(ctx, resolvedPeriod),
-  ]);
+  const [anomalies, tpLossReport, violationSummary, plannedWorks, completenessCells, reconcileRows] =
+    await Promise.all([
+      detectAnomalies(ctx, resolvedFeederId, resolvedPeriod),
+      detectTpLossAnomalies(ctx, resolvedFeederId),
+      q.violations(ctx, resolvedPeriod, resolvedFeederId),
+      q.works(ctx, resolvedFeederId, 'PLANNED', 100),
+      entry.completeness(ctx, resolvedPeriod),
+      passport.reconcile(ctx, resolvedPeriod),
+    ]);
 
   const items: AlertItem[] = [];
   const today = new Date().toISOString().slice(0, 10);
 
-  // 1. Statistik anomaliyalar (kunlik yo'qotish + TP holati) — `analytics.ts`.
+  // 1. Statistik anomaliyalar (kunlik yo'qotish + TP holati) - `analytics.ts`.
   for (const a of anomalies.dailyAnomalies) {
     items.push({
       severity: a.severity, code: 'daily_loss_anomaly', messageUz: a.messageUz,
@@ -124,7 +126,15 @@ export async function computeAlerts(
     });
   }
 
-  // 2. Qoidabuzarliklar — jinoiy/ma'muriy holat 'high', iste'molchi aybsiz 'medium'.
+  // 1b. TP balans hisoblagichi anomaliyalari - `analytics.detectTpLossAnomalies`.
+  for (const a of tpLossReport.anomalies) {
+    items.push({
+      severity: a.severity, code: 'tp_daily_loss_anomaly', messageUz: a.messageUz,
+      refType: 'tp', refId: a.tpId,
+    });
+  }
+
+  // 2. Qoidabuzarliklar - jinoiy/ma'muriy holat 'high', iste'molchi aybsiz 'medium'.
   for (const row of violationSummary.rows) {
     if (row.count === 0) continue;
     const severity: AlertSeverity = row.caseType === 'NO_FAULT' ? 'medium' : 'high';
@@ -138,7 +148,7 @@ export async function computeAlerts(
     });
   }
 
-  // 3. Muddati o'tgan rejalashtirilgan ishlar — `planned_end` o'tmishda bo'lsa.
+  // 3. Muddati o'tgan rejalashtirilgan ishlar - `planned_end` o'tmishda bo'lsa.
   for (const w of plannedWorks) {
     if (!w.plannedEnd || w.plannedEnd >= today) continue;
     const overdueDays = Math.floor(
@@ -148,13 +158,13 @@ export async function computeAlerts(
       severity: overdueDays > WORK_OVERDUE_HIGH_DAYS ? 'high' : 'medium',
       code: 'work_overdue',
       messageUz: `"${w.titleUz}" (${w.mfyName}${w.tpCode ? `, ${w.tpCode}` : ''}) ishi `
-        + `muddati ${w.plannedEnd} da tugagan, ${overdueDays} kun kechikmoqda — hali `
+        + `muddati ${w.plannedEnd} da tugagan, ${overdueDays} kun kechikmoqda - hali `
         + `"${w.status}" holatida.`,
       refType: 'work', refId: w.id,
     });
   }
 
-  // 4. Ma'lumot bo'shliqlari — domen bo'yicha guruhlanadi, aks holda 51 MFY x
+  // 4. Ma'lumot bo'shliqlari - domen bo'yicha guruhlanadi, aks holda 51 MFY x
   //    8 domen bo'lganda ro'yxat o'qib bo'lmas darajada uzun bo'lib ketardi.
   const missingByDomain = new Map<Domain, number>();
   for (const cell of completenessCells) {
@@ -174,13 +184,13 @@ export async function computeAlerts(
     });
   }
 
-  // 5. Pasport nomuvofiqligi — MFY yig'indisi tuman pasportiga mos kelmasa.
+  // 5. Pasport nomuvofiqligi - MFY yig'indisi tuman pasportiga mos kelmasa.
   for (const row of reconcileRows) {
     if (row.ok) continue;
     items.push({
       severity: 'medium',
       code: 'passport_mismatch',
-      messageUz: `"${row.labelUz}": MFY lar yig'indisi ${n(row.sumOfMfy)} — tuman `
+      messageUz: `"${row.labelUz}": MFY lar yig'indisi ${n(row.sumOfMfy)} - tuman `
         + `pasportidagi ${n(row.frozenValue)} qiymatdan farq qiladi (Δ ${n(row.diff)}).`,
       refType: 'passport_row', refId: row.no,
     });
@@ -196,11 +206,63 @@ export async function computeAlerts(
   };
 }
 
+// ─── Avtomatik qoralama ish (yuqori darajadagi TP yo'qotish anomaliyasi) ────
+
+const AUTO_DETECT_PREFIX = 'AI aniqladi: ';
+
+/**
+ * Yuqori (`high`) darajadagi TP balans anomaliyalari uchun avtomatik
+ * QORALAMA ish yozadi - foydalanuvchi talabi: "AI o'zi reja yaratsin, odam
+ * tasdiqlasin". Shuning uchun FAQAT `status: PLANNED` - hech narsa avtomatik
+ * boshlanmaydi yoki yopilmaydi; ko'rish/harakat qilish odamda qoladi.
+ *
+ * Sarlavha chatdagi `create_work` oqimidan ('AI tavsiyasi: ' prefiksi)
+ * ATAYLAB farqlanadi ('AI aniqladi: ') - ishlar ro'yxatida qaysi kanaldan
+ * kelgani bir qarashda ko'rinsin.
+ *
+ * IDEMPOTENT: mavjud PLANNED/IN_PROGRESS ish bilan allaqachon qoplangan TP
+ * uchun qayta ish yaratilmaydi - kunlik kron har safar chaqirsa ham.
+ */
+export async function autoDraftHighSeverityTpLossWorks(ctx: AppContext): Promise<number> {
+  const report = await detectTpLossAnomalies(ctx, null);
+  const high = report.anomalies.filter((a) => a.severity === 'high');
+  if (high.length === 0) return 0;
+
+  const [planned, inProgress] = await Promise.all([
+    q.works(ctx, null, 'PLANNED', 500),
+    q.works(ctx, null, 'IN_PROGRESS', 500),
+  ]);
+  const covered = new Set(
+    [...planned, ...inProgress].map((w) => w.tpCode).filter((c): c is string => c !== null),
+  );
+
+  let created = 0;
+  for (const a of high) {
+    if (covered.has(a.code)) continue;
+
+    const candidate = {
+      mfyId: a.mfyId, tpId: a.tpId, workType: 'METER_REPLACEMENT' as const,
+      titleUz: `${AUTO_DETECT_PREFIX}${a.code} balans hisoblagichi anomaliyasi (${a.bizDate})`,
+      description: a.messageUz, status: 'PLANNED' as const,
+      plannedStart: null, plannedEnd: null, actualEnd: null, progressPct: 0,
+      quantity: 0, unit: 'ta', costMln: 0,
+      effectLossPctBefore: null, effectLossPctAfter: null, effectSavingKwhMonth: 0,
+    };
+    const parsed = workSchema.safeParse(candidate);
+    if (!parsed.success) continue;
+
+    await q.createWork(ctx, parsed.data as Work);
+    covered.add(a.code);
+    created += 1;
+  }
+  return created;
+}
+
 // ─── Kunlik cron uchun kesh ─────────────────────────────────────────────────
 
 /*
  * Kunlik push cron (`server.ts`) natijasini shu yerda saqlaydi, `routes/ai.ts`
- * GET `/alerts` esa shundan o'qiydi — har bir HTTP so'rovda qayta
+ * GET `/alerts` esa shundan o'qiydi - har bir HTTP so'rovda qayta
  * hisoblanmasin. Modul darajasidagi oddiy o'zgaruvchi yetarli: bitta
  * jarayon (process), yangi DB jadvali shart emas. `server.ts` dan bu yerga
  * import qilingani uchun `routes/ai.ts` ni `server.ts` ga bog'lab qo'ymaydi
@@ -218,11 +280,11 @@ export function getCachedDigest(): AlertsReport | null {
 
 // ─── Qisqa matn xulosasi ────────────────────────────────────────────────────
 
-/** Ko'rsatiladigan misollar soni — Telegram xabari ekranga sig'ishi kerak. */
+/** Ko'rsatiladigan misollar soni - Telegram xabari ekranga sig'ishi kerak. */
 const SUMMARY_EXAMPLES = 5;
 
 /**
- * Uzbek tilida QISQA xulosa — AI chat javobi VA Telegram push matni sifatida
+ * Uzbek tilida QISQA xulosa - AI chat javobi VA Telegram push matni sifatida
  * ishlatiladi, shuning uchun markdown yo'q, faqat oddiy matn va "·" belgisi
  * (xuddi `ai.ts` dagi `systemPrompt()` qoidasidagi kabi).
  */
@@ -237,9 +299,9 @@ function buildSummary(items: AlertItem[], period: string): string {
 
   const lines: string[] = [`⚠️ ${period}: ${items.length} ta muammo aniqlandi.`];
   const counts = [
-    high > 0 ? `yuqori — ${high} ta` : null,
-    medium > 0 ? `o'rta — ${medium} ta` : null,
-    low > 0 ? `past — ${low} ta` : null,
+    high > 0 ? `yuqori - ${high} ta` : null,
+    medium > 0 ? `o'rta - ${medium} ta` : null,
+    low > 0 ? `past - ${low} ta` : null,
   ].filter((s): s is string => s !== null);
   if (counts.length > 0) lines.push(counts.join(', ') + '.');
 

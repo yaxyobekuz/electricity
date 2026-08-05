@@ -1,12 +1,12 @@
 /**
- * Fayl marshrutlari — ish dalolatnomasi rasmlari.
+ * Fayl marshrutlari - ish dalolatnomasi rasmlari.
  *
  * QOIDALAR:
  *   • Fayl LOKAL diskda (`var/uploads/work/<workId>/`), tashqi saqlagich yo'q.
  *   • Statik papka OCHILMAYDI: har bir yuklab olish shu marshrutdan o'tadi,
  *     ya'ni autentifikatsiya va (kelajakda) huquq tekshiruvi bir joyda.
  *   • Diskdagi nom SERVER tomonidan hosil qilinadi. Foydalanuvchi bergan
- *     nom faqat ko'rsatish uchun saqlanadi — "../../etc/passwd" kabi
+ *     nom faqat ko'rsatish uchun saqlanadi - "../../etc/passwd" kabi
  *     yo'l bilan hujum imkonsiz bo'lsin.
  */
 import { createReadStream } from 'node:fs';
@@ -26,7 +26,7 @@ const uploadQ = z.object({
   caption: z.string().max(300).optional(),
 });
 
-/** Ruxsat etilgan turlar — bajariladigan fayl yuklanmasligi uchun oq ro'yxat. */
+/** Ruxsat etilgan turlar - bajariladigan fayl yuklanmasligi uchun oq ro'yxat. */
 const MIME_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -59,12 +59,12 @@ const filesRoutes: FastifyPluginAsync = async (app) => {
 
     return reply
       .header('Content-Type', row.mime)
-      // Rasm o'zgarmaydi (nomi uuid) — brauzer bir marta yuklab, keshda saqlaydi.
+      // Rasm o'zgarmaydi (nomi uuid) - brauzer bir marta yuklab, keshda saqlaydi.
       .header('Cache-Control', 'private, max-age=86400')
       .send(createReadStream(path));
   });
 
-  /** Rasm yuklash — faqat ma'lumot kirituvchi rollar. */
+  /** Rasm yuklash - faqat ma'lumot kirituvchi rollar. */
   app.post(
     '/work-photo/:id',
     { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },
@@ -98,10 +98,10 @@ const filesRoutes: FastifyPluginAsync = async (app) => {
       await writeFile(join(dir, fileName), buf);
 
       /*
-       * Yozish `withTransaction` orqali: `query`/`queryOne` — `BEGIN READ ONLY`,
+       * Yozish `withTransaction` orqali: `query`/`queryOne` - `BEGIN READ ONLY`,
        * ular ichida INSERT ishlamaydi.
        *
-       * Yozuv qo'shilmasa fayl DISKDA QOLIB KETMASIN — bunday "yetim" fayllar
+       * Yozuv qo'shilmasa fayl DISKDA QOLIB KETMASIN - bunday "yetim" fayllar
        * zaxira nusxani shishiradi va hech qachon ko'rinmaydi.
        */
       let savedId: number;
@@ -129,7 +129,7 @@ const filesRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  /** Rasmni o'chirish — yozuv ham, fayl ham. */
+  /** Rasmni o'chirish - yozuv ham, fayl ham. */
   app.delete(
     '/work-photo/:id',
     { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },

@@ -1,4 +1,4 @@
-/** Muhit sozlamalari — bitta joyda o'qiladi va tekshiriladi. */
+/** Muhit sozlamalari - bitta joyda o'qiladi va tekshiriladi. */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +8,7 @@ export const API_ROOT = resolve(here, '..');
 export const REPO_ROOT = resolve(API_ROOT, '../..');
 
 /**
- * Oddiy .env yuklagich — tashqi bog'liqliksiz.
+ * Oddiy .env yuklagich - tashqi bog'liqliksiz.
  * `dotenv` qo'shishning hojati yo'q: bizga faqat KEY=VALUE kerak.
  */
 function loadEnvFile(path: string): void {
@@ -36,7 +36,7 @@ function loadEnvFile(path: string): void {
 }
 
 loadEnvFile(resolve(REPO_ROOT, '.env'));
-loadEnvFile(resolve(REPO_ROOT, '.env.example')); // zaxira — dev uchun
+loadEnvFile(resolve(REPO_ROOT, '.env.example')); // zaxira - dev uchun
 
 const str = (key: string, fallback?: string): string => {
   const v = process.env[key] ?? fallback;
@@ -79,7 +79,7 @@ export const config = {
   },
 
   /*
-   * AI yordamchi — YAGONA tashqi xizmat.
+   * AI yordamchi - YAGONA tashqi xizmat.
    *
    * Kalit berilmasa (`OPENAI_API_KEY` bo'sh) modul BUTUNLAY o'chadi va tizim
    * avvalgidek to'liq offline ishlaydi. Kalit qo'yilgan taqdirdagina server
@@ -90,15 +90,15 @@ export const config = {
     apiKey: str('OPENAI_API_KEY', ''),
     model: str('OPENAI_MODEL', 'gpt-4o-mini'),
     baseUrl: str('OPENAI_BASE_URL', 'https://api.openai.com/v1').replace(/\/+$/, ''),
-    /** Javob uzunligi chegarasi — uzun esse emas, qisqa yordam kerak. */
+    /** Javob uzunligi chegarasi - uzun esse emas, qisqa yordam kerak. */
     maxTokens: int('OPENAI_MAX_TOKENS', 1200),
     timeoutMs: int('OPENAI_TIMEOUT_MS', 60_000),
   },
 
   /*
-   * Telegram — kunlik ogohlantirish push'i uchun (server.ts dagi cron).
+   * Telegram - kunlik ogohlantirish push'i uchun (server.ts dagi cron).
    *
-   * Token bo'sh bo'lsa xususiyat BUTUNLAY o'chgan holatda qoladi — cron
+   * Token bo'sh bo'lsa xususiyat BUTUNLAY o'chgan holatda qoladi - cron
    * ogohlantirishlarni hisoblab kesh'da saqlaydi, lekin Telegram'ga
    * yubormaydi. Bu YAGONA bot/ ish maydonidagi mustaqil Telegram botdan
    * ALOHIDA: o'sha bot o'z env o'zgaruvchilarini o'zi to'g'ridan-to'g'ri
@@ -116,7 +116,7 @@ export const config = {
     assets: resolve(API_ROOT, 'assets'),
     artifacts: resolve(REPO_ROOT, 'artifacts'),
     webDist: resolve(REPO_ROOT, 'apps/web/dist'),
-    /* Yuklangan fayllar — LOKAL diskda; tashqi saqlagich yo'q (offline talabi). */
+    /* Yuklangan fayllar - LOKAL diskda; tashqi saqlagich yo'q (offline talabi). */
     uploads: resolve(REPO_ROOT, 'var/uploads'),
   },
 } as const;

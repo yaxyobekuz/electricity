@@ -1,11 +1,11 @@
 /**
  * Faylni DASTURIY ravishda yuklab olish.
  *
- * Panelning eski tugmalari `window.location.href` bilan ishlaydi — bu oddiy
+ * Panelning eski tugmalari `window.location.href` bilan ishlaydi - bu oddiy
  * havola bosish bilan bir xil va odatiy holatda yetarli. AI agent uchun esa
  * yaramaydi: sahifadan chiqib ketiladi, SPA qayta yuklanadi va chat oynasi
  * yopiladi. Shu sababli fayl `fetch` bilan olinadi va yashirin havola orqali
- * saqlanadi — sahifa joyida qoladi.
+ * saqlanadi - sahifa joyida qoladi.
  *
  * Naqsh `components/ui/AuthImage.tsx` dan: blob → object URL → tozalash.
  */
@@ -15,13 +15,13 @@ import { apiFetchRaw } from './api.ts';
 function fileNameFrom(header: string | null, fallback: string): string {
   if (!header) return fallback;
 
-  // RFC 5987: `filename*=UTF-8''...` — kirill/lotin nomlar shu yerda.
+  // RFC 5987: `filename*=UTF-8''...` - kirill/lotin nomlar shu yerda.
   const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header);
   if (utf8?.[1]) {
     try {
       return decodeURIComponent(utf8[1]);
     } catch {
-      /* buzuq kodlash — oddiy nomga tushamiz */
+      /* buzuq kodlash - oddiy nomga tushamiz */
     }
   }
 
@@ -33,7 +33,7 @@ function fileNameFrom(header: string | null, fallback: string): string {
  * API dan faylni olib, foydalanuvchining kompyuteriga saqlaydi.
  *
  * @param path  API yo'li, masalan `/report/period/monthly.xlsx?period=2026-07`
- * @returns saqlangan fayl nomi — chatda "shu fayl yuklandi" deb ko'rsatish uchun
+ * @returns saqlangan fayl nomi - chatda "shu fayl yuklandi" deb ko'rsatish uchun
  */
 export async function downloadFile(path: string, fallbackName = 'hisobot'): Promise<string> {
   const res = await apiFetchRaw(path);

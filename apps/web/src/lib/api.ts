@@ -6,10 +6,10 @@
  *   • `http://192.168.1.132:3001/api` → to'g'ridan-to'g'ri API serveriga.
  *
  * Absolyut manzil berilganda ham sahifa QAYSI hostdan ochilgan bo'lsa, so'rov
- * o'sha hostga yuboriladi — faqat port va yo'l `.env` dan olinadi. Sabab:
+ * o'sha hostga yuboriladi - faqat port va yo'l `.env` dan olinadi. Sabab:
  * LAN IP o'zgarishi mumkin, hamda `localhost:5173` dan ochilganda so'rov
  * `localhost:3001` ga ketsa, refresh cookie (SameSite=Strict) yo'qolmaydi.
- * Tashqi tarmoq YO'Q — hammasi shu kompyuter/LAN ichida.
+ * Tashqi tarmoq YO'Q - hammasi shu kompyuter/LAN ichida.
  */
 import type { ApiError } from '@beap/shared';
 
@@ -17,14 +17,14 @@ import type { ApiError } from '@beap/shared';
 function resolveBase(): string {
   const configured = String(import.meta.env.VITE_API_BASE ?? '').trim();
 
-  // Berilmagan yoki nisbiy — o'zgarishsiz ishlatamiz (Vite proksi yo'li).
+  // Berilmagan yoki nisbiy - o'zgarishsiz ishlatamiz (Vite proksi yo'li).
   if (!configured || configured.startsWith('/')) {
     return (configured || '/api').replace(/\/+$/, '');
   }
 
   try {
     const url = new URL(configured);
-    // Brauzerda — hostni joriy sahifadan olamiz, port/yo'l sozlamadan qoladi.
+    // Brauzerda - hostni joriy sahifadan olamiz, port/yo'l sozlamadan qoladi.
     if (typeof window !== 'undefined' && window.location.hostname) {
       url.hostname = window.location.hostname;
       url.protocol = window.location.protocol;
@@ -38,7 +38,7 @@ function resolveBase(): string {
 
 const BASE = resolveBase();
 
-/** To'liq API manzilini quradi — `api.ts` tashqarisidagi `fetch` lar uchun. */
+/** To'liq API manzilini quradi - `api.ts` tashqarisidagi `fetch` lar uchun. */
 export function apiUrl(path: string): string {
   return `${BASE}${path}`;
 }
@@ -59,7 +59,7 @@ export function setUnauthorizedHandler(fn: (() => void) | null): void {
 export class ApiRequestError extends Error {
   readonly status: number;
   readonly code: string;
-  /** Maydonga bog'langan xatolar — HeroUI `<Form validationErrors>` uchun. */
+  /** Maydonga bog'langan xatolar - HeroUI `<Form validationErrors>` uchun. */
   readonly fieldErrors: Record<string, string>;
   readonly requestId: string | undefined;
 
@@ -88,7 +88,7 @@ async function refreshAccessToken(): Promise<boolean> {
     try {
       const res = await fetch(`${BASE}/auth/refresh`, {
         method: 'POST',
-        // API boshqa portda bo'lishi mumkin — cookie baribir yuborilsin.
+        // API boshqa portda bo'lishi mumkin - cookie baribir yuborilsin.
         credentials: 'include',
       });
       if (!res.ok) return false;
@@ -126,7 +126,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   let res = await doFetch();
 
-  // Access token muddati tugagan bo'lsa — bir marta yangilab ko'ramiz.
+  // Access token muddati tugagan bo'lsa - bir marta yangilab ko'ramiz.
   if (res.status === 401 && !skipRefresh) {
     const ok = await refreshAccessToken();
     if (ok) {
@@ -152,7 +152,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 }
 
 /**
- * Fayl yuborish / olish — JSON emas.
+ * Fayl yuborish / olish - JSON emas.
  *
  * `apiFetch` tanani JSON qilib o'raydi, `FormData` va rasm oqimi esa xom
  * holida ketishi kerak. Token va `credentials` bir xil qoidada qoladi.
@@ -162,7 +162,7 @@ export async function apiFetchRaw(
   options: {
     method?: string;
     body?: BodyInit;
-    /** Qo'shimcha sarlavhalar — SSE oqimi uchun `Accept`, JSON tana uchun `Content-Type`. */
+    /** Qo'shimcha sarlavhalar - SSE oqimi uchun `Accept`, JSON tana uchun `Content-Type`. */
     headers?: Record<string, string>;
     signal?: AbortSignal;
   } = {},
@@ -186,7 +186,7 @@ export async function apiFetchRaw(
   }
 
   if (!res.ok) {
-    // Server sababni JSON da aytgan bo'lsa — o'shani ko'rsatamiz, "xato 503" emas.
+    // Server sababni JSON da aytgan bo'lsa - o'shani ko'rsatamiz, "xato 503" emas.
     let payload: Partial<ApiError> = {};
     try {
       payload = (await res.json()) as Partial<ApiError>;
@@ -208,7 +208,7 @@ export const api = {
   delete: <T>(path: string): Promise<T> => apiFetch<T>(path, { method: 'DELETE' }),
 };
 
-/** So'rov parametrlarini qurish — `undefined` qiymatlar tushib qoladi. */
+/** So'rov parametrlarini qurish - `undefined` qiymatlar tushib qoladi. */
 export function qs(params: Record<string, string | number | undefined | null>): string {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {

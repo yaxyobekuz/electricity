@@ -3,16 +3,16 @@
 --
 -- Mijoz har kuni to'ldiradigan Excel varag'ining AYNAN o'zi: 17 ta ko'rsatkich,
 -- bitta mahalla, bitta kun. Fayl yuklansa ham, panelda qo'lda tahrirlansa ham
--- ma'lumot shu jadvalga tushadi — ya'ni "manba nusxasi" bir joyda turadi.
+-- ma'lumot shu jadvalga tushadi - ya'ni "manba nusxasi" bir joyda turadi.
 --
 -- NEGA ALOHIDA JADVAL, tayyor `fact.*` jadvallariga to'g'ridan-to'g'ri emas:
---   • forma tuzilishi mijozniki — u o'zgarsa, tahlil jadvallari buzilmasin;
+--   • forma tuzilishi mijozniki - u o'zgarsa, tahlil jadvallari buzilmasin;
 --   • ba'zi ustunlar (o'rtacha hisob, texnik quvvat) hech qayerga tushmaydi,
 --     lekin kiritilgan holicha saqlanishi kerak;
---   • "kim, qachon, qaysi fayldan" — audit izi shu yerda.
+--   • "kim, qachon, qaysi fayldan" - audit izi shu yerda.
 --
 -- BIR KUN = BIR QATOR: `(mfy_id, biz_date)` yagona. Qayta yuklansa, oxirgi
--- fayl ustiga yoziladi — mijozning talabi shu.
+-- fayl ustiga yoziladi - mijozning talabi shu.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 CREATE TABLE fact.daily_form (
@@ -31,7 +31,7 @@ CREATE TABLE fact.daily_form (
   avg_consumption   numeric(12,2) NOT NULL DEFAULT 0 CHECK (avg_consumption >= 0),
   avg_bill          numeric(12,2) NOT NULL DEFAULT 0 CHECK (avg_bill        >= 0),
 
-  -- Energiya — MING kWh (fayldagi birlik)
+  -- Energiya - MING kWh (fayldagi birlik)
   total_in_mwh      numeric(12,2) NOT NULL DEFAULT 0 CHECK (total_in_mwh      >= 0),
   sold_mwh          numeric(12,2) NOT NULL DEFAULT 0 CHECK (sold_mwh          >= 0),
   total_loss_mwh    numeric(12,2) NOT NULL DEFAULT 0 CHECK (total_loss_mwh    >= 0),
@@ -78,4 +78,4 @@ CREATE POLICY daily_form_delete ON fact.daily_form FOR DELETE TO beap_app
   USING (sec.can_write_mfy(mfy_id));
 
 COMMENT ON TABLE fact.daily_form IS
-  'Mijozning kunlik Excel formasi — bir mahalla, bir kun, 17 ko''rsatkich';
+  'Mijozning kunlik Excel formasi - bir mahalla, bir kun, 17 ko''rsatkich';

@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0005_reference_data.sql — o'zgarmas spravochnik ma'lumotlari
+-- 0005_reference_data.sql - o'zgarmas spravochnik ma'lumotlari
 --
--- MFY / TP / tarmoq segmentlari bu yerda EMAS — ular `seed/mfy.seed.json`
+-- MFY / TP / tarmoq segmentlari bu yerda EMAS - ular `seed/mfy.seed.json`
 -- dan yuklanadi, chunki mijoz haqiqiy ro'yxatni tasdiqlagach faqat o'sha
 -- fayl o'zgarishi kerak.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -25,8 +25,8 @@ ON CONFLICT (code) DO NOTHING;
 -- `effective_from` bilan versiya qo'shiladi (eskisi tarixda qoladi).
 
 INSERT INTO ref.norm (scope_type, scope_id, metric, value_num, unit, effective_from, source_doc) VALUES
-  ('TUMAN', NULL, 'NATURAL_LOSS_PCT',        4.200, '%',  '2024-01-01', 'Mockup / soha amaliyoti — rasmiy hujjat kutilmoqda'),
-  ('TUMAN', NULL, 'TECHNICAL_LOSS_PCT',      3.200, '%',  '2024-01-01', 'Mockup / soha amaliyoti — rasmiy hujjat kutilmoqda'),
+  ('TUMAN', NULL, 'NATURAL_LOSS_PCT',        4.200, '%',  '2024-01-01', 'Mockup / soha amaliyoti - rasmiy hujjat kutilmoqda'),
+  ('TUMAN', NULL, 'TECHNICAL_LOSS_PCT',      3.200, '%',  '2024-01-01', 'Mockup / soha amaliyoti - rasmiy hujjat kutilmoqda'),
   ('TUMAN', NULL, 'TOTAL_LOSS_TARGET_PCT',   8.000, '%',  '2024-01-01', 'Tuman maqsadli ko''rsatkichi'),
   ('TUMAN', NULL, 'TP_MAX_DISTANCE_M',     300.000, 'm',  '2024-01-01', 'TP → iste''molchi standart masofasi'),
   ('TUMAN', NULL, 'TP_OPTIMAL_LOAD_PCT_MIN', 40.000, '%', '2024-01-01', 'TP samarali yuklama oralig''i'),

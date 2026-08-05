@@ -1,5 +1,5 @@
 /**
- * Energiya balansi — Sankey diagrammasi.
+ * Energiya balansi - Sankey diagrammasi.
  *
  * RANG QARORI: bu KATEGORIK emas, STATUS diagrammasi. Shu sababli
  * kategorik palitra o'rniga ma'noli ranglar ishlatiladi:

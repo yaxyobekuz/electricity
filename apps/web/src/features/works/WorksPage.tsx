@@ -1,4 +1,4 @@
-/** Ishlar sahifasi — reja va bajarilgan, natijasi bilan. */
+/** Ishlar sahifasi - reja va bajarilgan, natijasi bilan. */
 import { Tabs } from '@heroui/react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,13 +1,13 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0006_plausibility_fix.sql — qarzdorlik ishonchliligi tekshiruvini qayta yozish
+-- 0006_plausibility_fix.sql - qarzdorlik ishonchliligi tekshiruvini qayta yozish
 --
 -- MUAMMO (0002 dagi dastlabki variant):
 --   Tekshiruv "shu oydagi boshqa MFY lar yig'indisi" ga tayangan edi. Lekin
---   konvertlar birin-ketin tasdiqlanadi — oyning BIRINCHI tasdiqlangan MFY si
+--   konvertlar birin-ketin tasdiqlanadi - oyning BIRINCHI tasdiqlangan MFY si
 --   har doim "jamining 100%" bo'lib ko'rinadi va noto'g'ri bloklanadi.
 --   Bu seed paytida ham, haqiqiy ishlatishda ham yuzaga chiqadi.
 --
--- YECHIM: tartibga bog'liq bo'lmagan mezon — BIR ISTE'MOLCHIGA to'g'ri
+-- YECHIM: tartibga bog'liq bo'lmagan mezon - BIR ISTE'MOLCHIGA to'g'ri
 --   keladigan qarzdorlikni tuman o'rtachasi bilan solishtirish.
 --
 --   Go'ravon hodisasi: tuman qarzdorligi (4,265.6 mln) 829 iste'molchili MFY
@@ -26,7 +26,7 @@ DECLARE
   v_sample_mfys    int;
   v_ratio          numeric;
 BEGIN
-  -- Generated ustunlar BEFORE triggerda hali hisoblanmagan — qo'lda yig'amiz.
+  -- Generated ustunlar BEFORE triggerda hali hisoblanmagan - qo'lda yig'amiz.
   v_mine_debt      := NEW.debt_population_mln + NEW.debt_legal_mln + NEW.debt_budget_mln;
   v_mine_consumers := NEW.consumers_population + NEW.consumers_legal;
 
@@ -47,7 +47,7 @@ BEGIN
     AND r.period_month >  NEW.period_month - INTERVAL '12 months'
     AND r.period_month <= NEW.period_month;
 
-  -- Taqqoslash uchun yetarli baza yo'q (tizimning birinchi oylari) — o'tkazamiz.
+  -- Taqqoslash uchun yetarli baza yo'q (tizimning birinchi oylari) - o'tkazamiz.
   IF v_avg_per_cons IS NULL OR v_avg_per_cons <= 0 OR coalesce(v_sample_mfys, 0) < 3 THEN
     RETURN NEW;
   END IF;
@@ -56,7 +56,7 @@ BEGIN
 
   IF v_ratio > 8.0 THEN
     RAISE EXCEPTION
-      'IMPLAUSIBLE_DEBT: bir iste''molchiga % mln so''m qarzdorlik — tuman o''rtachasidan % barobar ko''p',
+      'IMPLAUSIBLE_DEBT: bir iste''molchiga % mln so''m qarzdorlik - tuman o''rtachasidan % barobar ko''p',
       round(v_mine_per_cons, 3), round(v_ratio, 1)
       USING ERRCODE = 'check_violation',
             HINT = 'district_paste_suspected',

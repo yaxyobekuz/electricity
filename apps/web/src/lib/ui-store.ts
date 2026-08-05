@@ -1,5 +1,5 @@
 /**
- * UI holati — FAQAT uchta narsa uchun.
+ * UI holati - FAQAT uchta narsa uchun.
  * Server shaklidagi ma'lumot bu yerga tushmaydi (u TanStack Query da).
  */
 import type { AuthUser } from '@beap/shared';
@@ -23,13 +23,13 @@ interface UiState {
   sidebarOpen: boolean;
   user: AuthUser | null;
   script: 'latn' | 'cyrl';
-  /** AI yordamchi paneli ochiqmi — boshqa joylardan (masalan tavsiya kartasi) ham ochilishi kerak. */
+  /** AI yordamchi paneli ochiqmi - boshqa joylardan (masalan tavsiya kartasi) ham ochilishi kerak. */
   aiOpen: boolean;
   /**
-   * AI panelga TASHQARIDAN yuborilishi kerak bo'lgan savol — masalan
+   * AI panelga TASHQARIDAN yuborilishi kerak bo'lgan savol - masalan
    * "Rejalashtirilgan ishlar" panelidagi "AI tavsiya" tugmasidan. `null` =
    * navbatda hech narsa yo'q. `AiAssistant` buni o'qib darhol yuboradi va
-   * tozalaydi — shu bilan bir xil savol ikki marta yuborilmaydi.
+   * tozalaydi - shu bilan bir xil savol ikki marta yuborilmaydi.
    */
   aiPendingPrompt: string | null;
 
@@ -59,7 +59,7 @@ function readTheme(): ThemeName {
   return 'gov';
 }
 
-/** Temani `<html>` ga qo'llaydi — HeroUI ham class'ni, ham data-theme ni o'qiydi. */
+/** Temani `<html>` ga qo'llaydi - HeroUI ham class'ni, ham data-theme ni o'qiydi. */
 export function applyTheme(theme: ThemeName): void {
   const root = document.documentElement;
   root.setAttribute('data-theme', theme);
@@ -96,7 +96,7 @@ export const useUi = create<UiState>((set, get) => ({
    */
   setPeriod: (period) => set({ period, asOfDate: null }),
 
-  /** Sana tanlansa davr ham o'sha oyga ko'chadi — ikkalasi doim mos. */
+  /** Sana tanlansa davr ham o'sha oyga ko'chadi - ikkalasi doim mos. */
   setAsOfDate: (asOfDate) =>
     set(asOfDate === null ? { asOfDate: null } : { asOfDate, period: asOfDate.slice(0, 7) }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),

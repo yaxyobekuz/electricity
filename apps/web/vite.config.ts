@@ -4,11 +4,11 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 
-/** Repozitoriy ildizi — `.env` bitta joyda turadi (API bilan umumiy). */
+/** Repozitoriy ildizi - `.env` bitta joyda turadi (API bilan umumiy). */
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 export default defineConfig(({ mode }) => {
-  // Prefikssiz o'zgaruvchilar ham kerak (WEB_PORT, API_PORT) — 3-argument ''.
+  // Prefikssiz o'zgaruvchilar ham kerak (WEB_PORT, API_PORT) - 3-argument ''.
   const env = loadEnv(mode, REPO_ROOT, '');
 
   const webHost = env.WEB_HOST || '0.0.0.0';
@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
-    // `.env` API bilan umumiy — ildizdan o'qiladi, `VITE_*` shu yerdan keladi.
+    // `.env` API bilan umumiy - ildizdan o'qiladi, `VITE_*` shu yerdan keladi.
     envDir: REPO_ROOT,
     resolve: {
       alias: {
@@ -28,12 +28,12 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      // 0.0.0.0 — LAN dagi boshqa qurilmalar http://<IP>:5173 orqali kiradi.
+      // 0.0.0.0 - LAN dagi boshqa qurilmalar http://<IP>:5173 orqali kiradi.
       host: webHost,
       port: webPort,
       strictPort: true,
       // `VITE_API_BASE` bo'sh bo'lsa frontend nisbiy `/api` ni ishlatadi va
-      // so'rov shu proksi orqali API ga uzatiladi — bir xil origin saqlanadi.
+      // so'rov shu proksi orqali API ga uzatiladi - bir xil origin saqlanadi.
       proxy: {
         '/api': { target: `http://127.0.0.1:${apiPort}`, changeOrigin: false },
       },
@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'es2022',
-      // Barcha aktivlar lokal — CDN yo'q, tashqi so'rov yo'q.
+      // Barcha aktivlar lokal - CDN yo'q, tashqi so'rov yo'q.
       assetsInlineLimit: 4096,
       chunkSizeWarningLimit: 900,
       rollupOptions: {

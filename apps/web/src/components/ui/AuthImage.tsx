@@ -2,7 +2,7 @@
  * Himoyalangan rasm.
  *
  * Rasm marshruti autentifikatsiya talab qiladi, token esa `Authorization`
- * sarlavhasida yuriladi — oddiy `<img src>` unga tokenni qo'sha olmaydi va
+ * sarlavhasida yuriladi - oddiy `<img src>` unga tokenni qo'sha olmaydi va
  * 401 qaytadi. Shuning uchun rasm `fetch` bilan olinadi va `blob:` manzil
  * sifatida beriladi. Manzil komponent yopilganda BEKOR QILINADI, aks holda
  * har ochilishda xotira o'sib boradi.

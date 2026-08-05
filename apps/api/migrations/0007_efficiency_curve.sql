@@ -1,9 +1,9 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0007_efficiency_curve.sql — samaradorlik indeksining yo'qotish komponentini
+-- 0007_efficiency_curve.sql - samaradorlik indeksining yo'qotish komponentini
 -- keskinlashtirish
 --
 -- MUAMMO: dastlabki egri chiziq maqsadning 3 barobarida 0 ball berardi.
--- Natijada 13.5% yo'qotishli MFY 66 ball olardi — dashboard muammoni
+-- Natijada 13.5% yo'qotishli MFY 66 ball olardi - dashboard muammoni
 -- ko'rsatmasdi.
 --
 -- YECHIM: maqsad darajasida 100 ball, maqsadning 2 BAROBARIDA 0 ball.

@@ -1,16 +1,16 @@
 /**
- * BEAP Telegram bot — kirish nuqtasi.
+ * BEAP Telegram bot - kirish nuqtasi.
  *
  * ALOHIDA JARAYON: `apps/api`/`apps/web` bilan bir xil repoda yashaydi, lekin
  * Postgres'ga to'g'ridan-to'g'ri ulanmaydi va `apps/api/src` dan hech narsa
- * import qilmaydi. Bu — mavjud, ishlab turgan `POST /api/ai/chat` (SSE)
+ * import qilmaydi. Bu - mavjud, ishlab turgan `POST /api/ai/chat` (SSE)
  * oqimining yupqa klienti, xuddi `apps/web/src/lib/ai.ts`dagi
  * `streamAiChat()` brauzer uchun qiladigan ishni Telegram uchun qiladi
  * (`chat.ts`). Bitta "miya" (OpenAI + asboblar, `apps/api/src/services/ai.ts`)
- * ikkala kanalga — veb va Telegram — xizmat qiladi.
+ * ikkala kanalga - veb va Telegram - xizmat qiladi.
  *
  * UZUN SO'ROV (long polling): `bot.start()` faqat TASHQARIGA ulanadi (Telegram
- * serverlariga), hech qanday port tinglamaydi — tizimning "faqat chiquvchi
+ * serverlariga), hech qanday port tinglamaydi - tizimning "faqat chiquvchi
  * so'rov" tarmoq modeliga mos (`apps/api/src/services/ai.ts`dagi OpenAI
  * chaqiruvi kabi, `config.ts` da izohlangan).
  */
@@ -23,7 +23,7 @@ import { env } from './env.ts';
 import { toTelegramHtml } from './format.ts';
 
 // `OPENAI_API_KEY` bo'shligida `aiEnabled()` qanday o'chsa (`services/ai.ts`),
-// bot ham token yo'qligida shunday — xatosiz, `exit(0)` bilan.
+// bot ham token yo'qligida shunday - xatosiz, `exit(0)` bilan.
 if (!env.botToken) {
   console.log(
     'Telegram bot o‘chirilgan: TELEGRAM_BOT_TOKEN berilmagan (.env faylini tekshiring).',
@@ -33,13 +33,13 @@ if (!env.botToken) {
 
 const HISTORY_LIMIT = 24; // apps/api/src/routes/ai.ts dagi zod sxemasi bilan bir xil chegara
 const EDIT_DEBOUNCE_MS = 800;
-// Telegram xabar chegarasi 4096 — ozgina zaxira bilan kesamiz.
+// Telegram xabar chegarasi 4096 - ozgina zaxira bilan kesamiz.
 const MAX_MESSAGE_LEN = 4000;
 // CONTRACT 2: 'chart' action'ining payload.url'i shu prefiks bilan boshlansa,
-// bu API-nisbiy yo'l emas — inline PNG (base64), HTTP fetch shart emas.
+// bu API-nisbiy yo'l emas - inline PNG (base64), HTTP fetch shart emas.
 const DATA_URI_PNG_PREFIX = 'data:image/png;base64,';
 
-/** Har bir Telegram chat uchun suhbat tarixi — jarayon xotirasida, DB YO'Q. */
+/** Har bir Telegram chat uchun suhbat tarixi - jarayon xotirasida, DB YO'Q. */
 const histories = new Map<number, ChatMessage[]>();
 
 function pushHistory(chatId: number, message: ChatMessage): void {
@@ -50,7 +50,7 @@ function pushHistory(chatId: number, message: ChatMessage): void {
 
 const bot = new Bot(env.botToken);
 
-// Bitta yomon yangilanish butun botni yiqitmasin — grammy shu funksiyaga yo'naltiradi.
+// Bitta yomon yangilanish butun botni yiqitmasin - grammy shu funksiyaga yo'naltiradi.
 bot.catch((err) => {
   console.error('Bot xatosi:', err.error instanceof Error ? err.error.message : err.error);
 });
@@ -71,7 +71,7 @@ bot.command('start', async (ctx) => {
  * bo'lak-bo'lak tahrirlash → yakuniy javobni tarixga qo'shish.
  *
  * `bot.on('message:text', ...)` va `bot.on('message:voice', ...)` (pastda)
- * shu funksiyani chaqiradi — mantiq bitta joyda, ikki kirish nuqtasi.
+ * shu funksiyani chaqiradi - mantiq bitta joyda, ikki kirish nuqtasi.
  */
 async function respondToText(ctx: Context, chatId: number, text: string): Promise<void> {
   pushHistory(chatId, { role: 'user', content: text });
@@ -88,13 +88,13 @@ async function respondToText(ctx: Context, chatId: number, text: string): Promis
         chatId, placeholder.message_id, toTelegramHtml(clipped), { parse_mode: 'HTML' },
       );
     } catch {
-      // "message is not modified" yoki tarmoq xatosi — oqimni to'xtatmaymiz,
+      // "message is not modified" yoki tarmoq xatosi - oqimni to'xtatmaymiz,
       // keyingi bo'lak yoki yakuniy tahrir baribir yetib boradi.
     }
   };
 
   const handleAction = (action: ChatAction): void => {
-    // navigate/set_period/set_as_of_date — brauzersiz ma'nosiz, e'tiborsiz qoldiriladi.
+    // navigate/set_period/set_as_of_date - brauzersiz ma'nosiz, e'tiborsiz qoldiriladi.
     if (action.type === 'download') {
       const url = typeof action.payload['url'] === 'string' ? action.payload['url'] : null;
       if (!url) return;
@@ -110,9 +110,9 @@ async function respondToText(ctx: Context, chatId: number, text: string): Promis
       if (!url) return;
 
       // CONTRACT 2: payload.url endi yoki API-nisbiy yo'l (4 ta doimiy
-      // diagramma turi — ilgarigidek `sendChartPhoto` bilan fetch qilinadi),
+      // diagramma turi - ilgarigidek `sendChartPhoto` bilan fetch qilinadi),
       // yoki inline 'data:image/png;base64,...' rasm ('render_table'/
-      // 'render_custom_chart' asboblari qaytargan) — bu holda HTTP so'rov
+      // 'render_custom_chart' asboblari qaytargan) - bu holda HTTP so'rov
       // shart emas, baytlar to'g'ridan-to'g'ri shu yerda dekodlanadi.
       if (url.startsWith(DATA_URI_PNG_PREFIX)) {
         const buf = Buffer.from(url.slice(DATA_URI_PNG_PREFIX.length), 'base64');
@@ -191,7 +191,7 @@ bot.on('message:voice', async (ctx) => {
     try {
       await ctx.api.editMessageText(chatId, placeholder.message_id, 'Ovozli xabarni tushunib bo‘lmadi.');
     } catch {
-      // Tahrirlab bo'lmasa ham indamaymiz — foydalanuvchi joy egallovchini ko'radi.
+      // Tahrirlab bo'lmasa ham indamaymiz - foydalanuvchi joy egallovchini ko'radi.
     }
     return;
   }
@@ -201,7 +201,7 @@ bot.on('message:voice', async (ctx) => {
       chatId, placeholder.message_id, toTelegramHtml(`🎤 "${transcribed}"`), { parse_mode: 'HTML' },
     );
   } catch {
-    // "message is not modified" yoki tarmoq xatosi — javob baribir davom etadi.
+    // "message is not modified" yoki tarmoq xatosi - javob baribir davom etadi.
   }
 
   await respondToText(ctx, chatId, transcribed);

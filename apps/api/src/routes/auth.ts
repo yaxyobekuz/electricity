@@ -7,7 +7,7 @@ import {
 } from '../plugins/auth.ts';
 
 const authRoutes: FastifyPluginAsync = async (app) => {
-  /** Parol tanlashga urinishlarni cheklaymiz — daqiqasiga 20 ta. */
+  /** Parol tanlashga urinishlarni cheklaymiz - daqiqasiga 20 ta. */
   const loginRateLimit = {
     config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
   };

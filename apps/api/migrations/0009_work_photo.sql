@@ -2,7 +2,7 @@
 -- ISH DALOLATNOMASI UCHUN RASMLAR
 --
 -- "Ish bajarildi" degan yozuvning o'zi dalil emas. Hokim yoki tekshiruvchi
--- "qayerda, qanday qilingan?" deb so'raganda javob RASM bo'ladi — shuning
+-- "qayerda, qanday qilingan?" deb so'raganda javob RASM bo'ladi - shuning
 -- uchun har bir ishga bir nechta surat biriktiriladi.
 --
 -- Fayl DISKDA saqlanadi (`var/uploads/work/<id>/<uuid>.<ext>`), bazada faqat
@@ -13,7 +13,7 @@
 CREATE TABLE fact.work_photo (
   id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   work_id       bigint NOT NULL REFERENCES fact.work ON DELETE CASCADE,
-  -- Diskdagi nom — tashqaridan kelgan nomga ISHONILMAYDI (yo'l bilan hujum).
+  -- Diskdagi nom - tashqaridan kelgan nomga ISHONILMAYDI (yo'l bilan hujum).
   file_name     text NOT NULL,
   original_name text,
   mime          text NOT NULL CHECK (mime IN ('image/jpeg', 'image/png', 'image/webp')),

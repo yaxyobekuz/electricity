@@ -4,13 +4,13 @@
  * Nima uchun kerak: UI matnlari i18n JSON da tarjima qilingan, lekin
  * ma'lumotlar bazasidan keladigan yorliqlar (ish nomlari, qarzdor nomlari,
  * TP nomlari) faqat lotinda. Ularni har biri uchun qo'lda tarjima qilish
- * amaliy emas — o'zbek lotin→kirill deyarli deterministik.
+ * amaliy emas - o'zbek lotin→kirill deyarli deterministik.
  *
- * MFY nomlari BUNDAN MUSTASNO — atoqli otlar uchun DB da `name_uz_cyr`
+ * MFY nomlari BUNDAN MUSTASNO - atoqli otlar uchun DB da `name_uz_cyr`
  * ustuni bor va u har doim ustun turadi.
  */
 
-/** Digraflar birinchi — tartib muhim (`sh` `s`+`h` dan oldin). */
+/** Digraflar birinchi - tartib muhim (`sh` `s`+`h` dan oldin). */
 const DIGRAPHS: [RegExp, string][] = [
   [/o['ʻʼ`’‘]/g, 'ў'],
   [/O['ʻʼ`’‘]/g, 'Ў'],

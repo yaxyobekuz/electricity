@@ -1,5 +1,5 @@
 /**
- * Ish dalolatnomasi — ekran (modal) va qog'oz (chop etish) uchun BITTA mazmun.
+ * Ish dalolatnomasi - ekran (modal) va qog'oz (chop etish) uchun BITTA mazmun.
  *
  * Nusxa ikkita bo'lsa, ular vaqt o'tib bir-biridan uzoqlashadi: ekranda
  * ko'rgan raqam qog'ozda boshqacha chiqadi. Shuning uchun tarkib shu yerda
@@ -36,7 +36,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export function WorkAct({ work, print = false }: { work: WorkDetail; print?: boolean }) {
-  const dash = (v: string | null): string => (v && v.length > 0 ? dateShort(v) : '—');
+  const dash = (v: string | null): string => (v && v.length > 0 ? dateShort(v) : '-');
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,13 +71,13 @@ export function WorkAct({ work, print = false }: { work: WorkDetail; print?: boo
           )}
         </Row>
         <Row label="Mahalla">{work.mfyName} ({work.mfyCode})</Row>
-        <Row label="Transformator">{work.tpCode ?? '—'}</Row>
-        <Row label="Reja muddati">{dash(work.plannedStart)} — {dash(work.plannedEnd)}</Row>
+        <Row label="Transformator">{work.tpCode ?? '-'}</Row>
+        <Row label="Reja muddati">{dash(work.plannedStart)} - {dash(work.plannedEnd)}</Row>
         <Row label="Bajarilgan sana">{dash(work.actualEnd)}</Row>
         <Row label="Hajmi">
-          {work.quantity > 0 ? `${num(work.quantity, work.quantity % 1 === 0 ? 0 : 1)} ${work.unit}` : '—'}
+          {work.quantity > 0 ? `${num(work.quantity, work.quantity % 1 === 0 ? 0 : 1)} ${work.unit}` : '-'}
         </Row>
-        <Row label="Qiymati">{work.costMln > 0 ? money(work.costMln).text : '—'}</Row>
+        <Row label="Qiymati">{work.costMln > 0 ? money(work.costMln).text : '-'}</Row>
         {work.description && <Row label="Izoh">{work.description}</Row>}
       </dl>
 
@@ -88,17 +88,17 @@ export function WorkAct({ work, print = false }: { work: WorkDetail; print?: boo
         </p>
         <dl>
           <Row label="Yo‘qotish (ishgacha)">
-            {work.effectLossPctBefore === null ? '—' : pct(work.effectLossPctBefore, 1)}
+            {work.effectLossPctBefore === null ? '-' : pct(work.effectLossPctBefore, 1)}
           </Row>
           <Row label="Yo‘qotish (keyin)">
-            {work.effectLossPctAfter === null ? '—' : pct(work.effectLossPctAfter, 1)}
+            {work.effectLossPctAfter === null ? '-' : pct(work.effectLossPctAfter, 1)}
           </Row>
           <Row label="Tejalgan energiya">
             {work.effectSavingKwhMonth > 0 ? (
               <span style={{ color: 'var(--viz-good)' }}>
                 {energy(work.effectSavingKwhMonth).text} / oy
               </span>
-            ) : '—'}
+            ) : '-'}
           </Row>
         </dl>
       </div>
@@ -130,7 +130,7 @@ export function WorkAct({ work, print = false }: { work: WorkDetail; print?: boo
         )}
       </div>
 
-      {/* ── Imzo joyi — faqat qog'ozda ─────────────────────────────────── */}
+      {/* ── Imzo joyi - faqat qog'ozda ─────────────────────────────────── */}
       {print && (
         <div className="mt-6 flex justify-between text-[11px]">
           <div className="w-56">

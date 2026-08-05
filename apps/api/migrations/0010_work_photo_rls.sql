@@ -1,12 +1,12 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- ISH RASMLARI UCHUN QATOR DARAJASIDAGI HIMOYA
 --
--- Tizimning qoidasi: yozish huquqi IKKI qatlamda tekshiriladi — API da
+-- Tizimning qoidasi: yozish huquqi IKKI qatlamda tekshiriladi - API da
 -- (tushunarli xato beradi) va Postgres RLS da (API xato qilsa ham himoya
 -- qiladi). `fact.work_photo` yangi jadval, shuning uchun u ham shu qoidaga
 -- qo'shiladi.
 --
--- Rasmda `mfy_id` ustuni yo'q — u ONA ISHDAN olinadi, xuddi TP orqali
+-- Rasmda `mfy_id` ustuni yo'q - u ONA ISHDAN olinadi, xuddi TP orqali
 -- bog'langan jadvallardagidek.
 -- ═══════════════════════════════════════════════════════════════════════════
 

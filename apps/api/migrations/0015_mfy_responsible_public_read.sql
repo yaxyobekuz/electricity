@@ -1,11 +1,11 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0015_mfy_responsible_public_read.sql — ma'sul shaxs UMUMIY o'qishga ochiladi
+-- 0015_mfy_responsible_public_read.sql - ma'sul shaxs UMUMIY o'qishga ochiladi
 --
 -- Dashboard tizimga kirmasdan ham ko'rinadi (boshqa barcha panellar singari).
 -- `ref.mfy_responsible` boshqa `ref.*` jadvallar kabi (ref.mfy, ref.tp, ...)
--- Row Level Security'siz bo'lishi kerak edi — bu SPRAVOCHNIK, foydalanuvchi
+-- Row Level Security'siz bo'lishi kerak edi - bu SPRAVOCHNIK, foydalanuvchi
 -- scope'iga bog'liq FAKT emas. 0014 buni `fact.feeder_monthly` naqshi bilan
--- adashtirib RLS bilan yopgan edi — shu sabab anonim foydalanuvchida panel
+-- adashtirib RLS bilan yopgan edi - shu sabab anonim foydalanuvchida panel
 -- bo'sh ko'rinardi. Yozish huquqi API darajasida (`assertMfyWrite`) qoladi.
 -- ═══════════════════════════════════════════════════════════════════════════
 

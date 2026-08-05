@@ -13,6 +13,7 @@
     "demo:sarnaul": "node --experimental-strip-types scripts/demo-sarnaul.ts",
     "load:mfy": "node --experimental-strip-types scripts/load-mfy-data.ts",
     "verify:passport": "node --experimental-strip-types scripts/verify-passport.ts",
+    "import:tp-loss": "node --experimental-strip-types scripts/import-tp-daily-loss.ts",
     "test": "vitest run"
   },
   "dependencies": {

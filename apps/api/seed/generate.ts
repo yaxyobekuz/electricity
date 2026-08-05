@@ -2,7 +2,7 @@
  * Demo ma'lumot generatori.
  *
  * Maqsad: tuman jamlari HAQIQIY pasport raqamlarini takrorlaydigan, ammo
- * tuman kabi jonli ko'rinadigan — muammolari bilan birga — demo yaratish.
+ * tuman kabi jonli ko'rinadigan - muammolari bilan birga - demo yaratish.
  *
  * Determinizm: `mulberry32` urug'i qat'iy, shuning uchun skrinshotlar barcha
  * mashinalarda bir xil chiqadi.
@@ -36,7 +36,7 @@ export function mulberry32(a: number): () => number {
 
 const rand = mulberry32(SEED);
 
-/** Box–Muller — normal taqsimot. */
+/** Box–Muller - normal taqsimot. */
 function gauss(mean = 0, sd = 1): number {
   const u = Math.max(rand(), 1e-9);
   const v = Math.max(rand(), 1e-9);
@@ -50,7 +50,7 @@ const r1 = (x: number): number => Math.round(x * 10) / 10;
 const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, x));
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Taqsimlash — largest remainder (yig'indi AYNAN mos keladi)
+// Taqsimlash - largest remainder (yig'indi AYNAN mos keladi)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** Butun sonlarni og'irlik bo'yicha taqsimlaydi; yig'indi = total. */
@@ -123,7 +123,7 @@ function allocateWithPins(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Sana yordamchilari (UTC — vaqt mintaqasi ta'sirisiz)
+// Sana yordamchilari (UTC - vaqt mintaqasi ta'sirisiz)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const iso = (d: Date): string => d.toISOString().slice(0, 10);
@@ -171,7 +171,7 @@ function weekly(d: Date): number {
   return wd === 0 || wd === 6 ? 0.94 : 1.02;
 }
 
-/** Qish davridagi sovuq to'lqinlar — yiliga 2–4 marta, 3–6 kun, ×1.15. */
+/** Qish davridagi sovuq to'lqinlar - yiliga 2–4 marta, 3–6 kun, ×1.15. */
 function buildColdSnaps(from: string, to: string): Map<string, number> {
   const map = new Map<string, number>();
   const startYear = Number(from.slice(0, 4));
@@ -422,7 +422,7 @@ export async function generateSeed(
       scopeRows.push([uid, 'MFY', mfyIds[idx]]);
     }
   }
-  // Elektroset menejerlari — butun elektroset (login paytida MFY larga yoyiladi)
+  // Elektroset menejerlari - butun elektroset (login paytida MFY larga yoyiladi)
   for (const [login, esCode] of [
     ['manager.baliqchi', 'BALIQCHI'],
     ['manager.chinobod', 'CHINOBOD'],
@@ -433,9 +433,9 @@ export async function generateSeed(
       scopeRows.push([uid, 'ELEKTROSET', esId]);
     }
   }
-  // Admin — butun tuman
+  // Admin - butun tuman
   scopeRows.push([adminId, 'TUMAN', null]);
-  // Hokimiyat kuzatuvchilari — yozish huquqisiz (scope berilmaydi)
+  // Hokimiyat kuzatuvchilari - yozish huquqisiz (scope berilmaydi)
 
   await bulkInsert(client, 'sec.user_scope', ['user_id', 'scope_type', 'scope_id'], scopeRows);
   rowCounts['sec.user_scope'] = scopeRows.length;
@@ -512,7 +512,7 @@ export async function generateSeed(
     }
   }
 
-  // Nimstansiyalar (35/10) — pasportning tuman darajasidagi alohida qatori.
+  // Nimstansiyalar (35/10) - pasportning tuman darajasidagi alohida qatori.
   // Ular tp_status_monthly ga kirmaydi, shuning uchun "transformatorlar soni" ga qo'shilmaydi.
   const substationCount = dt['substationCount'] ?? 0;
   const biggest = cfg.mfys
@@ -696,7 +696,7 @@ export async function generateSeed(
     const repairTrend = 1.45 - 0.45 * (monthIdx / Math.max(1, totalMonths - 1));
 
     // Oylik qarzdorlik taqsimoti.
-    // Profil koeffitsienti OG'IRLIKKA kiritiladi (taqsimotdan keyin ko'paytirilmaydi) —
+    // Profil koeffitsienti OG'IRLIKKA kiritiladi (taqsimotdan keyin ko'paytirilmaydi) -
     // aks holda MFY lar yig'indisi tuman jamiga teng bo'lmay qoladi.
     const monthProgress = monthIdx / Math.max(1, totalMonths - 1);
     const debtWeights = cfg.mfys.map((m, i) => {
@@ -710,7 +710,7 @@ export async function generateSeed(
     });
     const debtPopAlloc = allocateFloat(dt['debtPopulationMln']! * debtTrend, debtWeights, 1);
     // Pasportda faqat "Aholi" va "Yuridik" bor. Dashboard 3 toifani ko'rsatadi,
-    // shuning uchun budjet tashkilotlari yuridik ULUSHIDAN ajratiladi — jamiga
+    // shuning uchun budjet tashkilotlari yuridik ULUSHIDAN ajratiladi - jamiga
     // qo'shimcha bo'lib qo'shilmaydi.
     const debtLegalTotal = dt['debtLegalMln']! * debtTrend;
     const debtLegalAlloc = allocateFloat(debtLegalTotal, debtWeights, 1);
@@ -747,7 +747,7 @@ export async function generateSeed(
       })),
       'int',
     );
-    // Pin lar taqsimotning ICHIDA hisobga olinadi — aks holda pin qo'yilgan MFY
+    // Pin lar taqsimotning ICHIDA hisobga olinadi - aks holda pin qo'yilgan MFY
     // o'z ulushini "olib qo'yadi" va tuman jami kamayib qoladi.
     const isLast = monthIdx === totalMonths - 1;
     const repair04Alloc = allocateWithPins(
@@ -986,7 +986,7 @@ export async function generateSeed(
     { type: 'SUPPORT_REPLACEMENT', title: 'Tayanch ustunlarni almashtirish', unit: 'ta', qty: [3, 25] },
   ];
 
-  // Daraxtdan tozalash — tuman jamiga (145.6 km/yil) kalibrovka qilinadi.
+  // Daraxtdan tozalash - tuman jamiga (145.6 km/yil) kalibrovka qilinadi.
   const treeAlloc = allocateWithPins(
     dt['treeClearingKmYear']!,
     cfg.mfys.map((m) => ({ weight: m.weight, pin: m.pinned?.treeClearingKmYear })),
@@ -1074,13 +1074,13 @@ export async function generateSeed(
   rowCounts['fact.violation_act'] = vaRows.length;
 
   // ── 10. Joriy oy: qoralama va ko'rib chiqilayotgan konvertlar ────────────
-  log(`Joriy oy (${currentPeriod}) — qoralama va ko‘rib chiqish navbati…`);
+  log(`Joriy oy (${currentPeriod}) - qoralama va ko‘rib chiqish navbati…`);
   const lateIdx = cfg.mfys.findIndex((m) => m.profile === 'late-submitter');
   const reviewIdx = cfg.mfys.findIndex((m) => m.profile === 'good');
 
-  // Kech topshiruvchi — qoralamada qoladi (to'liqlik matritsasida qizil katak)
+  // Kech topshiruvchi - qoralamada qoladi (to'liqlik matritsasida qizil katak)
   if (lateIdx >= 0) await createSubmissions(currentPeriod, 'draft', lateIdx);
-  // Bittasi ko'rib chiqishga yuborilgan — review navbati bo'sh bo'lmasin
+  // Bittasi ko'rib chiqishga yuborilgan - review navbati bo'sh bo'lmasin
   if (reviewIdx >= 0) await createSubmissions(currentPeriod, 'submitted', reviewIdx);
 
   // Yuborilgan konvertga haqiqiy ma'lumot ham qo'shamiz
@@ -1134,7 +1134,7 @@ export async function generateSeed(
          dt['debtPopulationMln'], dt['debtLegalMln']],
       );
       await client.query('ROLLBACK TO SAVEPOINT integrity_demo');
-      goravonDemo = '✗ KUTILMAGAN: tuman qarzdorligi MFY qatoriga yozildi — trigger ishlamadi!';
+      goravonDemo = '✗ KUTILMAGAN: tuman qarzdorligi MFY qatoriga yozildi - trigger ishlamadi!';
     } catch (err) {
       await client.query('ROLLBACK TO SAVEPOINT integrity_demo');
       const msg = err instanceof Error ? err.message : String(err);

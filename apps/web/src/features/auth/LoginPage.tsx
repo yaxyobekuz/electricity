@@ -125,7 +125,7 @@ export default function LoginPage() {
           </Form>
         </div>
 
-        {/* Demo hisoblar — ishlab chiqarishda olib tashlanadi */}
+        {/* Demo hisoblar - ishlab chiqarishda olib tashlanadi */}
         <div className="mt-4 rounded-xl border border-border/70 bg-surface-secondary p-4">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
             {t('auth.demoNote')}

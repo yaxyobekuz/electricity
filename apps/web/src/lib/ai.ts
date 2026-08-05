@@ -3,7 +3,7 @@
  *
  * Javob SSE oqimi bilan keladi: server har bir bo'lakni `event: delta`
  * ko'rinishida yuboradi, biz esa uni chat oynasiga darhol qo'shamiz.
- * Shuning uchun bu yerda TanStack Query emas, oddiy `fetch` ishlatiladi —
+ * Shuning uchun bu yerda TanStack Query emas, oddiy `fetch` ishlatiladi -
  * Query kesh uchun, oqim uchun emas.
  */
 import { apiFetchRaw } from './api.ts';
@@ -36,7 +36,7 @@ export interface AlertItem {
  * `routes/ai.ts` GET `/alerts` javobi.
  *
  * Kunlik kesh hali hisoblanmagan bo'lsa (server yangi ishga tushgan, soat
- * 08:00 ga yetmagan) `available: false` qaytadi — bu XATO EMAS, oddiy "hali
+ * 08:00 ga yetmagan) `available: false` qaytadi - bu XATO EMAS, oddiy "hali
  * tayyor emas" holati, xuddi `/status` dagi "enabled: false" kabi.
  */
 export type AlertsDigest =
@@ -48,7 +48,7 @@ export async function fetchAlerts(signal?: AbortSignal): Promise<AlertsDigest> {
   return (await res.json()) as AlertsDigest;
 }
 
-/** Agent bajarayotgan amal — chatda ko'rsatiladi. */
+/** Agent bajarayotgan amal - chatda ko'rsatiladi. */
 export interface AiToolEvent {
   name: string;
   label: string;
@@ -69,9 +69,9 @@ export interface AiAction {
 }
 
 export interface StreamHandlers {
-  /** Har bir yangi bo'lak — javob matniga qo'shiladi. */
+  /** Har bir yangi bo'lak - javob matniga qo'shiladi. */
   onDelta: (text: string) => void;
-  /** Agent asbob ishlatdi — "🔧 Hisobot tayyorlanmoqda…" ko'rsatish uchun. */
+  /** Agent asbob ishlatdi - "🔧 Hisobot tayyorlanmoqda…" ko'rsatish uchun. */
   onTool?: (event: AiToolEvent) => void;
   /** Agent brauzerdan amal so'radi. */
   onAction?: (action: AiAction) => void;
@@ -82,7 +82,7 @@ export interface StreamHandlers {
 /**
  * Suhbatni yuboradi va javobni bo'lak-bo'lak qaytaradi.
  *
- * `signal` — foydalanuvchi "to'xtat" bosgani yoki panelni yopgani uchun:
+ * `signal` - foydalanuvchi "to'xtat" bosgani yoki panelni yopgani uchun:
  * shunda server ham OpenAI so'rovini bekor qiladi va token behuda ketmaydi.
  */
 export async function streamAiChat(
@@ -146,7 +146,7 @@ export async function streamAiChat(
           opts.onError?.(String(parsed['message'] ?? 'Noma’lum xato'));
         }
       } catch {
-        /* buzilgan bo'lak — tashlab ketamiz */
+        /* buzilgan bo'lak - tashlab ketamiz */
       }
     }
   }

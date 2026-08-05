@@ -1,9 +1,9 @@
 /**
  * Panel sarlavhasidagi "AI tavsiya" tugmasi.
  *
- * Bosilganda AI yordamchi ochiladi va berilgan savol avtomatik yuboriladi —
+ * Bosilganda AI yordamchi ochiladi va berilgan savol avtomatik yuboriladi -
  * foydalanuvchi savolni o'zi yozib o'tirmaydi, javobni darhol oladi. Ko'rinishi
- * panellardagi "Barchasi" havolasi bilan bir xil uslubda — yon-yonma turadi.
+ * panellardagi "Barchasi" havolasi bilan bir xil uslubda - yon-yonma turadi.
  */
 import { Sparkles } from 'lucide-react';
 

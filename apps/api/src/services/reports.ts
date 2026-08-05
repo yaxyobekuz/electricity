@@ -1,9 +1,9 @@
 /**
- * Hisobot generatori — Excel (exceljs) va PDF (pdfmake).
+ * Hisobot generatori - Excel (exceljs) va PDF (pdfmake).
  *
  * IKKI QOIDA:
  *   1. Hech qanday tashqi xizmat ishlatilmaydi. Shriftlar `pdfmake` paketi
- *      ichidan keladi (Roboto — u ham `o‘` dagi U+2018 ni, ham kirill
+ *      ichidan keladi (Roboto - u ham `o‘` dagi U+2018 ni, ham kirill
  *      `қ ғ ҳ ў` harflarini qoplaydi; tekshirilgan).
  *   2. Pasport eksporti rasmiy ПАСПОРТ maketini takrorlaydi: 13 raqamli
  *      qator, "shundan …" kichik qatorlari va har bir qatorning MANBASI
@@ -26,7 +26,7 @@ const require = createRequire(import.meta.url);
  * "PdfPrinter is not a constructor" xatosini beradi.
  *
  * Tiplar paketi yangilanmaguncha bizga kerak bo'lgan yuzani shu yerda
- * e'lon qilamiz — bu qasddan qilingan va sababi yuqorida yozilgan.
+ * e'lon qilamiz - bu qasddan qilingan va sababi yuqorida yozilgan.
  */
 interface PdfMakeV3 {
   setFonts(fonts: Record<string, Record<string, string>>): void;
@@ -38,7 +38,7 @@ interface PdfMakeV3 {
 const pdfmake = pdfmakeModule as unknown as PdfMakeV3;
 
 /**
- * Roboto TTF fayllari `pdfmake` paketi ICHIDA — tarmoqdan olinmaydi.
+ * Roboto TTF fayllari `pdfmake` paketi ICHIDA - tarmoqdan olinmaydi.
  * Tekshirilgan: Roboto `o‘` dagi U+2018 ni ham, kirill `ў қ ғ ҳ` ni ham
  * qoplaydi, ya'ni lotin va kirill pasportlar bir xil to'g'ri chiqadi.
  */
@@ -54,7 +54,7 @@ pdfmake.setFonts({
 });
 
 /*
- * OFFLINE KAFOLATI — mashina tomonidan majburlanadi.
+ * OFFLINE KAFOLATI - mashina tomonidan majburlanadi.
  *
  * pdfmake hujjat ichidagi `http(s)://` manzillarni yuklab olishga urinishi
  * mumkin. Bu tizimda ma'lumot tashqariga chiqmasligi shart, shuning uchun
@@ -85,7 +85,7 @@ function fmtFor(unit: string): string {
 /** Pasportni rasmiy forma ko'rinishida Excel'ga yozadi. */
 export async function passportXlsx(passport: Passport): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'BEAP — Baliqchi tumani elektr energiya nazorat tizimi';
+  wb.creator = 'BEAP - Baliqchi tumani elektr energiya nazorat tizimi';
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Pasport', {
@@ -157,7 +157,7 @@ export async function passportXlsx(passport: Passport): Promise<Buffer> {
   ws.addRow([]);
   const note = ws.addRow([
     null,
-    '"Kiritiladi" — xodim qo‘lda yozadi. "Hisoblanadi" — tizim boshqa ma’lumotlardan chiqaradi. '
+    '"Kiritiladi" - xodim qo‘lda yozadi. "Hisoblanadi" - tizim boshqa ma’lumotlardan chiqaradi. '
       + 'Hech qanday jami qiymat qo‘lda kiritilmaydi.',
   ]);
   note.font = { size: 9, italic: true, color: { argb: 'FF888888' } };
@@ -199,7 +199,7 @@ const STATUS_UZ: Record<string, string> = {
   good: 'Standart doirasida', warning: 'Diqqat', serious: 'Jiddiy', critical: 'Tanqidiy',
 };
 
-/** Davriy hisobot — bir nechta varaqli Excel kitobi. */
+/** Davriy hisobot - bir nechta varaqli Excel kitobi. */
 export async function periodXlsx(input: PeriodReportInput): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'BEAP';
@@ -210,7 +210,7 @@ export async function periodXlsx(input: PeriodReportInput): Promise<Buffer> {
   s1.columns = [{ width: 42 }, { width: 20 }, { width: 16 }];
 
   s1.mergeCells('A1:C1');
-  s1.getCell('A1').value = `${input.kindLabel} hisobot — ${input.scopeName}`;
+  s1.getCell('A1').value = `${input.kindLabel} hisobot - ${input.scopeName}`;
   s1.getCell('A1').font = { size: 14, bold: true };
   s1.mergeCells('A2:C2');
   s1.getCell('A2').value = `Davr: ${periodLabel(input.period)}`;
@@ -270,7 +270,7 @@ export async function periodXlsx(input: PeriodReportInput): Promise<Buffer> {
     if (m.gapPp > 0) r.getCell('gap').font = { color: { argb: 'FFC1121F' } };
   }
 
-  // Jami qatori — FORMULA bilan, qo'lda emas.
+  // Jami qatori - FORMULA bilan, qo'lda emas.
   const last = s2.rowCount;
   if (input.mfys.length > 0) {
     const total = s2.addRow({ name: 'JAMI', kwh: { formula: `SUM(B2:B${last})` } });
@@ -303,12 +303,12 @@ export async function periodXlsx(input: PeriodReportInput): Promise<Buffer> {
 // ─── PDF ─────────────────────────────────────────────────────────────────────
 
 const uz = (v: number | null, unit: string): string => {
-  if (v === null) return '—';
+  if (v === null) return '-';
   const d = unit === 'ta' ? 0 : unit === 'km' ? 2 : 1;
   return v.toLocaleString('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d });
 };
 
-/** Pasport PDF — A4 portret, rasmiy forma. */
+/** Pasport PDF - A4 portret, rasmiy forma. */
 export async function passportPdf(passport: Passport): Promise<Buffer> {
   const body: TableCell[][] = [
     [
@@ -361,7 +361,7 @@ export async function passportPdf(passport: Passport): Promise<Buffer> {
         },
       },
       {
-        text: '«Kiritiladi» — xodim qo‘lda yozadi. «Hisoblanadi» — tizim boshqa ma’lumotlardan '
+        text: '«Kiritiladi» - xodim qo‘lda yozadi. «Hisoblanadi» - tizim boshqa ma’lumotlardan '
           + 'chiqaradi. Hech qanday jami qiymat qo‘lda kiritilmaydi.',
         fontSize: 7.5, italics: true, color: '#888888', margin: [0, 10, 0, 0],
       },
@@ -374,7 +374,7 @@ export async function passportPdf(passport: Passport): Promise<Buffer> {
 
 }
 
-/** Davriy hisobot PDF — A4 albom (mahallalar jadvali keng). */
+/** Davriy hisobot PDF - A4 albom (mahallalar jadvali keng). */
 export async function periodPdf(input: PeriodReportInput): Promise<Buffer> {
   const kpiBody: TableCell[][] = [
     [

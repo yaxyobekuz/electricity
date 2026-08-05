@@ -1,8 +1,8 @@
 /**
- * Ish dalolatnomasi — chop etish sahifasi.
+ * Ish dalolatnomasi - chop etish sahifasi.
  *
  * Qobiqsiz, A4 ga moslangan (`print.css`). Ma'lumot va rasmlar kelgach chop
- * etish oynasi o'zi ochiladi — foydalanuvchi bitta tugma bosadi, qolganini
+ * etish oynasi o'zi ochiladi - foydalanuvchi bitta tugma bosadi, qolganini
  * brauzer qiladi.
  */
 import { dateShort } from '@beap/shared';

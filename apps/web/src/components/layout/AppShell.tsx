@@ -11,7 +11,7 @@ import { parseDate } from '@internationalized/date';
 import {
   Activity, ArrowDown, ArrowUp, BarChart3, Bell, Building2, CalendarDays,
   CircleDollarSign, ClipboardCheck, ClipboardList, FileSpreadsheet, Home, Languages,
-  LogOut, Menu, Moon, Ruler, ScrollText, Settings, Sun, TriangleAlert, Zap,
+  LogOut, Menu, Moon, Ruler, ScrollText, Settings, Sun, TriangleAlert, Upload, Zap,
 } from 'lucide-react';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -43,7 +43,7 @@ interface NavItem {
 const HeaderSlot = createContext<HTMLElement | null>(null);
 
 /**
- * Pastki chiziqdagi bo'sh joy — sahifaga oid izoh shu yerga tushadi.
+ * Pastki chiziqdagi bo'sh joy - sahifaga oid izoh shu yerga tushadi.
  *
  * Aks holda izoh kontentning oxirida ALOHIDA qator bo'lib, uning ostida
  * yana footer turadi: ekranning pastida ikkita deyarli bo'sh qator.
@@ -51,7 +51,7 @@ const HeaderSlot = createContext<HTMLElement | null>(null);
 const FooterSlot = createContext<HTMLElement | null>(null);
 
 /*
- * Menyu — FIDER darajasidagi tizim uchun.
+ * Menyu - FIDER darajasidagi tizim uchun.
  *
  * Mahallalar ro'yxati, yo'qotish reytingi, qarzdorlik va tuman pasporti
  * olib tashlandi: ular 22 mahallani solishtirish uchun edi, bitta fider
@@ -65,6 +65,10 @@ const NAV: NavItem[] = [
   { to: '/reports', labelKey: 'nav.reports', icon: <FileSpreadsheet className="size-4.5" /> },
   {
     to: '/entry', labelKey: 'nav.entry', icon: <ClipboardCheck className="size-4.5" />,
+    roles: ['mfy_operator', 'elektroset_manager', 'admin'],
+  },
+  {
+    to: '/tp-loss', labelKey: 'nav.tpLoss', icon: <Upload className="size-4.5" />,
     roles: ['mfy_operator', 'elektroset_manager', 'admin'],
   },
   {
@@ -171,7 +175,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        {/* Ma'lumot yangilanganlik belgisi — ishonch uchun */}
+        {/* Ma'lumot yangilanganlik belgisi - ishonch uchun */}
         {sidebarOpen && boot?.lastRefreshAt && (
           <div className="px-5 pb-4">
             <p className="text-[10px] leading-tight text-muted">
@@ -202,12 +206,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div ref={setHeaderSlot} className="flex min-w-0 flex-1 items-center" />
 
           <div className="flex shrink-0 items-center gap-1.5">
-            {/* Hisobot sanasi — bosiladi, kalendar ochiladi */}
+            {/* Hisobot sanasi - bosiladi, kalendar ochiladi */}
             {boot?.dataRange.maxDate && boot.dataRange.minDate && (
               <AsOfDatePicker maxDate={boot.dataRange.maxDate} minDate={boot.dataRange.minDate} />
             )}
 
-            {/* Ogohlantirishlar qo'ng'irog'i — kesh hali tayyor bo'lmasa o'zi yashiradi */}
+            {/* Ogohlantirishlar qo'ng'irog'i - kesh hali tayyor bo'lmasa o'zi yashiradi */}
             <AlertsBell />
 
             {/* Til */}
@@ -308,7 +312,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-4 pb-3 text-[10.5px] text-muted">
           <span>© {new Date().getFullYear()} {t('app.footer')}</span>
-          {/* `contents` — o'ram quti hosil qilmaydi, izoh footer qatorining bandi bo'ladi. */}
+          {/* `contents` - o'ram quti hosil qilmaydi, izoh footer qatorining bandi bo'ladi. */}
           <div ref={setFooterSlot} className="contents" />
           <span className="flex items-center gap-3">
             <Chip size="sm" variant="soft">
@@ -320,7 +324,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {/*
-        AI yordamchi — qobiqning ichida, lekin `fixed` joylashuvda: sahifa
+        AI yordamchi - qobiqning ichida, lekin `fixed` joylashuvda: sahifa
         almashganda panel yopilmaydi va suhbat uzilmaydi.
       */}
       <AiAssistant />
@@ -329,7 +333,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 /**
- * Hisobot sanasi tanlagich — yuqori chiziqdagi ixcham "tabletka".
+ * Hisobot sanasi tanlagich - yuqori chiziqdagi ixcham "tabletka".
  *
  * Kalendar FAQAT ma'lumot mavjud oraliqni ochadi (`minDate…maxDate`):
  * bo'sh kunni tanlash mumkin bo'lsa, hokim bo'sh dashboard ko'rib
@@ -348,7 +352,7 @@ function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       {/*
-        Tugma `Popover` ning BEVOSITA farzandi — HeroUI uni tetik deb oladi.
+        Tugma `Popover` ning BEVOSITA farzandi - HeroUI uni tetik deb oladi.
         Shu sababli ko'rinish to'liq shu yerda boshqariladi va yuqori
         chiziqdagi boshqa "tabletka" lar bilan bir xil bo'ladi.
       */}
@@ -389,7 +393,7 @@ function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string
             </Calendar.Grid>
           </Calendar>
 
-          {/* Oxirgi kunga qaytish — "eng so'nggi holat" odatiy ko'rinish */}
+          {/* Oxirgi kunga qaytish - "eng so'nggi holat" odatiy ko'rinish */}
           {asOfDate && (
             <Button
               className="mt-1 w-full"
@@ -410,11 +414,11 @@ function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string
 }
 
 /**
- * Ogohlantirishlar qo'ng'irog'i — yuqori chiziqdagi ixcham belgi.
+ * Ogohlantirishlar qo'ng'irog'i - yuqori chiziqdagi ixcham belgi.
  *
  * Kunlik kesh cron orqali 08:00 da hisoblanadi (`services/alerts.ts`). Server
  * hali birinchi marta hisoblamagan bo'lsa `GET /ai/alerts` `{ available:
- * false }` qaytaradi — bu XATO EMAS, shuning uchun bu holatda belgi shunchaki
+ * false }` qaytaradi - bu XATO EMAS, shuning uchun bu holatda belgi shunchaki
  * ko'rsatilmaydi, xato holati chiqarilmaydi.
  */
 function AlertsBell() {
@@ -428,9 +432,9 @@ function AlertsBell() {
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       {/*
-        Tugma `Popover` ning BEVOSITA farzandi (`AsOfDatePicker` dagi kabi) —
+        Tugma `Popover` ning BEVOSITA farzandi (`AsOfDatePicker` dagi kabi) -
         HeroUI uni tetik deb oladi. Badge Tugma ICHIDA joylashadi va
-        `relative` shu yerda beriladi — `Badge.Anchor` o'ramisiz ham
+        `relative` shu yerda beriladi - `Badge.Anchor` o'ramisiz ham
         `top-right` joylashuvi to'g'ri ishlaydi.
       */}
       <Button
@@ -484,11 +488,11 @@ function AlertsBell() {
 }
 
 /**
- * Yon paneldagi samaradorlik indeksi — gradient ko'k karta.
+ * Yon paneldagi samaradorlik indeksi - gradient ko'k karta.
  *
  * Baho YARIM DOIRADA: chiziqli "progress" bandidan farqli o'laroq, yarim
  * doira 0–100 shkalani bir qarashda ko'rsatadi va markazda katta raqamga
- * joy qoldiradi — yon panel tor bo'lgani uchun bu muhim.
+ * joy qoldiradi - yon panel tor bo'lgani uchun bu muhim.
  */
 function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: number | null }) {
   const label =
@@ -546,10 +550,10 @@ function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: nu
         <span aria-hidden="true">{face}</span> {label}
       </p>
 
-      {/* O'tgan davr bilan solishtirish — baho yolg'iz o'zi trendni aytmaydi */}
+      {/* O'tgan davr bilan solishtirish - baho yolg'iz o'zi trendni aytmaydi */}
       <div className="mt-2.5 flex items-center justify-between gap-2 text-[10.5px]">
         <span className="opacity-85">
-          O‘tgan oy: <span className="tabular font-semibold">{prevScore?.toFixed(0) ?? '—'}</span>
+          O‘tgan oy: <span className="tabular font-semibold">{prevScore?.toFixed(0) ?? '-'}</span>
         </span>
         {deltaPct !== null && (
           <span className="tabular flex items-center gap-0.5 font-semibold">
@@ -567,7 +571,7 @@ function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: nu
 /**
  * Tavsiya kartasi.
  *
- * DIQQAT: "AI" — bu yerda faqat KO'RINISH nomi. Tagida hech qanday model
+ * DIQQAT: "AI" - bu yerda faqat KO'RINISH nomi. Tagida hech qanday model
  * yo'q: fiderning normadan oshgani SQL qoidasi bilan aniqlanadi va normativ
  * daraja `TOTAL_LOSS_TARGET_PCT` me'yoridan olinadi. Shu sababli raqamni
  * har doim izohlab berish mumkin.
@@ -590,7 +594,7 @@ function AdviceCard({
 
       <div className="mt-1.5 flex items-end gap-2">
         {/*
-          Robot — bezak, ma'no tashimaydi: `alt=""` va `aria-hidden`,
+          Robot - bezak, ma'no tashimaydi: `alt=""` va `aria-hidden`,
           shuning uchun skrinrider uni o'qimaydi va matn takrorlanmaydi.
         */}
         <img
@@ -604,13 +608,13 @@ function AdviceCard({
           {advice.count > 0 ? (
             <>
               Yo‘qotish normadan yuqori:{' '}
-              <span className="font-bold">{pct(advice.currentLossPct, 1)}</span>. Normativ daraja —{' '}
+              <span className="font-bold">{pct(advice.currentLossPct, 1)}</span>. Normativ daraja -{' '}
               <span className="font-bold">{pct(advice.targetLossPct, 1)}</span>.
             </>
           ) : (
             <>
               Yo‘qotish normativ darajada
-              (<span className="font-bold">{pct(advice.targetLossPct, 1)}</span>) — qo‘shimcha
+              (<span className="font-bold">{pct(advice.targetLossPct, 1)}</span>) - qo‘shimcha
               tavsiya yo‘q.
             </>
           )}
@@ -630,7 +634,7 @@ function AdviceCard({
 }
 
 /**
- * Sahifaga oid izoh — PASTKI CHIZIQ ichida ko'rsatiladi (portal orqali).
+ * Sahifaga oid izoh - PASTKI CHIZIQ ichida ko'rsatiladi (portal orqali).
  *
  * Qobiq tashqarisida (masalan chop etish sahifasida) hech narsa chizmaydi.
  */
@@ -644,7 +648,7 @@ export function FooterNote({ children }: { children: ReactNode }) {
 }
 
 /**
- * Sahifa sarlavhasi — YUQORI CHIZIQ ichida ko'rsatiladi (portal orqali).
+ * Sahifa sarlavhasi - YUQORI CHIZIQ ichida ko'rsatiladi (portal orqali).
  *
  * Sarlavha, yo'l va sahifa amallari bitta ixcham qatorda: shu tufayli
  * kontent maydoni to'liq diagramma va jadvallarga qoladi.
@@ -696,7 +700,7 @@ export function PageHeader({
     </div>
   );
 
-  // Qobiq tashqarisida (chop etish sahifasi) — oddiy blok sifatida chiqadi.
+  // Qobiq tashqarisida (chop etish sahifasi) - oddiy blok sifatida chiqadi.
   return slot ? createPortal(content, slot) : <div className="mb-3 flex">{content}</div>;
 }
 
@@ -717,7 +721,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   );
 }
 
-/** Yuklanish holati — faqat BIRINCHI yuklashda ko'rsatiladi. */
+/** Yuklanish holati - faqat BIRINCHI yuklashda ko'rsatiladi. */
 export function LoadingState({ rows = 4 }: { rows?: number }) {
   return (
     <div aria-busy="true" aria-live="polite" className="flex flex-col gap-3">

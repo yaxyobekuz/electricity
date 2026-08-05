@@ -1,18 +1,18 @@
 /**
- * AI AGENT — o'ng pastki burchakdagi suhbat paneli.
+ * AI AGENT - o'ng pastki burchakdagi suhbat paneli.
  *
  * Ko'rinishi qo'llab-quvvatlash chatiga o'xshaydi, lekin bu maslahatchi emas,
  * BAJARUVCHI: server modelga asboblar beradi va model ularni chaqiradi.
- * Ma'lumot asboblari serverda ishlaydi, INTERFEYS amallari esa shu yerda —
+ * Ma'lumot asboblari serverda ishlaydi, INTERFEYS amallari esa shu yerda -
  * `action` hodisasi kelganda sahifa ochiladi, davr almashadi yoki fayl
  * yuklab olinadi. Shuning uchun "hisobotni yuklab ber" degan iltimos
  * javob bilan emas, FAYL bilan yakunlanadi.
  *
  * Panel AppShell ichida BIR MARTA joylashadi va sahifa almashganda
- * yopilmaydi — suhbat uzilib qolmaydi. Aynan shu sababli navigatsiya
+ * yopilmaydi - suhbat uzilib qolmaydi. Aynan shu sababli navigatsiya
  * `useNavigate` bilan bajariladi, `window.location` bilan emas.
  *
- * Login TALAB QILINMAYDI — panelning raqamlari mehmonga ham ochiq. Ammo
+ * Login TALAB QILINMAYDI - panelning raqamlari mehmonga ham ochiq. Ammo
  * bazaga YOZADIGAN asboblar server tomonda login va rolni talab qiladi.
  *
  * Kalit sozlanmagan bo'lsa (`/ai/status` → enabled:false) tugma chiqmaydi:
@@ -29,11 +29,11 @@ import { apiUrl } from '../../lib/api.ts';
 import { downloadFile } from '../../lib/download.ts';
 import { useUi } from '../../lib/ui-store.ts';
 
-/** Suhbat sahifa yangilanganda ham qolsin — bir sessiya doirasida. */
+/** Suhbat sahifa yangilanganda ham qolsin - bir sessiya doirasida. */
 const STORE_KEY = 'beap.ai.chat';
 
 /*
- * Takliflar AMAL so'raydigan qilib yozilgan — foydalanuvchi agentning
+ * Takliflar AMAL so'raydigan qilib yozilgan - foydalanuvchi agentning
  * shunchaki javob bermasligini, ish bajarishini birinchi qarashda ko'rsin.
  */
 const SUGGESTIONS = [
@@ -44,11 +44,11 @@ const SUGGESTIONS = [
 ];
 
 interface ChatItem extends AiMessage {
-  /** Xato xabari — boshqa rangda va nusxa olinmaydigan qilib ko'rsatiladi. */
+  /** Xato xabari - boshqa rangda va nusxa olinmaydigan qilib ko'rsatiladi. */
   isError?: boolean;
-  /** Shu javob davomida bajarilgan amallar — pufak ustida chiplar bo'lib chiqadi. */
+  /** Shu javob davomida bajarilgan amallar - pufak ustida chiplar bo'lib chiqadi. */
   tools?: AiToolEvent[];
-  /** Agent yuborgan diagramma rasmi — alohida pufak sifatida ko'rsatiladi. */
+  /** Agent yuborgan diagramma rasmi - alohida pufak sifatida ko'rsatiladi. */
   imageUrl?: string;
 }
 
@@ -80,7 +80,7 @@ export function AiAssistant() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Yordamchi ulanganmi — bir marta tekshiriladi.
+  // Yordamchi ulanganmi - bir marta tekshiriladi.
   useEffect(() => {
     const ac = new AbortController();
     void (async () => {
@@ -98,7 +98,7 @@ export function AiAssistant() {
     try {
       sessionStorage.setItem(STORE_KEY, JSON.stringify(items.slice(-40)));
     } catch {
-      /* saqlab bo'lmadi — muhim emas */
+      /* saqlab bo'lmadi - muhim emas */
     }
   }, [items]);
 
@@ -118,7 +118,7 @@ export function AiAssistant() {
   /**
    * Agent so'ragan amalni BRAUZERDA bajaradi.
    *
-   * Server bularni o'zi qila olmaydi — sahifa ochish, davrni almashtirish
+   * Server bularni o'zi qila olmaydi - sahifa ochish, davrni almashtirish
    * va faylni saqlash klientda bo'ladi. Xato bo'lsa suhbat to'xtamaydi:
    * xabar oddiy xato pufagi bo'lib qo'shiladi va model javobini davom
    * ettiradi.
@@ -130,7 +130,7 @@ export function AiAssistant() {
       case 'navigate': {
         const path = String(p['path'] ?? '/dashboard');
         const search = typeof p['search'] === 'string' && p['search'] ? p['search'] : null;
-        // Qidiruv matni `?q=` bilan uzatiladi — sahifalar uni o'qiy oladi.
+        // Qidiruv matni `?q=` bilan uzatiladi - sahifalar uni o'qiy oladi.
         void navigate(search ? `${path}?q=${encodeURIComponent(search)}` : path);
         break;
       }
@@ -162,13 +162,13 @@ export function AiAssistant() {
          * `url` ikki xil kelishi mumkin: 4 ta tayyor diagramma turi uchun
          * API-nisbiy yo'l ('/report/chart/...'), yoki erkin jadval/diagramma
          * asboblari ('render_table', 'render_custom_chart') uchun o'zida
-         * rasmni olib yuruvchi 'data:image/png;base64,...' — bunga HTTP
+         * rasmni olib yuruvchi 'data:image/png;base64,...' - bunga HTTP
          * so'rov shart emas, brauzer uni to'g'ridan-to'g'ri chizadi.
          */
         const isDataUri = url.startsWith('data:');
         if (!isDataUri && !url.startsWith('/')) break;
         /*
-         * Rasm hozir oqib kelayotgan matn pufagiga QO'SHILMAYDI — o'sha
+         * Rasm hozir oqib kelayotgan matn pufagiga QO'SHILMAYDI - o'sha
          * pufak hali `onDelta` bilan to'ldirilmoqda, amal esa oqim
          * o'rtasida kelishi mumkin. Shuning uchun YANGI xabar sifatida
          * qo'shiladi, xuddi `download` xato holatidagi kabi.
@@ -222,7 +222,7 @@ export function AiAssistant() {
 
               /*
                * Bir asbob ikki marta keladi: `running`, keyin `done`.
-               * Ikkita chip chiqmasin — mavjudi YANGILANADI.
+               * Ikkita chip chiqmasin - mavjudi YANGILANADI.
                */
               const tools = [...(last.tools ?? [])];
               const at = tools.findIndex((t) => t.name === event.name && t.status === 'running');
@@ -243,7 +243,7 @@ export function AiAssistant() {
           },
         });
       } catch (err) {
-        // Foydalanuvchi o'zi to'xtatgan bo'lsa — xato emas.
+        // Foydalanuvchi o'zi to'xtatgan bo'lsa - xato emas.
         if (ac.signal.aborted) return;
         setItems((prev) => {
           const next = [...prev];
@@ -257,7 +257,7 @@ export function AiAssistant() {
       } finally {
         /*
          * Model hech narsa qaytarmasa bo'sh pufak qolib ketmasin. AMMO
-         * asbob ishlagan bo'lsa pufak bo'sh emas — unda chiplar turadi
+         * asbob ishlagan bo'lsa pufak bo'sh emas - unda chiplar turadi
          * ("Hisobot tayyorlandi"), shuning uchun u saqlanadi.
          */
         setItems((prev) => {
@@ -279,7 +279,7 @@ export function AiAssistant() {
   };
 
   /*
-   * Panel tashqarisidan (masalan "AI tavsiya" tugmasidan) kelgan savol —
+   * Panel tashqarisidan (masalan "AI tavsiya" tugmasidan) kelgan savol -
    * `askAi()` panelni ochadi VA shu matnni bu yerda avtomatik yuboradi.
    * Navbat darhol tozalanadi: aks holda panel qayta ochilganda (yoki
    * boshqa `aiOpen` o'zgarishida) o'sha savol qayta yuborilib qolardi.
@@ -311,7 +311,7 @@ export function AiAssistant() {
         onClick={() => setOpen(true)}
       >
         <Sparkles className="size-6" strokeWidth={2} />
-        {/* "Onlayn" nuqtasi — yordamchi tayyorligini bildiradi */}
+        {/* "Onlayn" nuqtasi - yordamchi tayyorligini bildiradi */}
         <span className="absolute right-1 top-1 size-3 rounded-full border-2 border-white bg-success" />
       </button>
 
@@ -396,13 +396,13 @@ export function AiAssistant() {
                 variant="secondary"
                 onChange={(e) => {
                   setDraft(e.target.value);
-                  // Matn o'sganda maydon ham o'sadi — 4 qatorgacha.
+                  // Matn o'sganda maydon ham o'sadi - 4 qatorgacha.
                   const el = e.target;
                   el.style.height = 'auto';
                   el.style.height = `${Math.min(el.scrollHeight, 112)}px`;
                 }}
                 onKeyDown={(e) => {
-                  // Enter — yuborish, Shift+Enter — yangi qator.
+                  // Enter - yuborish, Shift+Enter - yangi qator.
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     send(draft);
@@ -447,7 +447,7 @@ export function AiAssistant() {
   );
 }
 
-/** Bo'sh suhbat — nima so'rash mumkinligi darhol ko'rinib tursin. */
+/** Bo'sh suhbat - nima so'rash mumkinligi darhol ko'rinib tursin. */
 function Greeting({ onPick }: { onPick: (text: string) => void }) {
   return (
     <div className="flex flex-col items-center gap-3 px-2 pt-4 text-center">
@@ -489,7 +489,7 @@ function Greeting({ onPick }: { onPick: (text: string) => void }) {
 /**
  * Bitta xabar.
  *
- * Model matnni `**qalin**` bilan bezaydi — uni HTML ga aylantiramiz, qolgani
+ * Model matnni `**qalin**` bilan bezaydi - uni HTML ga aylantiramiz, qolgani
  * `pre-wrap` bilan qanday kelgan bo'lsa shunday chiqadi. To'liq markdown
  * kutubxonasi shu qadar kichik matn uchun ortiqcha.
  */
@@ -509,7 +509,7 @@ function Bubble({
     <div className={cn('flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
       {/*
         Bajarilgan amallar pufakdan YUQORIDA turadi: foydalanuvchi avval
-        "nima qilindi" ni, keyin xulosani o'qiydi — sabab-natija tartibi.
+        "nima qilindi" ni, keyin xulosani o'qiydi - sabab-natija tartibi.
       */}
       {tools.length > 0 && (
         <div className="flex max-w-[90%] flex-col gap-1">
@@ -518,9 +518,9 @@ function Bubble({
       )}
 
       {/*
-        Diagramma — matn pufagidan ALOHIDA, chunki o'z xabari sifatida
-        keladi (`runAction` dagi 'chart' — qarang yuqorida). Rasm uchun
-        ichki bo'shliq matnnikidan kamroq — chekka bilan tirqish qolmasin.
+        Diagramma - matn pufagidan ALOHIDA, chunki o'z xabari sifatida
+        keladi (`runAction` dagi 'chart' - qarang yuqorida). Rasm uchun
+        ichki bo'shliq matnnikidan kamroq - chekka bilan tirqish qolmasin.
       */}
       {imageUrl && (
         <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-bl-md bg-surface p-1 shadow-surface">
@@ -550,7 +550,7 @@ function Bubble({
   );
 }
 
-/** Bitta amal — "nima qilinayotgani" va natijasi. */
+/** Bitta amal - "nima qilinayotgani" va natijasi. */
 function ToolChip({ tool }: { tool: AiToolEvent }) {
   const running = tool.status === 'running';
   const failed = !running && !tool.ok;
@@ -561,7 +561,7 @@ function ToolChip({ tool }: { tool: AiToolEvent }) {
         'flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10.5px] font-medium',
         failed ? 'bg-danger-soft text-danger' : 'text-accent',
       )}
-      // Yumshoq fon `components.css` dagi bilan bir xil usulda — HeroUI ning
+      // Yumshoq fon `components.css` dagi bilan bir xil usulda - HeroUI ning
       // `accent-soft` yordamchisi bu yerda kafolatlanmagan.
       style={failed ? undefined : { background: 'color-mix(in oklab, var(--accent) 11%, transparent)' }}
     >
@@ -587,7 +587,7 @@ function formatRich(text: string): ReactNode[] {
     ));
 }
 
-/** Uchta sakrab turuvchi nuqta — javob kelayotgani bilinib tursin. */
+/** Uchta sakrab turuvchi nuqta - javob kelayotgani bilinib tursin. */
 function Typing() {
   return (
     <span aria-label="Javob yozilmoqda" className="flex items-center gap-1 py-0.5" role="status">

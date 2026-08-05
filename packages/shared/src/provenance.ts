@@ -1,5 +1,5 @@
 /**
- * METRIKA MANBASI XARITASI — "manbasiz raqam yo'q" qoidasining majburlanishi.
+ * METRIKA MANBASI XARITASI - "manbasiz raqam yo'q" qoidasining majburlanishi.
  *
  * Dashboardda ko'rsatiladigan HAR BIR metrika shu yerda ro'yxatdan o'tishi shart:
  * u yo xodim tomonidan KIRITILADI (`input`), yo tizim tomonidan HISOBLANADI (`derived`).
@@ -7,7 +7,7 @@
  * `provenance.test.ts` dashboard panellarida ishlatilgan metrika kalitlarini shu
  * xarita bilan solishtiradi va mos kelmasa build'ni yiqitadi.
  *
- * UI'da har bir KPI kartasining "i" tugmasi aynan shu yozuvni ko'rsatadi —
+ * UI'da har bir KPI kartasining "i" tugmasi aynan shu yozuvni ko'rsatadi -
  * hokim "bu raqam qayerdan keldi?" deb so'raganda javob bir bosishda.
  */
 
@@ -25,7 +25,7 @@ export interface InputProvenance {
 
 export interface DerivedProvenance {
   source: 'derived';
-  /** Hisoblash formulasi — inson o'qishi uchun. */
+  /** Hisoblash formulasi - inson o'qishi uchun. */
   formula: string;
   /** Qaysi kiritiladigan metrikalarga tayanadi. */
   dependsOn: readonly string[];
@@ -118,7 +118,7 @@ export const METRIC_PROVENANCE = {
     'Jami qarzdorlik',
     'mln so‘m',
   ),
-  debtorName: input('DEBT', 'fact.debt_top_entry', 'debtor_name', 'Qarzdor nomi', '—'),
+  debtorName: input('DEBT', 'fact.debt_top_entry', 'debtor_name', 'Qarzdor nomi', '-'),
   debtorAmountMln: input('DEBT', 'fact.debt_top_entry', 'amount_mln', 'Qarzdor summasi', 'mln so‘m'),
 
   // ── Hisoblagichlar ─────────────────────────────────────────────────────────
@@ -132,9 +132,9 @@ export const METRIC_PROVENANCE = {
   tpAvgDistanceM: input('TP_STATUS', 'ref.tp', 'avg_distance_m', 'TP → iste’molchi masofasi', 'm'),
   tpLoadPct: input('TP_STATUS', 'fact.tp_status_monthly', 'load_pct', 'TP yuklamasi', '%'),
   tpPeakKva: input('TP_STATUS', 'fact.tp_status_monthly', 'peak_kva', 'TP peak quvvati', 'kVA'),
-  tpCondition: input('TP_STATUS', 'fact.tp_status_monthly', 'condition', 'TP holati', '—'),
-  tpUnderLoad: input('TP_STATUS', 'fact.tp_status_monthly', 'under_load', 'Yuklama bilan ishlayotgan TP', '—'),
-  tpRepairNeeded: input('TP_STATUS', 'fact.tp_status_monthly', 'repair_needed', 'Ta’mir kerak', '—'),
+  tpCondition: input('TP_STATUS', 'fact.tp_status_monthly', 'condition', 'TP holati', '-'),
+  tpUnderLoad: input('TP_STATUS', 'fact.tp_status_monthly', 'under_load', 'Yuklama bilan ishlayotgan TP', '-'),
+  tpRepairNeeded: input('TP_STATUS', 'fact.tp_status_monthly', 'repair_needed', 'Ta’mir kerak', '-'),
   tpCount: derived('COUNT(ref.tp)', ['tpRatedKva'], 'Transformatorlar soni', 'ta'),
   tpOverloadedCount: derived(
     'COUNT(*) FILTER (WHERE load_pct >= TP_OVERLOAD_PCT)',
@@ -176,7 +176,7 @@ export const METRIC_PROVENANCE = {
 
   // ── Ishlar ─────────────────────────────────────────────────────────────────
   workProgressPct: input('WORKS', 'fact.work', 'progress_pct', 'Ish bajarilishi', '%'),
-  workQuantity: input('WORKS', 'fact.work', 'quantity', 'Ish hajmi', '—'),
+  workQuantity: input('WORKS', 'fact.work', 'quantity', 'Ish hajmi', '-'),
   workCostMln: input('WORKS', 'fact.work', 'cost_mln', 'Ish qiymati', 'mln so‘m'),
   workEffectBefore: input('WORKS', 'fact.work', 'effect_loss_pct_before', 'Ishdan oldingi yo‘qotish', '%'),
   workEffectAfter: input('WORKS', 'fact.work', 'effect_loss_pct_after', 'Ishdan keyingi yo‘qotish', '%'),
@@ -233,12 +233,12 @@ export function isKnownMetric(key: string): key is MetricKey {
 export function provenanceText(key: MetricKey): string {
   const p = METRIC_PROVENANCE[key];
   if (p.source === 'input') {
-    return `Qo‘lda kiritiladi — «${p.labelUz}» maydoni, «${p.domain}» formasida.`;
+    return `Qo‘lda kiritiladi - «${p.labelUz}» maydoni, «${p.domain}» formasida.`;
   }
   return `Tizim hisoblaydi: ${p.formula}`;
 }
 
-/** Barcha kiritiladigan metrikalar — input panel qamrovini tekshirish uchun. */
+/** Barcha kiritiladigan metrikalar - input panel qamrovini tekshirish uchun. */
 export function inputMetrics(): MetricKey[] {
   return (Object.keys(METRIC_PROVENANCE) as MetricKey[]).filter(
     (k) => METRIC_PROVENANCE[k].source === 'input',

@@ -111,7 +111,7 @@ export default function ReviewQueue() {
                   <td className="tabular text-muted">#{s.revision}</td>
                   <td className="text-muted">{s.createdByName}</td>
                   <td className="tabular text-muted">
-                    {s.submittedAt ? dateTimeLabel(s.submittedAt) : '—'}
+                    {s.submittedAt ? dateTimeLabel(s.submittedAt) : '-'}
                   </td>
                   <td>
                     <div className="flex items-center gap-1">
@@ -144,7 +144,7 @@ export default function ReviewQueue() {
               <Modal.CloseTrigger />
               <Modal.Header>
                 <Modal.Heading>
-                  {selected.scopeName} — {DOMAIN_LABEL_UZ[selected.domain]}
+                  {selected.scopeName} - {DOMAIN_LABEL_UZ[selected.domain]}
                 </Modal.Heading>
               </Modal.Header>
               <Modal.Body>
@@ -209,7 +209,7 @@ function DiffTable({ submissionId }: { submissionId: number }) {
   if (rows.length === 0) {
     return (
       <p className="rounded-lg border border-border/70 bg-surface-secondary px-3 py-2.5 text-xs text-muted">
-        Bu birinchi revisiya — taqqoslash uchun oldingi tasdiqlangan hisobot yo‘q.
+        Bu birinchi revisiya - taqqoslash uchun oldingi tasdiqlangan hisobot yo‘q.
       </p>
     );
   }
@@ -232,14 +232,14 @@ function DiffTable({ submissionId }: { submissionId: number }) {
               <tr key={r.path} className={big ? 'bg-warning/10' : undefined}>
                 <td>{r.labelUz}</td>
                 <td className="num text-muted">
-                  {typeof r.before === 'number' ? num(r.before, 1) : (r.before ?? '—')}
+                  {typeof r.before === 'number' ? num(r.before, 1) : (r.before ?? '-')}
                 </td>
                 <td className="num font-medium">
-                  {typeof r.after === 'number' ? num(r.after, 1) : (r.after ?? '—')}
+                  {typeof r.after === 'number' ? num(r.after, 1) : (r.after ?? '-')}
                 </td>
                 <td className="num">
                   {r.deltaPct === null ? (
-                    '—'
+                    '-'
                   ) : (
                     <span
                       className="font-medium"

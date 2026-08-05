@@ -1,5 +1,5 @@
 /**
- * Input panel — ma'lumot kiritish, tekshirish va tasdiqlash oqimi.
+ * Input panel - ma'lumot kiritish, tekshirish va tasdiqlash oqimi.
  *
  * Muhim: bu yerdagi hech bir funksiya "jami" qiymatni yozmaydi.
  * Jamilar DB da GENERATED ustunlar sifatida hisoblanadi.
@@ -48,7 +48,7 @@ function mapSubmission(r: Record<string, unknown>): Submission {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// To'liqlik matritsasi — hokim korxonalarni shu panel bilan nazorat qiladi
+// To'liqlik matritsasi - hokim korxonalarni shu panel bilan nazorat qiladi
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function completeness(ctx: AppContext, period: string): Promise<CompletenessCell[]> {
@@ -99,7 +99,7 @@ export async function reviewQueue(ctx: AppContext): Promise<Submission[]> {
 
 /**
  * Qoralama ochadi yoki mavjudini qaytaradi.
- * Tasdiqlangan konvert bo'lsa — tuzatish (amendment) revisiyasi ochiladi.
+ * Tasdiqlangan konvert bo'lsa - tuzatish (amendment) revisiyasi ochiladi.
  */
 export async function openDraft(
   ctx: AppContext, mfyId: number, domain: Domain, period: string,
@@ -314,11 +314,11 @@ export async function saveMonthlyReturn(
 }
 
 /**
- * TP holati qatorlarini SAQLAYDI — `saveEnergyBalance` bilan bir xil "hammasini
+ * TP holati qatorlarini SAQLAYDI - `saveEnergyBalance` bilan bir xil "hammasini
  * o'chir, qayta yoz" strategiyasi (bitta konvert = bitta oy uchun to'liq
  * ro'yxat). Shu sababli AI asbobi (`update_tp_status`, `ai-tools.ts`) bitta
  * TP ni yangilashdan oldin MAVJUD qatorlarni (`tpStatusRows`) o'qib, ustiga
- * birlashtirib qayta yuborishi kerak — aks holda boshqa TP larning holati
+ * birlashtirib qayta yuborishi kerak - aks holda boshqa TP larning holati
  * yo'qolib qolardi.
  */
 export async function saveTpStatus(
@@ -346,9 +346,9 @@ export async function saveTpStatus(
             under_load, repair_needed, repair_reason)
          VALUES ${tuples.join(',')}`, params);
     } catch (err) {
-      // `tp_id` chet kalit — noto'g'ri/o'chirilgan TP berilsa tushunarli xabar.
+      // `tp_id` chet kalit - noto'g'ri/o'chirilgan TP berilsa tushunarli xabar.
       if (isPgError(err) && err.code === '23503') {
-        throw Object.assign(new Error('TP topilmadi — berilgan ID mavjud emas'), { statusCode: 400 });
+        throw Object.assign(new Error('TP topilmadi - berilgan ID mavjud emas'), { statusCode: 400 });
       }
       throw err;
     }
@@ -358,7 +358,7 @@ export async function saveTpStatus(
   });
 }
 
-/** Tarmoq nuqsoni qatorlarini SAQLAYDI — `saveTpStatus` bilan bir xil naqsh. */
+/** Tarmoq nuqsoni qatorlarini SAQLAYDI - `saveTpStatus` bilan bir xil naqsh. */
 export async function saveNetworkDefect(
   ctx: AppContext, submissionId: number, rows: NetworkDefect[],
 ): Promise<number> {
@@ -384,7 +384,7 @@ export async function saveNetworkDefect(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Tekshirish (dry-run — hech narsa yozilmaydi)
+// Tekshirish (dry-run - hech narsa yozilmaydi)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function validateSubmission(
@@ -428,7 +428,7 @@ export async function validateSubmission(
       });
     }
 
-    // O'tgan oyga nisbatan keskin o'zgarish — izoh talab qilinadi.
+    // O'tgan oyga nisbatan keskin o'zgarish - izoh talab qilinadi.
     const prevTotal = await queryOne<{ kwh: number }>(
       `SELECT coalesce(sum(a.kwh_in), 0) AS kwh FROM agg.mfy_daily a
        WHERE a.mfy_id = $1
@@ -442,7 +442,7 @@ export async function validateSubmission(
       if (change > 0.3) {
         issues.push({
           path: 'kwhIn', severity: 'warning',
-          message: `Tarmoqqa kirgan energiya o‘tgan oyga nisbatan ${(change * 100).toFixed(0)}% o‘zgargan — izoh talab qilinadi`,
+          message: `Tarmoqqa kirgan energiya o‘tgan oyga nisbatan ${(change * 100).toFixed(0)}% o‘zgargan - izoh talab qilinadi`,
         });
       }
     }
@@ -484,7 +484,7 @@ export async function validateSubmission(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Revisiyalar farqi — ko'ruvchi maydon darajasidagi o'zgarishni ko'radi
+// Revisiyalar farqi - ko'ruvchi maydon darajasidagi o'zgarishni ko'radi
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FIELD_LABELS: Record<string, string> = {

@@ -1,5 +1,5 @@
 /**
- * API javob tiplari — server va klient o'rtasidagi shartnoma.
+ * API javob tiplari - server va klient o'rtasidagi shartnoma.
  * Route handler'lar shu tiplarni qaytaradi, TanStack Query shu tiplarni oladi.
  */
 
@@ -38,7 +38,7 @@ export interface Mfy {
   gridCol: number | null;
 }
 
-/** Fider bo'yicha ma'sul shaxs — bitta fider uchun bitta amaldagi yozuv. */
+/** Fider bo'yicha ma'sul shaxs - bitta fider uchun bitta amaldagi yozuv. */
 export interface MfyResponsible {
   mfyId: number;
   fullName: string;
@@ -87,7 +87,7 @@ export interface Bootstrap {
   mfys: Mfy[];
   norms: Norm[];
   categories: { code: ConsumerCategory; nameUz: string }[];
-  /** Ma'lumotlar oxirgi marta qachon agregatlangani — header'dagi ishonch belgisi. */
+  /** Ma'lumotlar oxirgi marta qachon agregatlangani - header'dagi ishonch belgisi. */
   lastRefreshAt: string | null;
   /** Ma'lumot mavjud bo'lgan davrlar oralig'i. */
   dataRange: { minDate: string | null; maxDate: string | null };
@@ -126,19 +126,19 @@ export interface KpiTile {
    * Solishtirish qiymati ko'rsatilsa, raqam o'z-o'zini izohlaydi.
    */
   prevValue: number | null;
-  /** Solishtirish davri, masalan `2026-05` — "o'tgan oy" degani. */
+  /** Solishtirish davri, masalan `2026-05` - "o'tgan oy" degani. */
   prevPeriod: string;
-  /** O'sish yaxshimi yoki yomonmi — rangni shu belgilaydi. */
+  /** O'sish yaxshimi yoki yomonmi - rangni shu belgilaydi. */
   goodDirection: 'up' | 'down';
   /** Sparkline nuqtalari. */
   spark: number[];
   /**
    * Sparkline nuqtalari qaysi davrni bildiradi.
    * Energiya ko'rsatkichlari kunlik, abonent/qarzdorlik/TP esa oylik yoziladi,
-   * shuning uchun diagrammalar bir xil davrni ko'rsatmaydi — buni aytish shart.
+   * shuning uchun diagrammalar bir xil davrni ko'rsatmaydi - buni aytish shart.
    */
   sparkBucket: 'day' | 'month';
-  /** Manba (provenance) kaliti — "i" popoveri uchun. */
+  /** Manba (provenance) kaliti - "i" popoveri uchun. */
   metric: string;
 }
 
@@ -152,13 +152,13 @@ export interface EnergyBalanceNode {
 
 export interface EfficiencyBreakdown {
   score: number;
-  /** O'tgan davr bahosi — o'zgarishni ko'rsatish uchun. */
+  /** O'tgan davr bahosi - o'zgarishni ko'rsatish uchun. */
   prevScore: number | null;
   components: { key: string; labelUz: string; weight: number; score: number }[];
-  /** Statistik prognoz (Holt-Winters) — mavjud bo'lsa. */
+  /** Statistik prognoz (Holt-Winters) - mavjud bo'lsa. */
   forecast: { period: string; lossPct: number }[] | null;
   /**
-   * Tavsiya xulosasi — DETERMINISTIK: normadan oshgan mahallalar soni va
+   * Tavsiya xulosasi - DETERMINISTIK: normadan oshgan mahallalar soni va
    * yo'qotishning normativ darajasi. Hech qanday model yoki LLM yo'q.
    */
   advice: { count: number; targetLossPct: number; currentLossPct: number } | null;
@@ -199,7 +199,7 @@ export interface DistanceRow {
  * Transformator holati.
  *
  * `null` = MA'LUMOT YO'Q (pasport kiritilmagan yoki oylik holat hisoboti
- * kelmagan), 0 emas. Interfeys bunday maydonni «—» deb ko'rsatadi.
+ * kelmagan), 0 emas. Interfeys bunday maydonni «-» deb ko'rsatadi.
  */
 export interface TpMonitorRow {
   tpId: number;
@@ -215,7 +215,7 @@ export interface TpMonitorRow {
 }
 
 /**
- * Fider boshidagi oylik balans — hisoblagich ko'rsatkichi va undan
+ * Fider boshidagi oylik balans - hisoblagich ko'rsatkichi va undan
  * kelib chiqadigan to'rt raqam.
  */
 export interface FeederMonthly {
@@ -235,7 +235,7 @@ export interface FeederMonthly {
   avgDailyKwh: number;
   /** Hisoblangan: o'rtacha yuklama, kW. */
   avgLoadKw: number;
-  /** Davrdagi kunlar soni — yuqoridagi o'rtachalar shundan chiqadi. */
+  /** Davrdagi kunlar soni - yuqoridagi o'rtachalar shundan chiqadi. */
   days: number;
 }
 
@@ -253,6 +253,68 @@ export interface TpMonthlyRow {
   kwhMonth: number;
 }
 
+/** TP darajasidagi kunlik chiziqli yo'qotish - balans hisoblagichi vs bириктирилган iste'molchilar. */
+export interface TpLossDailyRow {
+  id: number;
+  tpId: number;
+  code: string;
+  mfyId: number;
+  mfyName: string;
+  bizDate: string;
+  kwhBalanceMeter: number;
+  kwhConsumersAttached: number;
+  kwhLoss: number;
+  lossPct: number | null;
+  inspectionNote: string | null;
+  source: 'EXCEL' | 'MANUAL';
+}
+
+/** `detectTpLossAnomalies()` natijasining bitta elementi. */
+export interface TpLossAnomalyItem {
+  tpId: number;
+  code: string;
+  mfyId: number;
+  mfyName: string;
+  bizDate: string;
+  kwhBalanceMeter: number;
+  kwhConsumersAttached: number;
+  kwhLoss: number;
+  lossPct: number | null;
+  severity: 'medium' | 'high';
+  messageUz: string;
+}
+
+export interface TpLossAnomalyReport {
+  asOfDate: string | null;
+  anomalies: TpLossAnomalyItem[];
+}
+
+/** Yuklashdan OLDIN ko'rsatiladigan qator - TP kodi hali resolve qilingan/qilinmagan. */
+export interface TpLossPreviewRow {
+  tpCode: string;
+  tpId: number | null;
+  mfyId: number | null;
+  bizDate: string;
+  kwhBalanceMeter: number;
+  kwhConsumersAttached: number;
+  kwhLoss: number;
+  lossPct: number | null;
+  inspectionNote: string | null;
+  willUpsert: boolean;
+}
+
+export interface TpLossPreviewResponse {
+  rows: TpLossPreviewRow[];
+  warnings: { rowNo: number; message: string }[];
+  summary: { totalRows: number; resolvedRows: number; unresolvedCodes: string[] };
+}
+
+export interface TpLossConfirmResponse {
+  inserted: number;
+  updated: number;
+  skippedUnresolved: string[];
+}
+
 export interface DebtBreakdown {
   totalMln: number;
   byCategory: { category: ConsumerCategory; labelUz: string; amountMln: number; pct: number }[];
@@ -263,11 +325,11 @@ export interface LossMapCell {
   mfyId: number;
   nameUz: string;
   shortName: string;
-  /** Plitka maydoni — tarmoqqa kirgan energiya. */
+  /** Plitka maydoni - tarmoqqa kirgan energiya. */
   kwhIn: number;
   lossPct: number;
   normPct: number;
-  /** Rang qiymati — normadan farq (p.p.). */
+  /** Rang qiymati - normadan farq (p.p.). */
   gapPp: number;
   status: RagStatus;
   gridRow: number | null;
@@ -302,7 +364,7 @@ export interface AlertItem {
   /** Bosilganda o'tiladigan sahifa. */
   href: string | null;
   mfyId: number | null;
-  /** Qoida kodi — bu deterministik SQL qoidasi, AI emas. */
+  /** Qoida kodi - bu deterministik SQL qoidasi, AI emas. */
   rule: string;
 }
 
@@ -350,16 +412,16 @@ export interface ConsumerBreakdown {
   disconnected: number;
   /** OQIM: davr ichida yangi ulanganlar. */
   new: number;
-  /** OQIM: davr ichida uzilganlar — `disconnected` dan farqli o'laroq. */
+  /** OQIM: davr ichida uzilganlar - `disconnected` dan farqli o'laroq. */
   disconnectedNew: number;
   population: number;
   legal: number;
 }
 
 /**
- * Yo'qotish tuzilmasi IKKI toifada — sohaning standart bo'linishi:
- *   texnologik — tarmoqda fizik yo'qoladigan qism (tabiiy + texnik),
- *   tijoriy    — hisobga olinmagan iste'mol (noqonuniy ulanish, hisoblagich).
+ * Yo'qotish tuzilmasi IKKI toifada - sohaning standart bo'linishi:
+ *   texnologik - tarmoqda fizik yo'qoladigan qism (tabiiy + texnik),
+ *   tijoriy    - hisobga olinmagan iste'mol (noqonuniy ulanish, hisoblagich).
  * Bazada uch xil ustun saqlanadi, ular shu ikki toifaga yig'iladi.
  */
 export interface LossStructure {
@@ -367,7 +429,7 @@ export interface LossStructure {
   parts: { key: 'technological' | 'commercial'; labelUz: string; kwh: number; pct: number }[];
 }
 
-/** Bitta dalolatnoma — "nima asosida?" oynasidagi ro'yxat qatori. */
+/** Bitta dalolatnoma - "nima asosida?" oynasidagi ro'yxat qatori. */
 export interface ViolationActRow {
   id: number;
   actNo: string;
@@ -382,7 +444,7 @@ export interface ViolationActRow {
   caseType: ViolationCaseType;
 }
 
-/** Toifa bo'yicha yig'indi — kartadagi bitta qator. */
+/** Toifa bo'yicha yig'indi - kartadagi bitta qator. */
 export interface ViolationSummaryRow {
   caseType: ViolationCaseType;
   labelUz: string;
@@ -394,7 +456,7 @@ export interface ViolationSummaryRow {
 }
 
 export interface ViolationSummary {
-  /** Qaysi oraliq bo'yicha hisoblangani — kartada ochiq yoziladi. */
+  /** Qaysi oraliq bo'yicha hisoblangani - kartada ochiq yoziladi. */
   from: string;
   to: string;
   rows: ViolationSummaryRow[];
@@ -402,7 +464,7 @@ export interface ViolationSummary {
 
 export interface WorkPhoto {
   id: number;
-  /** API yo'li — `/api/files/work-photo/:id`. */
+  /** API yo'li - `/api/files/work-photo/:id`. */
   url: string;
   kind: 'BEFORE' | 'AFTER' | 'DOC';
   caption: string | null;
@@ -411,7 +473,7 @@ export interface WorkPhoto {
   createdAt: string;
 }
 
-/** Ish dalolatnomasi — barcha maydonlar + rasmlar. */
+/** Ish dalolatnomasi - barcha maydonlar + rasmlar. */
 export interface WorkDetail extends WorkRow {
   description: string | null;
   mfyCode: string;
@@ -530,7 +592,7 @@ export interface SubmissionDiffRow {
 export interface ApiError {
   error: string;
   message: string;
-  /** Maydonga bog'langan xatolar — HeroUI `<Form validationErrors>` uchun. */
+  /** Maydonga bog'langan xatolar - HeroUI `<Form validationErrors>` uchun. */
   errors?: Record<string, string>;
   requestId?: string;
 }

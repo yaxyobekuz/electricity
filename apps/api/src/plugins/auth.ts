@@ -1,13 +1,13 @@
 /**
  * Autentifikatsiya va rol nazorati.
  *
- *  • Parol      — argon2id
- *  • Access     — JWT (jose, HS256), 15 daq, klientda faqat xotirada
- *  • Refresh    — opaque 32 bayt, xeshlangan holda DB da, httpOnly cookie,
+ *  • Parol      - argon2id
+ *  • Access     - JWT (jose, HS256), 15 daq, klientda faqat xotirada
+ *  • Refresh    - opaque 32 bayt, xeshlangan holda DB da, httpOnly cookie,
  *                 oila (family) bo'yicha qayta ishlatishni aniqlash
  *
  * Har bir so'rovda `AppContext` quriladi va u DB tranzaksiyasiga
- * `SET LOCAL app.*` orqali uzatiladi — audit va RLS shundan oziqlanadi.
+ * `SET LOCAL app.*` orqali uzatiladi - audit va RLS shundan oziqlanadi.
  */
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
@@ -100,7 +100,7 @@ export async function login(
   const row = await queryOne<{ id: number; password_hash: string; is_active: boolean }>(
     `SELECT id, password_hash, is_active FROM sec.app_user WHERE login = $1`, [loginName]);
 
-  // Foydalanuvchi topilmasa ham xeshni tekshiramiz — vaqt bo'yicha sizib chiqishni oldini oladi.
+  // Foydalanuvchi topilmasa ham xeshni tekshiramiz - vaqt bo'yicha sizib chiqishni oldini oladi.
   const hash = row?.password_hash ?? '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$aaaaaaaaaaaaaaaaaaaaaa';
   let ok = false;
   try {
@@ -137,7 +137,7 @@ export async function rotateRefresh(token: string): Promise<LoginOutcome | null>
 
   if (!row || row.revoked_at || row.expired) return null;
 
-  // QAYTA ISHLATISH aniqlandi — butun oila bekor qilinadi.
+  // QAYTA ISHLATISH aniqlandi - butun oila bekor qilinadi.
   if (row.used_at) {
     await withTransaction({ userId: row.user_id, role: 'system', mfyIds: [], requestId: 'token-reuse' },
       async (client) => {
@@ -194,7 +194,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorateRequest('user', null);
   app.decorateRequest('ctx', undefined as unknown as AppContext);
 
-  // Har bir so'rovda kontekstni quramiz (token bo'lmasa ham — anonim kontekst).
+  // Har bir so'rovda kontekstni quramiz (token bo'lmasa ham - anonim kontekst).
   app.addHook('onRequest', async (req) => {
     const header = req.headers.authorization;
     let user: AuthUser | null = null;

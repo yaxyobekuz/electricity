@@ -1,4 +1,4 @@
-/** API serveri — kirish nuqtasi. */
+/** API serveri - kirish nuqtasi. */
 import cron from 'node-cron';
 
 import { buildApp } from './app.ts';
@@ -24,11 +24,11 @@ async function main(): Promise<void> {
   );
 
   /*
-   * Kunlik ogohlantirish push'i — har kuni soat 08:00 da (Toshkent).
+   * Kunlik ogohlantirish push'i - har kuni soat 08:00 da (Toshkent).
    *
    * `SYSTEM_CONTEXT` ishlatiladi: bu foydalanuvchi so'rovi emas, mustaqil
    * fon vazifasi, hech kim tizimga kirmagan. Natija `alerts.ts` ichidagi
-   * keshga yoziladi — `routes/ai.ts` GET `/alerts` shu yerdan o'qiydi.
+   * keshga yoziladi - `routes/ai.ts` GET `/alerts` shu yerdan o'qiydi.
    * Xato yiqilib ketishi mumkin emas: bitta buzuq hisob-kitob butun cron
    * rejalashtiruvchini to'xtatib qo'ymasligi kerak.
    */
@@ -39,6 +39,13 @@ async function main(): Promise<void> {
         try {
           const digest = await alerts.computeAlerts(SYSTEM_CONTEXT, null);
           alerts.setCachedDigest(digest);
+
+          const draftedCount = await alerts.autoDraftHighSeverityTpLossWorks(SYSTEM_CONTEXT);
+          if (draftedCount > 0) {
+            app.log.info(
+              { draftedCount }, 'TP yo\'qotish anomaliyasi uchun avtomatik reja yaratildi',
+            );
+          }
 
           if (config.telegram.botToken && config.telegram.alertChatId) {
             await telegram.sendMessage(
@@ -54,9 +61,9 @@ async function main(): Promise<void> {
   );
 
   /*
-   * Haftalik AI tahliliy xulosa push'i — har Dushanba soat 08:30 da
+   * Haftalik AI tahliliy xulosa push'i - har Dushanba soat 08:30 da
    * (Toshkent), kunlik ogohlantirish push'idan keyin, hokim ularni ketma-ket
-   * o'qisin deb. Xato yiqilib ketishi mumkin emas — sabab yuqoridagi bilan
+   * o'qisin deb. Xato yiqilib ketishi mumkin emas - sabab yuqoridagi bilan
    * bir xil (bitta buzuq hisob-kitob butun cron rejalashtiruvchini
    * to'xtatib qo'ymasligi kerak).
    */
@@ -79,7 +86,7 @@ async function main(): Promise<void> {
   );
 
   /*
-   * Oylik AI tahliliy xulosa push'i — har oyning 1-kuni soat 09:00 da
+   * Oylik AI tahliliy xulosa push'i - har oyning 1-kuni soat 09:00 da
    * (Toshkent). Mantiq yuqoridagi haftalik bilan bir xil, faqat `kind`
    * 'monthly'.
    */
@@ -116,7 +123,7 @@ async function main(): Promise<void> {
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
   await app.listen({ host: config.api.host, port: config.api.port });
-  app.log.info(`BEAP API tayyor — http://${config.api.host}:${config.api.port}/api`);
+  app.log.info(`BEAP API tayyor - http://${config.api.host}:${config.api.port}/api`);
 }
 
 main().catch((err: unknown) => {

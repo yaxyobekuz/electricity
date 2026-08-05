@@ -1,5 +1,5 @@
 /**
- * AI yordamchi — OpenAI (ChatGPT) API ga ko'prik.
+ * AI yordamchi - OpenAI (ChatGPT) API ga ko'prik.
  *
  * IKKI VAZIFA:
  *   1. Tizimdagi HAQIQIY raqamlardan ixcham "ma'lumot surati" yig'ish;
@@ -14,15 +14,17 @@
  * serveriga murojaat qiladi (CSP `connect-src 'self'` buni majburlaydi),
  * tashqi so'rovni esa shu modul qiladi.
  *
- * Kalit berilmasa modul o'chgan holatda qoladi — tizim avvalgidek offline.
+ * Kalit berilmasa modul o'chgan holatda qoladi - tizim avvalgidek offline.
  */
 import { config } from '../config.ts';
 import { type AppContext, queryOne } from '../db/pool.ts';
 import * as q from '../db/queries/dashboard.ts';
 import { getMfyResponsible } from '../db/queries/ref.ts';
+import * as tq from '../db/queries/tpLoss.ts';
 import {
   TOOL_LABELS, TOOL_SPECS, type ClientAction, type ToolContext, type ToolOutcome, runTool,
 } from './ai-tools.ts';
+import { detectTpLossAnomalies } from './analytics.ts';
 
 export const aiEnabled = (): boolean => config.ai.apiKey.length > 0;
 
@@ -35,7 +37,7 @@ export interface ChatMessage {
 
 /** 1048000 → "1 048 000". Model ham, foydalanuvchi ham bir xil ko'radi. */
 function n(v: number | null | undefined, digits = 0): string {
-  if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+  if (v === null || v === undefined || !Number.isFinite(v)) return '-';
   return v.toLocaleString('en-US', {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
@@ -43,7 +45,7 @@ function n(v: number | null | undefined, digits = 0): string {
 }
 
 const p = (v: number | null | undefined): string =>
-  v === null || v === undefined ? '—' : `${v.toFixed(1)}%`;
+  v === null || v === undefined ? '-' : `${v.toFixed(1)}%`;
 
 // ─── Ma'lumot surati ────────────────────────────────────────────────────────
 
@@ -59,7 +61,7 @@ export interface Snapshot {
  * Surat 60 soniya keshlanadi.
  *
  * Chat oynasida savollar ketma-ket keladi va har biri uchun 5 ta SQL
- * so'rovini qayta yugurtirish keraksiz — ma'lumot kunlik yangilanadi.
+ * so'rovini qayta yugurtirish keraksiz - ma'lumot kunlik yangilanadi.
  */
 const cache = new Map<string, { at: number; value: Snapshot }>();
 const CACHE_MS = 60_000;
@@ -82,7 +84,10 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
   );
   if (!feeder) return null;
 
-  const [overview, feederMonthly, tps, workRows, violationSummary, range, responsible] = await Promise.all([
+  const [
+    overview, feederMonthly, tps, workRows, violationSummary, range, responsible,
+    tpLossRows, tpLossAnomalies,
+  ] = await Promise.all([
     q.districtOverview(ctx, resolved),
     q.feederMonthly(ctx, resolved, feeder.id),
     q.tpMonthly(ctx, resolved, feeder.id),
@@ -90,6 +95,8 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
     q.violations(ctx, resolved, feeder.id),
     q.dataRange(ctx),
     getMfyResponsible(ctx, feeder.id),
+    tq.tpLossLatestByTp(ctx, feeder.id, 100),
+    detectTpLossAnomalies(ctx, feeder.id),
   ]);
 
   const t = overview?.totals;
@@ -97,11 +104,11 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
 
   lines.push(`FIDER: ${feeder.name_uz} (${feeder.elektroset})`);
   lines.push(`HISOBOT DAVRI: ${resolved}${feederMonthly ? ` (${feederMonthly.days} kun)` : ''}`);
-  lines.push(`MA'LUMOT MAVJUD ORALIQ: ${range.minDate ?? '—'} … ${range.maxDate ?? '—'}`);
+  lines.push(`MA'LUMOT MAVJUD ORALIQ: ${range.minDate ?? '-'} … ${range.maxDate ?? '-'}`);
   lines.push(
     responsible
       ? `MA'SUL SHAXS: ${responsible.fullName}`
-        + `${responsible.position ? ` — ${responsible.position}` : ''}`
+        + `${responsible.position ? ` - ${responsible.position}` : ''}`
         + `${responsible.phone ? `, tel: ${responsible.phone}` : ''}`
       : "MA'SUL SHAXS: hozircha belgilanmagan (sozlamalar: /settings/responsible)",
   );
@@ -139,7 +146,7 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
     const totalKwh = tps.reduce((a, r) => a + r.kwhMonth, 0);
 
     /*
-     * TAYYOR REYTINGLAR — modelga saralashni topshirib bo'lmaydi.
+     * TAYYOR REYTINGLAR - modelga saralashni topshirib bo'lmaydi.
      *
      * Sinovda ko'rindi: 51 qatorli ro'yxat berilganda model faqat boshidagi
      * bir nechta qatorni ko'radi va "eng ko'p uzilgan abonent" savoliga
@@ -177,7 +184,7 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
       lines.push('');
     }
 
-    lines.push(`TP KESIMI — TO‘LIQ RO‘YXAT (${tps.length} ta).`);
+    lines.push(`TP KESIMI - TO‘LIQ RO‘YXAT (${tps.length} ta).`);
     lines.push('  DIQQAT: ro‘yxat ISTE\'MOL bo‘yicha saralangan. Reyting savollariga');
     lines.push('  javob berishda yuqoridagi tayyor reytinglardan foydalan, bu ro‘yxatning');
     lines.push('  boshidagi qatorlardan xulosa chiqarma.');
@@ -192,6 +199,23 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
     lines.push('');
   }
 
+  if (tpLossRows.length > 0) {
+    lines.push('TP BALANS HISOBLAGICHI - SO‘NGGI KUNLIK O‘QISH (fider oylik balansidan FARQLI, TP darajasida):');
+    for (const r of tpLossRows) {
+      lines.push(
+        `  ${r.code} (${r.bizDate}): balans ${n(r.kwhBalanceMeter)} kWh, `
+        + `iste'molchilar ${n(r.kwhConsumersAttached)} kWh, yo'qotish ${n(r.kwhLoss)} kWh (${p(r.lossPct)})`,
+      );
+    }
+    lines.push('');
+  }
+
+  if (tpLossAnomalies.anomalies.length > 0) {
+    lines.push('TP BALANS ANOMALIYALARI (mumkin bo‘lgan hisoblagich xatosi/o‘g‘irlik belgisi):');
+    for (const a of tpLossAnomalies.anomalies) lines.push(`  · [${a.severity}] ${a.messageUz}`);
+    lines.push('');
+  }
+
   if (workRows.length > 0) {
     const byStatus = new Map<string, number>();
     for (const w of workRows) byStatus.set(w.status, (byStatus.get(w.status) ?? 0) + 1);
@@ -199,7 +223,7 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
     lines.push(`  Holati bo‘yicha: ${[...byStatus].map(([s, c]) => `${s}=${c}`).join(', ')}`);
     for (const w of workRows.slice(0, 12)) {
       lines.push(
-        `  · ${w.titleUz} (${w.workType}) — ${w.status}, bajarildi ${w.progressPct}%`
+        `  · ${w.titleUz} (${w.workType}) - ${w.status}, bajarildi ${w.progressPct}%`
         + `${w.tpCode ? `, ${w.tpCode}` : ''}`
         + `${w.effectSavingKwhMonth > 0 ? `, tejamkorlik ${n(w.effectSavingKwhMonth)} kWh/oy` : ''}`,
       );
@@ -232,23 +256,23 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
 
 const GUIDE = `
 PANEL BO'LIMLARI (navigate asbobidagi yo'llar):
-  · /dashboard      — KPI kartalari, dinamika, yo'qotish tuzilmasi, TP holati
-  · /transformers   — 51 ta TP: hisoblagich, abonentlar, oylik iste'mol
-  · /energy-balance — kirgan energiya qayerga ketgani
-  · /works          — rejalashtirilgan va bajarilgan ishlar, dalolatnomalar
-  · /reports        — Excel/PDF eksport sahifasi
-  · /entry          — oylik shakllarni to'ldirish
-  · /review         — kiritilgan ma'lumotni tekshirish va tasdiqlash
-  · /settings/responsible — fider uchun ma'sul shaxsni belgilash/o'zgartirish
+  · /dashboard      - KPI kartalari, dinamika, yo'qotish tuzilmasi, TP holati
+  · /transformers   - 51 ta TP: hisoblagich, abonentlar, oylik iste'mol
+  · /energy-balance - kirgan energiya qayerga ketgani
+  · /works          - rejalashtirilgan va bajarilgan ishlar, dalolatnomalar
+  · /reports        - Excel/PDF eksport sahifasi
+  · /entry          - oylik shakllarni to'ldirish
+  · /review         - kiritilgan ma'lumotni tekshirish va tasdiqlash
+  · /settings/responsible - fider uchun ma'sul shaxsni belgilash/o'zgartirish
 `.trim();
 
 function systemPrompt(snapshot: Snapshot | null): string {
   return [
-    'Sen — BEAP (elektr energiya nazorat tizimi) ichidagi AGENTSAN.',
+    'Sen - BEAP (elektr energiya nazorat tizimi) ichidagi AGENTSAN.',
     'Foydalanuvchilar: elektr tarmoqlari xodimlari va rahbarlar.',
     '',
     'ENG MUHIM QOIDA: sen maslahat beruvchi emas, ISH BAJARUVCHISAN.',
-    'Foydalanuvchidan biror narsa qilishni SO‘RAMA — asbob bilan O‘ZING bajar.',
+    'Foydalanuvchidan biror narsa qilishni SO‘RAMA - asbob bilan O‘ZING bajar.',
     '  ✗ "Hisobotni yuklab olish uchun /reports sahifasiga o‘ting"',
     '  ✓ download_report asbobini chaqirasan, keyin "Oylik hisobot yuklandi" deysan',
     '  ✗ "Transformatorlar sahifasida ko‘rishingiz mumkin"',
@@ -256,60 +280,68 @@ function systemPrompt(snapshot: Snapshot | null): string {
     'Faqat huquqing yetmagan yoki ma’lumot bo‘lmagan holatda uzr so‘ra.',
     '',
     'ASBOBLARDAN FOYDALANISH:',
-    '1. Savolga MA’LUMOT SURATIDAGI raqam yetsa — asbob chaqirmasdan javob ber.',
-    '   Suratda yo‘q bo‘lsa (boshqa oy, bitta TP tafsiloti, ishlar, aktlar) —',
+    '1. Savolga MA’LUMOT SURATIDAGI raqam yetsa - asbob chaqirmasdan javob ber.',
+    '   Suratda yo‘q bo‘lsa (boshqa oy, bitta TP tafsiloti, ishlar, aktlar) -',
     '   tegishli asbobni chaqir. Raqamni HECH QACHON o‘ylab topma.',
-    '2. Reyting savollarida ("eng ko‘p", "eng yomon") list_tps asbobini ishlat —',
+    '2. Reyting savollarida ("eng ko‘p", "eng yomon") list_tps asbobini ishlat -',
     '   ro‘yxatni o‘zing saralashga urinma.',
     '3. Bir javobda bir nechta asbob chaqirish mumkin va ko‘pincha KERAK:',
     '   "TP-067 ni ko‘rsat" → get_tp (raqamlar uchun) VA navigate("/transformers",',
     '   search:"TP-067") (foydalanuvchi jadvalda ham ko‘rsin).',
-    '   "och", "ko‘rsat", "olib bor" so‘zlari — navigate chaqirish signali.',
+    '   "och", "ko‘rsat", "olib bor" so‘zlari - navigate chaqirish signali.',
     '   "iyun oyini ko‘rsat" → set_period("2026-06").',
     '4. "grafik", "diagramma", "chizma" so‘zlari ishlatilsa yoki foydalanuvchi biror',
-    '   narsani rasm holida ko‘rishni so‘rasa — mos `kind` bilan show_chart asbobini',
+    '   narsani rasm holida ko‘rishni so‘rasa - mos `kind` bilan show_chart asbobini',
     '   chaqir. Hisobot yuklab berish yoki ko‘rish so‘ralganda ham (masalan davr',
-    '   hisobot, TP reytingi) diagramma foydali bo‘lsa — show_chart ni tegishli',
+    '   hisobot, TP reytingi) diagramma foydali bo‘lsa - show_chart ni tegishli',
     '   ma’lumot/yuklash asbobi bilan SHU javobda BIRGA chaqir, faqat raqam yoki',
     '   faqat fayl bilan cheklanma.',
-    '5. Energiya balansi 31 kunlik jadval — uni chat orqali to‘ldirma.',
+    '5. Energiya balansi 31 kunlik jadval - uni chat orqali to‘ldirma.',
     '   Buning o‘rniga navigate bilan /entry sahifasini och.',
     '6. "Muammo bormi", "diqqat talab qiladigan narsa bormi" kabi savollarda',
-    '   get_alerts asbobini chaqir — javobni o‘zing taxmin qilma.',
+    '   get_alerts asbobini chaqir - javobni o‘zing taxmin qilma.',
     '7. MONTHLY_RETURN hisobotini chatda BOSQICHMA-BOSQICH to‘ldirish mumkin:',
     '   create_submission → har bir maydonni suhbat orqali so‘rab ol →',
     '   save_monthly_return → submit_submission dan OLDIN validate_submission',
     '   chaqir va xatolarni oddiy tilda tushuntir → shundan keyingina',
     '   submit_submission. Bu qoida ham 31 kunlik energiya balansi jadvaliga',
-    '   taalluqli emas — u hech qachon chat orqali to‘ldirilmaydi (yuqoridagi',
+    '   taalluqli emas - u hech qachon chat orqali to‘ldirilmaydi (yuqoridagi',
     '   5-band).',
     '8. "Qanday ish tavsiya qilasan?", "nima qilish kerak?" kabi savollarda',
     '   recommend_works asbobini chaqir. create_work FAQAT foydalanuvchi',
-    '   tavsiyani tasdiqlagach yoki aniq "shuni qo‘sh"/"yoz" desa chaqiriladi —',
-    '   so‘ralmasdan turib ish yaratma (bu — yozish amali, boshqa asboblardan',
+    '   tavsiyani tasdiqlagach yoki aniq "shuni qo‘sh"/"yoz" desa chaqiriladi -',
+    '   so‘ralmasdan turib ish yaratma (bu - yozish amali, boshqa asboblardan',
     '   farqli o‘laroq oldindan tasdiq talab qiladi). Ish holati haqida',
     '   so‘ralganda yoki "TP-067 dagi ish tugadi/boshlandi" kabi xabar',
     '   berilganda update_work_status chaqiriladi.',
     '9. "TP-067 ortiqcha yuklangan", "TP-043 nosoz" kabi TP holati haqida xabar',
     '   berilganda update_tp_status, "N km tarmoq ta’mirlanishi kerak" kabi',
     '   xabarda update_network_defect chaqiriladi (recommend_works aynan shu',
-    '   ma’lumotlarga tayanadi — kiritilmasa tavsiya berolmaydi). Ikkalasi ham',
+    '   ma’lumotlarga tayanadi - kiritilmasa tavsiya berolmaydi). Ikkalasi ham',
     '   qoralama sifatida saqlaydi: rasman hisoblanishi (jamlanmalarga qo‘shilishi)',
     '   uchun submit_submission KERAK, tasdiqlash esa faqat elektroset menejeri',
-    '   yoki administrator uchun (approve_submission) — buni foydalanuvchiga',
+    '   yoki administrator uchun (approve_submission) - buni foydalanuvchiga',
     '   ayt yoki agar u shu rolda bo‘lsa o‘zing bajaraver.',
     '',
     'JAVOB USLUBI:',
-    '10. O‘ZBEK tilida (lotin yozuvi). Foydalanuvchi rus yoki ingliz tilida yozsa —',
+    '10. O‘ZBEK tilida (lotin yozuvi). Foydalanuvchi rus yoki ingliz tilida yozsa -',
     '   o‘sha tilda javob ber.',
     '11. Qisqa: 2–5 gap yoki qisqa ro‘yxat. Bajargan ishingni bir gapda ayt.',
     '12. Raqam bilan birga birligini yoz (kWh, %, ta, mln so‘m).',
     '13. Markdown sarlavhalari (#) ishlatma; ro‘yxat uchun "·" belgisi.',
     '14. Savol 4 ta tayyor show_chart turiga yoki boshqa asboblarning oddiy matnli javobiga',
-    '    sig‘masa, lekin foydalanuvchi javobni RASM/JADVAL holida ko‘rishni xohlasa — avval',
+    '    sig‘masa, lekin foydalanuvchi javobni RASM/JADVAL holida ko‘rishni xohlasa - avval',
     '    kerakli raqamlarni tegishli ma’lumot asboblari bilan (get_tp, get_series,',
     '    compare_periods va h.k.) ol, keyin render_table yoki render_custom_chart ni O‘SHA',
     '    raqamlar bilan chaqir. Raqamni hech qachon o‘zing o‘ylab topma.',
+    '15. "TP balans/hisoblagich anomaliyasi", "bugun qanday muammo bor",',
+    '    "o‘g‘irlik" kabi savollarda get_tp_loss_anomalies asbobini yoki',
+    '    MA’LUMOT SURATIDAGI "TP BALANS ANOMALIYALARI" bo‘limini ishlat - bu',
+    '    ma’lumot fider (oylik) balansidan FARQLI, TP darajasidagi KUNLIK',
+    '    hisoblagich ko‘rsatkichi. Manfiy yo‘qotish (iste’molchilar balansdan',
+    '    ko‘p) fizik jihatdan mumkin emas - buni har doim aniq tushuntir va',
+    '    tekshiruv tavsiya qil, o‘zing "o‘g‘irlik" deb xulosa chiqarma (bu -',
+    '    faqat signal, aniqlangan xulosa emas).',
     '',
     GUIDE,
     '',
@@ -329,7 +361,7 @@ export class AiError extends Error {
   }
 }
 
-/** OpenAI xabar formati — asbob chaqiruvlari bilan birga. */
+/** OpenAI xabar formati - asbob chaqiruvlari bilan birga. */
 interface WireMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string | null;
@@ -374,13 +406,13 @@ async function* streamTurn(
         temperature: 0.2,
         max_tokens: config.ai.maxTokens,
         messages,
-        // Oxirgi bosqichda asboblar berilmaydi — model xulosa yozishi shart.
+        // Oxirgi bosqichda asboblar berilmaydi - model xulosa yozishi shart.
         ...(withTools ? { tools: TOOL_SPECS, tool_choice: 'auto' } : {}),
       }),
       signal,
     });
   } catch (err) {
-    // Tarmoq yo'q / DNS ishlamayapti — offline muhitda odatiy hol.
+    // Tarmoq yo'q / DNS ishlamayapti - offline muhitda odatiy hol.
     throw new AiError(
       502,
       `AI xizmatiga ulanib bo‘lmadi: ${err instanceof Error ? err.message : 'noma’lum xato'}`,
@@ -433,7 +465,7 @@ async function* streamTurn(
         return delta.content;
       }
     } catch {
-      /* to'liq kelmagan bo'lak — keyingi o'qishda yig'iladi */
+      /* to'liq kelmagan bo'lak - keyingi o'qishda yig'iladi */
     }
     return undefined;
   };
@@ -455,7 +487,7 @@ async function* streamTurn(
           if (!line.startsWith('data:')) continue;
           const chunk = consume(line.slice(5).trim());
           if (chunk === null) return { text, calls: [...calls.values()] };
-          // Bo'lak KELGAN ZAHOTI chiqariladi — chat oynasida so'zlar
+          // Bo'lak KELGAN ZAHOTI chiqariladi - chat oynasida so'zlar
           // yozilib borgani ko'rinadi, bosqich tugashini kutmaydi.
           if (chunk !== undefined) yield { type: 'delta', text: chunk };
         }
@@ -471,17 +503,17 @@ async function* streamTurn(
 /**
  * AGENT HALQASI.
  *
- * Model asbob chaqirsa — uni bajaramiz, natijani suhbatga qo'shamiz va
+ * Model asbob chaqirsa - uni bajaramiz, natijani suhbatga qo'shamiz va
  * modelni QAYTA chaqiramiz. Shu tufayli u ketma-ket ish qila oladi:
  * "davrni almashtir" → "endi TP larni saralab ber" → xulosa yoz.
  *
- * `MAX_ROUNDS` — cheksiz halqadan himoya. Oxirgi bosqichda asboblar
+ * `MAX_ROUNDS` - cheksiz halqadan himoya. Oxirgi bosqichda asboblar
  * BERILMAYDI: shunda model majburan matn bilan javob beradi va suhbat
  * "asbob chaqiraveraman" holatida osilib qolmaydi.
  *
  * 8 (avval 5 edi): tahlil asboblari (anomaliya, prognoz, ogohlantirish) va
  * bosqichma-bosqich hisobot to'ldirish ko'proq ketma-ket chaqiruv talab
- * qiladi — masalan create_submission → save_monthly_return →
+ * qiladi - masalan create_submission → save_monthly_return →
  * validate_submission → submit_submission bitta suhbatda.
  */
 const MAX_ROUNDS = 8;
@@ -509,7 +541,7 @@ export async function* runAgent(
   ];
 
   for (let round = 1; round <= MAX_ROUNDS; round += 1) {
-    // `yield*` — ichki generatorning bo'laklari to'g'ridan-to'g'ri o'tadi,
+    // `yield*` - ichki generatorning bo'laklari to'g'ridan-to'g'ri o'tadi,
     // qaytish qiymati esa (matn + asbob chaqiruvlari) shu yerda qoladi.
     const turn = yield* streamTurn(wire, round < MAX_ROUNDS, merged);
 
@@ -532,14 +564,14 @@ export async function* runAgent(
       try {
         args = JSON.parse(call.args || '{}') as Record<string, unknown>;
       } catch {
-        /* model buzuq JSON yubordi — bo'sh argument bilan davom etamiz */
+        /* model buzuq JSON yubordi - bo'sh argument bilan davom etamiz */
       }
 
       let outcome: ToolOutcome;
       try {
         outcome = await runTool(call.name, args, tools);
       } catch (err) {
-        // Asbob yiqilsa butun suhbat yiqilmasin — model xatoni o'qib,
+        // Asbob yiqilsa butun suhbat yiqilmasin - model xatoni o'qib,
         // foydalanuvchiga tushuntira oladi yoki boshqa yo'l topadi.
         outcome = {
           kind: 'data',

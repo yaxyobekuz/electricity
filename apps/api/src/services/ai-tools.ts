@@ -1,22 +1,22 @@
 /**
  * AI agentning ASBOBLARI.
  *
- * Model matn yozish bilan cheklanmaydi — u shu ro'yxatdagi amallarni chaqiradi
+ * Model matn yozish bilan cheklanmaydi - u shu ro'yxatdagi amallarni chaqiradi
  * va tizim ular uchun javob beradi. Uch toifa bor:
  *
- *   A. MA'LUMOT   — serverda bajariladi, natija modelga qaytadi.
+ *   A. MA'LUMOT   - serverda bajariladi, natija modelga qaytadi.
  *                   Hammasi MAVJUD `db/queries/*` funksiyalarini chaqiradi;
  *                   bu yerda yangi SQL yozilmaydi.
- *   B. INTERFEYS  — serverda BAJARILMAYDI. Server oqimga `action` hodisasini
+ *   B. INTERFEYS  - serverda BAJARILMAYDI. Server oqimga `action` hodisasini
  *                   chiqaradi, amalni brauzer bajaradi (sahifa ochish, davrni
  *                   almashtirish, fayl saqlash). Modelga `{ok:true}` qaytadi.
- *   C. YOZISH     — serverda, LEKIN faqat tizimga kirgan foydalanuvchi nomidan.
+ *   C. YOZISH     - serverda, LEKIN faqat tizimga kirgan foydalanuvchi nomidan.
  *                   Rol va MFY doirasi tekshiruvlari `routes/entry.ts` dagi
  *                   bilan bir xil qoladi; ustidan Postgres RLS ham turadi.
  *
  * Nega asboblar ro'yxati qattiq belgilangan: model ixtiyoriy SQL yoki ixtiyoriy
  * HTTP so'rov yubora olmaydi. U faqat shu funksiyalarni, faqat shu
- * parametrlar bilan chaqira oladi — ya'ni qamrov kod bilan chegaralangan.
+ * parametrlar bilan chaqira oladi - ya'ni qamrov kod bilan chegaralangan.
  */
 import type { AuthUser, Domain, MonthlyReturn, Work } from '@beap/shared';
 import {
@@ -36,9 +36,9 @@ import { renderCustomChart, renderTable } from './charts.ts';
 export interface ToolContext {
   ctx: AppContext;
   user: AuthUser | null;
-  /** Yagona fider — ko'p asboblar uchun standart qamrov. */
+  /** Yagona fider - ko'p asboblar uchun standart qamrov. */
   feederId: number | null;
-  /** Suhbat boshlangandagi davr — model boshqasini aytmasa shu ishlatiladi. */
+  /** Suhbat boshlangandagi davr - model boshqasini aytmasa shu ishlatiladi. */
   period: string;
   /** Foydalanuvchi berilgan MFY ga yoza oladimi. */
   canWriteMfy: (mfyId: number) => boolean;
@@ -86,12 +86,12 @@ export const TOOL_SPECS: ToolSpec[] = [
     { code: str('TP kodi, masalan "TP-067". Katta-kichik harf farq qilmaydi.') }, ['code']),
 
   fn('list_tps', 'Transformatorlarni tanlangan tartibda saralab beradi. Reyting '
-    + 'savollari uchun SHU asbobni ishlat — ro‘yxatni o‘zing saralama.',
+    + 'savollari uchun SHU asbobni ishlat - ro‘yxatni o‘zing saralama.',
     {
       sort_by: {
         type: 'string', enum: ['kwh', 'disconnected', 'off_share', 'consumers'],
-        description: 'kwh — iste’mol; disconnected — uzilgan abonentlar soni; '
-          + 'off_share — uzilganlar ulushi (%); consumers — abonentlar soni',
+        description: 'kwh - iste’mol; disconnected - uzilgan abonentlar soni; '
+          + 'off_share - uzilganlar ulushi (%); consumers - abonentlar soni',
       },
       limit: int('Nechta qator kerak (1–51). Standart 10.'),
     }, ['sort_by']),
@@ -146,6 +146,13 @@ export const TOOL_SPECS: ToolSpec[] = [
     + 'aniqlaydi (yo‘qotish sakrashi, ortiqcha yuklama).',
     { period: period('Oy; berilmasa joriy davr') }),
 
+  fn('get_tp_loss_anomalies', 'TP darajasidagi KUNLIK balans hisoblagichi va '
+    + 'bириктирилган iste’molchilar ko‘rsatkichi orasidagi anomaliyalarni ko‘rsatadi - '
+    + 'manfiy yo‘qotish (iste’molchilar balansdan ko‘p - fizik jihatdan mumkin emas, '
+    + 'ehtimoliy o‘g‘irlik/hisoblagich xatosi belgisi) va normadan sezilarli oshgan '
+    + 'yo‘qotish foizini aniqlaydi. Bu - fider (oylik) balansidan FARQLI, TP darajasidagi '
+    + 'kunlik ma’lumot.'),
+
   fn('forecast_losses', 'Kelgusi oylar uchun yo‘qotish foizi prognozini beradi.',
     { months_ahead: int('Nechta oy oldinga; standart 3') }),
 
@@ -160,7 +167,7 @@ export const TOOL_SPECS: ToolSpec[] = [
   fn('recommend_works', 'Muammolarni (ortiqcha yuklangan/nosoz/masofasi me’yordan uzoq TP, '
     + 'ta’mirlanmagan tarmoq) tahlil qilib, qanday YANGI ish (ta’mirlash, modernizatsiya, '
     + 'o‘rnatish) qilish tavsiya etilishini ko‘rsatadi. «Qanday ish tavsiya qilasan?», «nima '
-    + 'qilish kerak?», «muammolarni qanday hal qilaman?» kabi savollarda SHU asbobni chaqir — '
+    + 'qilish kerak?», «muammolarni qanday hal qilaman?» kabi savollarda SHU asbobni chaqir - '
     + 'javobni o‘zing o‘ylab topma. Allaqachon reja/jarayondagi ishlar bilan qoplangan '
     + 'muammolar qayta tavsiya etilmaydi.',
     { period: period('Oy; berilmasa joriy davr') }),
@@ -173,14 +180,14 @@ export const TOOL_SPECS: ToolSpec[] = [
         type: 'string',
         enum: ['/dashboard', '/transformers', '/energy-balance', '/works', '/reports',
           '/entry', '/review', '/settings/responsible'],
-        description: 'Qaysi sahifa ochilsin. /settings/responsible — ma’sul shaxsni '
+        description: 'Qaysi sahifa ochilsin. /settings/responsible - ma’sul shaxsni '
           + 'belgilash/o‘zgartirish sahifasi.',
       },
       search: str('Sahifadagi qidiruv maydoniga qo‘yiladigan matn, masalan TP kodi. '
         + 'Faqat /transformers va /works uchun.'),
     }, ['path']),
 
-  fn('set_period', 'Butun panelning hisobot OYINI almashtiradi — KPI kartalari, '
+  fn('set_period', 'Butun panelning hisobot OYINI almashtiradi - KPI kartalari, '
     + 'diagrammalar va jadvallar shu oyga o‘tadi.',
     { period: period('Oy, "YYYY-MM"') }, ['period']),
 
@@ -194,7 +201,7 @@ export const TOOL_SPECS: ToolSpec[] = [
       kind: {
         type: 'string',
         enum: ['daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'passport'],
-        description: 'Hisobot turi. passport — fider pasporti.',
+        description: 'Hisobot turi. passport - fider pasporti.',
       },
       ext: { type: 'string', enum: ['xlsx', 'pdf'], description: 'Fayl formati. Standart xlsx.' },
       period: period('Oy; berilmasa joriy davr'),
@@ -208,23 +215,23 @@ export const TOOL_SPECS: ToolSpec[] = [
       kind: {
         type: 'string',
         enum: ['energy_trend', 'tp_ranking', 'loss_breakdown', 'loss_forecast'],
-        description: 'Diagramma turi. energy_trend — kirgan/sotilgan energiya dinamikasi '
-          + '(vaqt bo‘yicha); tp_ranking — list_tps asbobidagi bilan bir xil TP reytingi, '
-          + 'lekin rasm shaklida; loss_breakdown — sotilgan/texnologik yo‘qotish/tijoriy '
-          + 'yo‘qotish taqsimoti; loss_forecast — yo‘qotish foizi prognozi.',
+        description: 'Diagramma turi. energy_trend - kirgan/sotilgan energiya dinamikasi '
+          + '(vaqt bo‘yicha); tp_ranking - list_tps asbobidagi bilan bir xil TP reytingi, '
+          + 'lekin rasm shaklida; loss_breakdown - sotilgan/texnologik yo‘qotish/tijoriy '
+          + 'yo‘qotish taqsimoti; loss_forecast - yo‘qotish foizi prognozi.',
       },
       period: period('Oy, "YYYY-MM". Faqat energy_trend va loss_breakdown uchun ma’noli; '
         + 'berilmasa joriy davr'),
       sort_by: {
         type: 'string', enum: ['kwh', 'disconnected', 'off_share', 'consumers'],
-        description: 'Faqat tp_ranking uchun. kwh — iste’mol; disconnected — uzilgan '
-          + 'abonentlar soni; off_share — uzilganlar ulushi (%); consumers — abonentlar soni',
+        description: 'Faqat tp_ranking uchun. kwh - iste’mol; disconnected - uzilgan '
+          + 'abonentlar soni; off_share - uzilganlar ulushi (%); consumers - abonentlar soni',
       },
       limit: int('Faqat tp_ranking uchun, nechta qator (1–20). Standart 10.'),
       months_ahead: int('Faqat loss_forecast uchun, nechta oy oldinga. Standart 3.'),
     }, ['kind']),
 
-  fn('render_table', 'Ma’lumotni JADVAL rasmi (PNG) ko‘rinishida ko‘rsatadi — savol 4 ta '
+  fn('render_table', 'Ma’lumotni JADVAL rasmi (PNG) ko‘rinishida ko‘rsatadi - savol 4 ta '
     + 'tayyor show_chart turiga yoki boshqa asboblarning oddiy matnli javobiga sig‘masa '
     + '(masalan bitta TP ni bir necha oy bo‘yicha solishtirish yoki har qanday kichik '
     + 'moslashuvchan taqqoslash) SHU asbobni chaqir. Avval kerakli raqamlarni boshqa asboblar '
@@ -240,13 +247,13 @@ export const TOOL_SPECS: ToolSpec[] = [
       rows: {
         type: 'array',
         items: { type: 'array', items: {} },
-        description: 'Jadval qatorlari — har bir ichki massiv BITTA qator, unda '
+        description: 'Jadval qatorlari - har bir ichki massiv BITTA qator, unda '
           + '`columns` soniga mos qiymatlar (matn yoki raqam). Ko‘pi bilan 30 qator.',
       },
     }, ['title', 'columns', 'rows']),
 
   fn('render_custom_chart', 'Ma’lumotni CHIZIQLI, USTUNLI yoki DONUT diagramma rasmi (PNG) '
-    + 'ko‘rinishida ko‘rsatadi — 4 ta tayyor show_chart turi qamrab olmaydigan ixtiyoriy '
+    + 'ko‘rinishida ko‘rsatadi - 4 ta tayyor show_chart turi qamrab olmaydigan ixtiyoriy '
     + 'taqqoslash/dinamika uchun. Avval kerakli raqamlarni boshqa asboblar bilan ol (get_tp, '
     + 'get_series, compare_periods va h.k.), keyin shu bilan diagramma qil. Raqamni hech qachon '
     + 'o‘ylab topma.',
@@ -255,7 +262,7 @@ export const TOOL_SPECS: ToolSpec[] = [
       chart_type: {
         type: 'string',
         enum: ['line', 'bar', 'donut'],
-        description: 'Diagramma turi: line — chiziqli, bar — ustunli, donut — doiraviy',
+        description: 'Diagramma turi: line - chiziqli, bar - ustunli, donut - doiraviy',
       },
       items: {
         type: 'array',
@@ -284,7 +291,7 @@ export const TOOL_SPECS: ToolSpec[] = [
 
   fn('save_monthly_return', 'Oylik hisobot raqamlarini SAQLAYDI. Faqat MONTHLY_RETURN '
     + 'qoralamasi uchun. Energiya balansi (31 kunlik jadval) bu asbob orqali '
-    + 'kiritilmaydi — buning uchun navigate bilan shaklni och.',
+    + 'kiritilmaydi - buning uchun navigate bilan shaklni och.',
     {
       submission_id: int('Qoralama raqami'),
       consumers_population: int('Aholi abonentlari'),
@@ -311,13 +318,13 @@ export const TOOL_SPECS: ToolSpec[] = [
   fn('reject_submission', 'Yuborilgan hisobotni RAD ETADI. Sabab majburiy.',
     { id: int('Hisobot raqami'), note: str('Rad etish sababi') }, ['id', 'note']),
 
-  fn('create_work', 'YANGI ish yozadi (fact.work) — masalan recommend_works taklif qilgan '
+  fn('create_work', 'YANGI ish yozadi (fact.work) - masalan recommend_works taklif qilgan '
     + 'ishni qo‘shish uchun. FAQAT foydalanuvchi aniq tasdiqlagach yoki «qo‘sh»/«yoz»/«ha» '
-    + 'kabi ravshan buyruq bersa chaqir — so‘ralmasdan turib ish yaratma.',
+    + 'kabi ravshan buyruq bersa chaqir - so‘ralmasdan turib ish yaratma.',
     {
       mfy_id: int('Fider/MFY ICHKI raqami (get_tp/recommend_works natijasidagi mfyId, TP kodi '
-        + 'EMAS). Ko‘pincha BERMASLIK kerak — berilmasa yagona fider avtomatik olinadi. '
-        + 'Aniq bilmasangiz hech qachon o‘ylab topma — bo‘sh qoldir.'),
+        + 'EMAS). Ko‘pincha BERMASLIK kerak - berilmasa yagona fider avtomatik olinadi. '
+        + 'Aniq bilmasangiz hech qachon o‘ylab topma - bo‘sh qoldir.'),
       work_type: {
         type: 'string', enum: [...WORK_TYPES],
         description: 'Ish turi: CABLE_REPLACEMENT, TP_INSTALL, TP_MODERNIZATION, '
@@ -327,16 +334,16 @@ export const TOOL_SPECS: ToolSpec[] = [
       title: str('Ish nomi (kamida 3 belgidan)'),
       description: str('Qo‘shimcha tavsif (ixtiyoriy)'),
       tp_id: int('Tegishli transformatorning ICHKI raqami (masalan recommend_works '
-        + 'natijasidagi tpId) — "TP-067" kabi KODNING O‘ZI EMAS. Foydalanuvchi TP kodini '
+        + 'natijasidagi tpId) - "TP-067" kabi KODNING O‘ZI EMAS. Foydalanuvchi TP kodini '
         + 'aytgan bo‘lsa, avval get_tp bilan shu kodni qidirib ID\'sini top; ID\'ni hech '
         + 'qachon kod raqamidan (masalan "067"dan) o‘ylab topma. Bilmasangiz bo‘sh qoldir.'),
       status: {
         type: 'string', enum: [...WORK_STATUSES],
-        description: 'Boshlang‘ich holat. Standart — Reja (PLANNED).',
+        description: 'Boshlang‘ich holat. Standart - Reja (PLANNED).',
       },
       planned_start: str('Reja boshlanish sanasi, "YYYY-MM-DD"'),
       planned_end: str('Reja tugash sanasi, "YYYY-MM-DD"'),
-      actual_end: str('Haqiqiy tugash sanasi — status=COMPLETED bo‘lsa majburiy, "YYYY-MM-DD"'),
+      actual_end: str('Haqiqiy tugash sanasi - status=COMPLETED bo‘lsa majburiy, "YYYY-MM-DD"'),
       progress_pct: int('Bajarilish foizi (0-100). COMPLETED uchun 100 bo‘lishi shart.'),
       quantity: { type: 'number', description: 'Hajm (masalan km yoki dona soni)' },
       unit: str('O‘lchov birligi, masalan "km" yoki "ta"'),
@@ -352,15 +359,15 @@ export const TOOL_SPECS: ToolSpec[] = [
         description: 'Yangi holat',
       },
       progress_pct: int('Bajarilish foizi (0-100). Bajarildi uchun 100 bo‘lishi shart.'),
-      actual_end: str('Haqiqiy tugash sanasi — Bajarildi uchun majburiy, "YYYY-MM-DD"'),
+      actual_end: str('Haqiqiy tugash sanasi - Bajarildi uchun majburiy, "YYYY-MM-DD"'),
     }, ['id', 'status']),
 
   fn('update_tp_status', 'Bitta TP ning oylik holatini (yuklama %, holati: yaxshi/diqqat/'
     + 'ortiqcha yuklama/nosozlik) belgilaydi yoki yangilaydi. «TP-067 ortiqcha yuklangan», '
-    + '«TP-043 nosoz» kabi xabarlarda SHU asbobni chaqir — bu ma’lumot recommend_works, '
+    + '«TP-043 nosoz» kabi xabarlarda SHU asbobni chaqir - bu ma’lumot recommend_works, '
     + 'get_alerts va TP monitoring jadvalining barchasiga ta’sir qiladi. Qoralama '
     + 'sifatida saqlaydi (`draft`); rasman ko‘rinishi uchun keyin submit_submission, '
-    + 'kerak bo‘lsa approve_submission ham chaqirilishi kerak — buni foydalanuvchiga ayt '
+    + 'kerak bo‘lsa approve_submission ham chaqirilishi kerak - buni foydalanuvchiga ayt '
     + 'yoki ruxsating bo‘lsa o‘zing bajar.',
     {
       tp_code: str('TP kodi, masalan "TP-067"'),
@@ -373,13 +380,13 @@ export const TOOL_SPECS: ToolSpec[] = [
       peak_kva: { type: 'number', description: 'Eng yuqori yuklama, kVA' },
       under_load: { type: 'boolean', description: 'Kam yuklangan (past foydalanish)' },
       repair_needed: { type: 'boolean', description: 'Ta’mirlash kerakmi' },
-      repair_reason: str('Ta’mirlash sababi — repair_needed=true bo‘lsa majburiy'),
+      repair_reason: str('Ta’mirlash sababi - repair_needed=true bo‘lsa majburiy'),
       period: period('Oy; berilmasa joriy davr'),
     }, ['tp_code']),
 
   fn('update_network_defect', 'Ta’mirlanishi kerak bo‘lgan va ta’mirlangan tarmoq '
     + 'uzunligini (km), kuchlanish klassi bo‘yicha, belgilaydi/yangilaydi. Foydalanuvchi '
-    + '«N km tarmoq ta’mirlanishi kerak» kabi ma’lumot bersa SHU asbobni chaqir — '
+    + '«N km tarmoq ta’mirlanishi kerak» kabi ma’lumot bersa SHU asbobni chaqir - '
     + 'recommend_works shu ma’lumotdan foydalanadi. Qoralama sifatida saqlaydi; rasman '
     + 'ko‘rinishi uchun submit_submission (va kerak bo‘lsa approve_submission) kerak.',
     {
@@ -394,7 +401,7 @@ export const TOOL_SPECS: ToolSpec[] = [
     }, ['voltage_kv', 'repair_needed_km']),
 ];
 
-/** Chat oynasida ko'rsatiladigan qisqa izoh — foydalanuvchi nima bo'layotganini bilsin. */
+/** Chat oynasida ko'rsatiladigan qisqa izoh - foydalanuvchi nima bo'layotganini bilsin. */
 export const TOOL_LABELS: Record<string, string> = {
   get_tp: 'Transformator ma’lumoti olinmoqda',
   list_tps: 'Transformatorlar saralanmoqda',
@@ -409,6 +416,7 @@ export const TOOL_LABELS: Record<string, string> = {
   reconcile_passport: 'Pasport solishtirilmoqda',
   search_debtor: 'Qarzdor qidirilmoqda',
   get_anomalies: 'Anomaliyalar qidirilmoqda',
+  get_tp_loss_anomalies: 'TP balans anomaliyalari tekshirilmoqda',
   forecast_losses: 'Prognoz hisoblanmoqda',
   get_alerts: 'Ogohlantirishlar olinmoqda',
   validate_submission: 'Qoralama tekshirilmoqda',
@@ -441,7 +449,7 @@ const asNumber = (v: unknown): number | undefined => {
   return typeof n === 'number' && Number.isFinite(n) ? n : undefined;
 };
 
-/** Ruxsat yo'qligi — xato emas, modelga tushunarli javob. */
+/** Ruxsat yo'qligi - xato emas, modelga tushunarli javob. */
 const denied = (reason: string): ToolOutcome => ({ kind: 'data', result: { ok: false, reason } });
 
 const PERIOD_RE = /^\d{4}-\d{2}$/;
@@ -454,46 +462,48 @@ interface WorkSuggestion {
   priority: number;
 }
 
-/** Tavsiyalar orasida ko'rsatiladigan eng ko'p qator soni — chatda o'qib bo'lmas uzun ro'yxat bo'lmasin. */
+/** Tavsiyalar orasida ko'rsatiladigan eng ko'p qator soni - chatda o'qib bo'lmas uzun ro'yxat bo'lmasin. */
 const MAX_RECOMMENDATIONS = 8;
 
-/** `TpMonitorPanel.tsx`dagi bilan BIR XIL bo'sag'a — "5%+/10%+ uzilgan ulush" ikki joyda ikki xil son bo'lmasin. */
+/** `TpMonitorPanel.tsx`dagi bilan BIR XIL bo'sag'a - "5%+/10%+ uzilgan ulush" ikki joyda ikki xil son bo'lmasin. */
 const OFF_SHARE_WARNING_PCT = 5;
 const OFF_SHARE_CRITICAL_PCT = 10;
-/** Yo'qotish maqsaddan shuncha foiz punktidan ko'p oshsa — tavsiya beriladi. */
+/** Yo'qotish maqsaddan shuncha foiz punktidan ko'p oshsa - tavsiya beriladi. */
 const LOSS_GAP_THRESHOLD_PP = 3;
 
 /**
  * "Qanday ish tavsiya qilasan?" savoliga javob.
  *
- * BESH MUSTAQIL, MAVJUD signal manbasidan foydalanadi — yangi tahlil/anomaliya
+ * BESH MUSTAQIL, MAVJUD signal manbasidan foydalanadi - yangi tahlil/anomaliya
  * qoidasi deyarli yozilmaydi, faqat allaqachon boshqa joyda hisoblangan
  * ko'rsatkichlar "bu ishga aylantirilsinmi" nuqtai nazaridan qayta o'qiladi:
- *   · `q.tpMonitoring()` — `condition`/`loadPct`/`distanceCompliant` maydonlari
+ *   · `q.tpMonitoring()` - `condition`/`loadPct`/`distanceCompliant` maydonlari
  *     hozirgacha frontendda ham ishlatilmagan (masofa/ATTENTION signali
- *     `detectAnomalies()`da ham yo'q — u faqat OVERLOAD/FAULT ni ko'radi).
- *     Bu manba `fact.tp_status_monthly` TASDIQLANGANDA to'ladi — hozircha
+ *     `detectAnomalies()`da ham yo'q - u faqat OVERLOAD/FAULT ni ko'radi).
+ *     Bu manba `fact.tp_status_monthly` TASDIQLANGANDA to'ladi - hozircha
  *     hech kim to'ldirmagan bo'lsa BO'SH bo'ladi, bu XATO EMAS.
- *   · `q.networkDefectBacklog()` — `fact.network_defect` ilgari HECH QAYERDA
- *     o'qilmagan, ta'mirlanmagan km miqdorini ko'rsatadi. Xuddi shu — hech kim
+ *   · `q.networkDefectBacklog()` - `fact.network_defect` ilgari HECH QAYERDA
+ *     o'qilmagan, ta'mirlanmagan km miqdorini ko'rsatadi. Xuddi shu - hech kim
  *     to'ldirmagan bo'lsa bo'sh.
- *   · `q.tpMonthly()` — uzilgan abonent ULUSHI, `TpMonitorPanel.tsx`da
+ *   · `q.tpMonthly()` - uzilgan abonent ULUSHI, `TpMonitorPanel.tsx`da
  *     allaqachon "muammo" deb rangli ko'rsatiladigan, lekin ishga
- *     ulanmaydigan signal ("uzilgan hisoblagich — to'g'ridan-to'g'ri tijoriy
+ *     ulanmaydigan signal ("uzilgan hisoblagich - to'g'ridan-to'g'ri tijoriy
  *     yo'qotish manbai", o'sha faylning izohi). Bu manba HAR DOIM to'ldirilgan
- *     (oylik hisobot bilan birga keladi) — shuning uchun yuqoridagi ikkitasi
+ *     (oylik hisobot bilan birga keladi) - shuning uchun yuqoridagi ikkitasi
  *     bo'sh bo'lsa ham odatda kamida shu yerdan tavsiya chiqadi.
- *   · `q.efficiency()` — feeder darajasidagi yo'qotish % maqsad darajadan
+ *   · `q.efficiency()` - feeder darajasidagi yo'qotish % maqsad darajadan
  *     qanchaga oshganini allaqachon hisoblaydi (bosh sahifadagi "AI tavsiya"
- *     kartasi shundan o'qiydi). Katta farq bo'lsa — aniq TP ko'rsatilmasa ham
+ *     kartasi shundan o'qiydi). Katta farq bo'lsa - aniq TP ko'rsatilmasa ham
  *     feeder darajasida umumiy tekshiruv/ta'mirlash tavsiya etiladi.
- *   · Mavjud REJA/JARAYONDAGI ishlar — xuddi shu muammo uchun ish
+ *   · Mavjud REJA/JARAYONDAGI ishlar - xuddi shu muammo uchun ish
  *     allaqachon bor bo'lsa, qayta tavsiya qilinmaydi.
  */
 async function recommendWorks(tc: ToolContext, period: string): Promise<{
   period: string; count: number; totalFound: number; suggestions: WorkSuggestion[];
 }> {
-  const [tpRows, tpMonthlyRows, backlog, efficiencyInfo, lossParts, plannedWorks, inProgressWorks] = await Promise.all([
+  const [
+    tpRows, tpMonthlyRows, backlog, efficiencyInfo, lossParts, plannedWorks, inProgressWorks, tpLossReport,
+  ] = await Promise.all([
     q.tpMonitoring(tc.ctx, period, tc.feederId, 500),
     q.tpMonthly(tc.ctx, period, tc.feederId),
     q.networkDefectBacklog(tc.ctx, period, tc.feederId),
@@ -501,6 +511,7 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
     q.lossStructure(tc.ctx, period, tc.feederId),
     q.works(tc.ctx, tc.feederId, 'PLANNED', 200),
     q.works(tc.ctx, tc.feederId, 'IN_PROGRESS', 200),
+    analytics.detectTpLossAnomalies(tc.ctx, tc.feederId),
   ]);
 
   const existingWorks = [...plannedWorks, ...inProgressWorks];
@@ -548,7 +559,7 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
     }
   }
 
-  // Kuchlanish klassiga qarab taxminiy ish turi — aniq nuqson tafsiloti
+  // Kuchlanish klassiga qarab taxminiy ish turi - aniq nuqson tafsiloti
   // `fact.network_defect`da yo'q (faqat km jamlanmasi), shuning uchun bu
   // qoida-taxmin, qat'iy xarita emas.
   for (const b of backlog) {
@@ -565,10 +576,10 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
   }
 
   /*
-   * Uzilgan/aloqasiz abonent ULUSHI — `TpMonitorPanel.tsx` da AYNAN shu
+   * Uzilgan/aloqasiz abonent ULUSHI - `TpMonitorPanel.tsx` da AYNAN shu
    * bo'sag'a (5%/10%) bilan "muammo" deb rangli ko'rsatiladi, lekin hech
    * qanday ishga ulanmaydi. Bu manba (oylik hisobot) HAR DOIM to'ldirilgan
-   * bo'ladi — TP holati hali kiritilmagan bo'lsa ham tavsiya chiqishi mumkin.
+   * bo'ladi - TP holati hali kiritilmagan bo'lsa ham tavsiya chiqishi mumkin.
    */
   const tpInfoByCode = new Map(tpRows.map((t) => [t.code, t]));
   for (const m of tpMonthlyRows) {
@@ -583,17 +594,17 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
       mfyId: info.mfyId, mfyName: info.mfyName, tpId: info.tpId, tpCode: m.code,
       suggestedTitle: `${m.code} dagi uzilgan/aloqasiz hisoblagichlarni tekshirish`,
       rationale: `${m.code} da ${m.consumersDisconnected}/${m.consumersTotal} abonent aloqada `
-        + `emas (${offSharePct.toFixed(1)}%) — to‘g‘ridan-to‘g‘ri tijoriy yo‘qotish manbai bo‘lishi mumkin.`,
+        + `emas (${offSharePct.toFixed(1)}%) - to‘g‘ridan-to‘g‘ri tijoriy yo‘qotish manbai bo‘lishi mumkin.`,
       priority: offSharePct >= OFF_SHARE_CRITICAL_PCT ? 75 : 45,
     });
   }
 
   /*
-   * Feeder darajasidagi yo'qotish % — maqsaddan sezilarli oshgan bo'lsa,
+   * Feeder darajasidagi yo'qotish % - maqsaddan sezilarli oshgan bo'lsa,
    * aniq TP ko'rsatilmagan bo'lsa ham umumiy tekshiruv tavsiya etiladi.
    * `efficiency()`ning `advice` maydoni bosh sahifadagi "AI tavsiya"
    * kartasi (`AdviceCard`, deterministik, AI emas) bilan BIR XIL hisob-kitob
-   * — shu yerda esa "demak qanday ish kerak" savoliga javob beriladi.
+   * - shu yerda esa "demak qanday ish kerak" savoliga javob beriladi.
    */
   if (efficiencyInfo?.advice) {
     const { targetLossPct, currentLossPct } = efficiencyInfo.advice;
@@ -610,7 +621,7 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
           workType, workTypeLabel: WORK_TYPE_LABEL_UZ[workType],
           mfyId, mfyName,
           suggestedTitle: `${mfyName}: yo‘qotishni maqsad darajaga tushirish bo‘yicha tekshiruv`,
-          rationale: `Joriy yo‘qotish ${currentLossPct.toFixed(1)}% — maqsad `
+          rationale: `Joriy yo‘qotish ${currentLossPct.toFixed(1)}% - maqsad `
             + `${targetLossPct.toFixed(1)}% dan ${gap.toFixed(1)} f.p. yuqori `
             + `(${commercialPct >= technologicalPct ? 'tijoriy' : 'texnologik'} yo‘qotish ustunlik `
             + `qiladi: ${commercialPct.toFixed(1)}% / ${technologicalPct.toFixed(1)}%).`,
@@ -620,17 +631,36 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
     }
   }
 
+  /*
+   * TP balans hisoblagichi anomaliyasi - `analytics.detectTpLossAnomalies()`.
+   * Faqat 'high' (fizik jihatdan mumkin emas - manfiy yo'qotish) signal
+   * ishga aylantiriladi; kunlik kron (`alerts.autoDraftHighSeverityTpLossWorks`)
+   * xuddi shu signaldan xuddi shu tarzda ish yaratadi - ikkalasi ham BIR XIL
+   * `coveredTpCodes` bilan tekshiriladi, shuning uchun ikki marta tavsiya
+   * qilinmaydi.
+   */
+  for (const a of tpLossReport.anomalies) {
+    if (a.severity !== 'high' || coveredTpCodes.has(a.code)) continue;
+    suggestions.push({
+      workType: 'METER_REPLACEMENT', workTypeLabel: WORK_TYPE_LABEL_UZ.METER_REPLACEMENT,
+      mfyId: a.mfyId, mfyName: a.mfyName, tpId: a.tpId, tpCode: a.code,
+      suggestedTitle: `${a.code} balans hisoblagichini tekshirish`,
+      rationale: a.messageUz,
+      priority: 90,
+    });
+  }
+
   suggestions.sort((a, b) => b.priority - a.priority);
   const top = suggestions.slice(0, MAX_RECOMMENDATIONS);
   return { period, count: top.length, totalFound: suggestions.length, suggestions: top };
 }
 
 /*
- * Login talab qilmasdan yozish — foydalanuvchi bilan ATAYLAB tasdiqlangan
+ * Login talab qilmasdan yozish - foydalanuvchi bilan ATAYLAB tasdiqlangan
  * qaror (standart xavfsizlik andozasidan chetga chiqish).
  *
  * `fact.submission.created_by` haqiqiy `sec.app_user` qatoriga NOT NULL chet
- * kalit bilan bog'langan — mehmon nomidan (`userId: null`) yozib bo'lmaydi,
+ * kalit bilan bog'langan - mehmon nomidan (`userId: null`) yozib bo'lmaydi,
  * Postgres buni rad etadi. Shuning uchun tizimga kirmagan foydalanuvchi
  * uchun yozish ADMINISTRATOR nomidan davom etadi: RLS/audit hali ham
  * ISHLAYDI (kim yozgani jurналda "admin" deb qoladi), faqat inson login
@@ -640,7 +670,7 @@ let cachedAdminId: number | null = null;
 
 async function anonymousWriteContext(): Promise<AppContext | null> {
   if (cachedAdminId === null) {
-    // `queryOne` ga `ctx` berilmasa standart `SYSTEM_CONTEXT` ishlatiladi —
+    // `queryOne` ga `ctx` berilmasa standart `SYSTEM_CONTEXT` ishlatiladi -
     // `sec.app_user`ni o'qish uchun kerak, mehmon konteksti yetarli emas.
     const row = await queryOne<{ id: number }>(
       `SELECT id FROM sec.app_user WHERE role = 'admin' ORDER BY id LIMIT 1`,
@@ -652,10 +682,10 @@ async function anonymousWriteContext(): Promise<AppContext | null> {
 }
 
 /**
- * TP kodini ("TP-067") ichki ID/MFY'ga aylantiradi — `get_tp`dagi bilan bir
+ * TP kodini ("TP-067") ichki ID/MFY'ga aylantiradi - `get_tp`dagi bilan bir
  * xil qidiruv. `update_tp_status` shu orqali ishlaydi, model hech qachon
  * ID'ni kod raqamidan o'ylab topmasin deb (`create_work`da bir marta shu
- * xato ko'rilgan — bu yerda boshidanoq oldi olingan).
+ * xato ko'rilgan - bu yerda boshidanoq oldi olingan).
  */
 async function resolveTpByCode(
   tc: ToolContext, code: string, period: string,
@@ -824,6 +854,11 @@ export async function runTool(
       return { kind: 'data', result: report };
     }
 
+    case 'get_tp_loss_anomalies': {
+      const report = await analytics.detectTpLossAnomalies(tc.ctx, tc.feederId);
+      return { kind: 'data', result: report };
+    }
+
     case 'forecast_losses': {
       const monthsAhead = Math.min(Math.max(asNumber(args['months_ahead']) ?? 3, 1), 12);
       const report = await analytics.forecastLosses(tc.ctx, tc.feederId, monthsAhead);
@@ -838,7 +873,7 @@ export async function runTool(
     case 'validate_submission': {
       const id = asNumber(args['id']);
       if (id === undefined) return denied('Qoralama raqami kerak');
-      // Faqat tekshiradi — holatni o'zgartirmaydi, `submit_submission` ichida shu chaqiriladi.
+      // Faqat tekshiradi - holatni o'zgartirmaydi, `submit_submission` ichida shu chaqiriladi.
       const report = await entry.validateSubmission(tc.ctx, id);
       return { kind: 'data', result: report };
     }
@@ -889,7 +924,7 @@ export async function runTool(
       const kind = asString(args['kind']) ?? 'monthly';
       const ext = asString(args['ext']) === 'pdf' ? 'pdf' : 'xlsx';
       /*
-       * Manzil SERVERDA quriladi — model ixtiyoriy URL bera olmasin.
+       * Manzil SERVERDA quriladi - model ixtiyoriy URL bera olmasin.
        * `/api` prefiksi qo'shilmaydi: klient uni `apiUrl()` bilan qo'shadi.
        */
       const url = kind === 'passport'
@@ -913,9 +948,9 @@ export async function runTool(
       }
 
       /*
-       * Manzil SERVERDA quriladi — model ixtiyoriy URL bera olmasin, xuddi
+       * Manzil SERVERDA quriladi - model ixtiyoriy URL bera olmasin, xuddi
        * `download_report` dagidek. `/api` prefiksi qo'shilmaydi: klient uni
-       * o'zi qo'shadi. Rasmning o'zi bu yerda EMAS — brauzer/bot shu URL ni
+       * o'zi qo'shadi. Rasmning o'zi bu yerda EMAS - brauzer/bot shu URL ni
        * chaqirganda serverda tayyorlanadi.
        */
       const qs = new URLSearchParams({ period });
@@ -940,20 +975,20 @@ export async function runTool(
 
       const columnsRaw = args['columns'];
       if (!Array.isArray(columnsRaw) || columnsRaw.length === 0) {
-        return denied('columns — ustun sarlavhalari massivi bo‘lishi kerak (kamida 1 ta)');
+        return denied('columns - ustun sarlavhalari massivi bo‘lishi kerak (kamida 1 ta)');
       }
       const rowsRaw = args['rows'];
       if (!Array.isArray(rowsRaw) || rowsRaw.length === 0 || !rowsRaw.every((r) => Array.isArray(r))) {
-        return denied('rows — massivlar massivi bo‘lishi kerak, har biri bitta jadval qatori');
+        return denied('rows - massivlar massivi bo‘lishi kerak, har biri bitta jadval qatori');
       }
 
-      // Model buzuq/keraksiz katta ma'lumot yubormasin — tavsifda aytilgan chegaralar shu yerda majburlanadi.
+      // Model buzuq/keraksiz katta ma'lumot yubormasin - tavsifda aytilgan chegaralar shu yerda majburlanadi.
       const columns = columnsRaw.slice(0, 8).map((c) => String(c));
       const rows: (string | number)[][] = rowsRaw.slice(0, 30).map((r) =>
         (r as unknown[]).map((cell) => (typeof cell === 'string' || typeof cell === 'number' ? cell : String(cell))));
 
       /*
-       * Rasm to'g'ridan-to'g'ri shu yerda, SINXRON tayyorlanadi — `show_chart`
+       * Rasm to'g'ridan-to'g'ri shu yerda, SINXRON tayyorlanadi - `show_chart`
        * dagidek keyinroq alohida HTTP marshrut orqali emas: bu ma'lumotlar
        * fayl sifatida saqlanmagan, faqat shu chaqiruvda mavjud (model o'zi
        * bergan raqamlar), shuning uchun manzil emas, tayyor rasm qaytariladi.
@@ -980,7 +1015,7 @@ export async function runTool(
 
       const itemsRaw = args['items'];
       if (!Array.isArray(itemsRaw) || itemsRaw.length === 0) {
-        return denied('items — kamida bitta {label, value} elementidan iborat massiv bo‘lishi kerak');
+        return denied('items - kamida bitta {label, value} elementidan iborat massiv bo‘lishi kerak');
       }
       const items: { series?: string; label: string; value: number }[] = [];
       for (const raw of itemsRaw.slice(0, 60)) {
@@ -1032,7 +1067,7 @@ export async function runTool(
       const sub = await entry.getSubmission(tc.ctx, id);
       if (!sub) return denied('Qoralama topilmadi');
       if (sub.domain !== 'MONTHLY_RETURN') {
-        return denied(`Bu qoralama "${sub.domain}" turida — bu asbob faqat MONTHLY_RETURN uchun`);
+        return denied(`Bu qoralama "${sub.domain}" turida - bu asbob faqat MONTHLY_RETURN uchun`);
       }
       if (!tc.canWriteMfy(sub.scopeId)) return denied('Bu hisobotga yozish huquqingiz yo‘q');
 
@@ -1057,7 +1092,7 @@ export async function runTool(
         metersReplacedCnt: asNumber(args['meters_replaced_cnt']) ?? current?.metersReplacedCnt ?? 0,
       };
 
-      // Shakl bilan BIR XIL tekshiruv — AI orqali chetlab o'tib bo'lmasin.
+      // Shakl bilan BIR XIL tekshiruv - AI orqali chetlab o'tib bo'lmasin.
       const parsed = monthlyReturnSchema.safeParse(merged);
       if (!parsed.success) {
         return denied(
@@ -1095,7 +1130,7 @@ export async function runTool(
 
       if (name === 'approve_submission') {
         const sub = await entry.changeStatus(tc.ctx, id, 'approved', null);
-        // Jamlanmalar fon rejimida — javob kutib qolmasin.
+        // Jamlanmalar fon rejimida - javob kutib qolmasin.
         void refreshAggregates().catch(() => undefined);
         return { kind: 'data', result: { ok: true, submission: sub } };
       }
@@ -1128,7 +1163,7 @@ export async function runTool(
       if (!titleRaw) return denied('Ish nomi (title) kerak');
       /*
        * AI yaratgan ishlarni mavjud UI'da (dalolatnoma, ishlar ro'yxati)
-       * vizual ajratib turish uchun — yangi DB ustuni qo'shmasdan eng arzon
+       * vizual ajratib turish uchun - yangi DB ustuni qo'shmasdan eng arzon
        * yechim, xuddi rasm izohlaridagi kabi oddiy matn belgisi.
        */
       const AI_PREFIX = 'AI tavsiyasi: ';
@@ -1148,7 +1183,7 @@ export async function runTool(
         effectLossPctBefore: null, effectLossPctAfter: null, effectSavingKwhMonth: 0,
       };
 
-      // `workSchema` — forma bilan BIR XIL tekshiruv, AI orqali chetlab o'tib bo'lmasin.
+      // `workSchema` - forma bilan BIR XIL tekshiruv, AI orqali chetlab o'tib bo'lmasin.
       const parsed = workSchema.safeParse(candidate);
       if (!parsed.success) {
         return denied(
@@ -1184,7 +1219,7 @@ export async function runTool(
 
       /*
        * Berilmagan maydonlar MAVJUD qiymatdan olinadi va TO'LIQ obyekt
-       * sifatida qayta tekshiriladi — `routes/dash.ts`dagi PATCH marshruti
+       * sifatida qayta tekshiriladi - `routes/dash.ts`dagi PATCH marshruti
        * bilan BIR XIL naqsh (status/progressPct/actualEnd birga mos kelishi
        * shart, DB CHECK shuni talab qiladi).
        */
@@ -1237,7 +1272,7 @@ export async function runTool(
 
       /*
        * Bitta TP ni yangilash uchun BUTUN ro'yxat qayta yuboriladi
-       * (`saveTpStatus` hammasini o'chirib qayta yozadi) — shuning uchun
+       * (`saveTpStatus` hammasini o'chirib qayta yozadi) - shuning uchun
        * boshqa TP larning MAVJUD qatorlari saqlanadi, faqat shu birining
        * qatori yangilanadi/qo'shiladi.
        */

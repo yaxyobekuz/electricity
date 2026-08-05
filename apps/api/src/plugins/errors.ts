@@ -1,7 +1,7 @@
 /**
  * Xatolarni yagona formatga keltirish.
  *
- * Postgres cheklov xatolari MAYDON darajasidagi xabarlarga aylantiriladi —
+ * Postgres cheklov xatolari MAYDON darajasidagi xabarlarga aylantiriladi -
  * ular to'g'ridan-to'g'ri HeroUI `<Form validationErrors={...}>` ga tushadi.
  * Ya'ni DB cheklovi va forma xabari bir xil matnni ko'rsatadi.
  */
@@ -66,7 +66,7 @@ const CONSTRAINT_MAP: Record<string, { field: string; message: string }> = {
   },
   norm_no_overlap: {
     field: 'effectiveFrom',
-    message: 'Bu davr uchun norma allaqachon belgilangan — amal qilish sanasini o‘zgartiring',
+    message: 'Bu davr uchun norma allaqachon belgilangan - amal qilish sanasini o‘zgartiring',
   },
   ts_repair_reason: {
     field: 'repairReason',

@@ -4,7 +4,7 @@
  * Dizayn: rangli yumshoq fon + o'ng yuqorida to'yingan ikona nishoni +
  * katta raqam + o'zgarish + pastda ustunli sparkline.
  *
- * Har bir kartada "i" tugmasi bor — u metrikaning MANBASINI ko'rsatadi
+ * Har bir kartada "i" tugmasi bor - u metrikaning MANBASINI ko'rsatadi
  * (qo'lda kiritiladimi yoki hisoblanadimi). Hokim "bu raqam qayerdan keldi?"
  * deb so'raganda javob bir bosishda.
  */
@@ -22,7 +22,7 @@ import { Sparkline } from './Sparkline.tsx';
 export type Tone = 'blue' | 'green' | 'orange' | 'purple' | 'pink' | 'sky' | 'amber' | 'cyan';
 
 function fmtByUnit(value: number | null, unit: string): { value: string; unit: string } {
-  if (value === null) return { value: '—', unit };
+  if (value === null) return { value: '-', unit };
   switch (unit) {
     case 'kWh':
       return energyParts(value);
@@ -39,13 +39,13 @@ const formatValue = (tile: KpiTile): { value: string; unit: string } =>
   fmtByUnit(tile.value, tile.unit);
 
 /**
- * O'tgan oyga nisbatan o'zgarish — MUTLAQ qiymatda.
+ * O'tgan oyga nisbatan o'zgarish - MUTLAQ qiymatda.
  *
  * Yolg'iz "↑ 0.2%" hech nima aytmaydi: nimadan nimaga o'zgargani ko'rinmaydi.
  * Shu sababli har bir kartada uchta narsa birga turadi: yo'nalish (o'q va
  * so'z), mutlaq o'zgarish (masalan «89 ta») va o'tgan oyning aniq qiymati.
  *
- * Foiz ko'rsatkichlari uchun o'zgarish FOIZ PUNKTIDA beriladi — 8.6% dan
+ * Foiz ko'rsatkichlari uchun o'zgarish FOIZ PUNKTIDA beriladi - 8.6% dan
  * 8.8% ga o'tish "2.3% o'sish" emas, "0.2 p.p. o'sish".
  */
 function changeText(tile: KpiTile): { abs: string; word: string } | null {
@@ -88,7 +88,7 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
   const provenance = isKnownMetric(tile.metric) ? provenanceText(tile.metric as MetricKey) : null;
   const change = changeText(tile);
   const prev = fmtByUnit(tile.prevValue, tile.unit);
-  const prevText = tile.prevValue === null ? '—' : `${prev.value} ${prev.unit}`;
+  const prevText = tile.prevValue === null ? '-' : `${prev.value} ${prev.unit}`;
   const caption = sparkCaption(tile);
 
   return (
@@ -132,7 +132,7 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
         <span className="kpi__unit">{unit}</span>
       </div>
 
-      {/* Yo'nalish + mutlaq o'zgarish + foiz — uchalasi birga */}
+      {/* Yo'nalish + mutlaq o'zgarish + foiz - uchalasi birga */}
       <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
         <span
           className="inline-flex items-center gap-0.5 text-[11.5px] font-semibold"
@@ -146,7 +146,7 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
           }}
         >
           <DeltaIcon aria-hidden="true" className="size-3.5" />
-          {change && change.abs ? change.abs : delta === null ? '—' : `${Math.abs(delta).toFixed(1)}%`}
+          {change && change.abs ? change.abs : delta === null ? '-' : `${Math.abs(delta).toFixed(1)}%`}
         </span>
         <span className="text-[10.5px] leading-tight text-muted">
           {change ? change.word : 'o‘tgan oyga nisbatan'}
@@ -154,7 +154,7 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
         </span>
       </div>
 
-      {/* O'tgan oyning ANIQ qiymati — raqam o'z-o'zini izohlaydi */}
+      {/* O'tgan oyning ANIQ qiymati - raqam o'z-o'zini izohlaydi */}
       <p className="truncate text-[10px] leading-tight text-muted">
         {periodLabel(tile.prevPeriod)}: <span className="font-medium">{prevText}</span>
       </p>
@@ -192,10 +192,10 @@ export function MiniStat({
   tone?: 'accent' | 'good' | 'warning' | 'critical';
   /** O'zgarish matni, masalan «1 ta» yoki «2.3%». */
   delta?: string;
-  /** O'zgarish ijobiymi — rangni shu belgilaydi. */
+  /** O'zgarish ijobiymi - rangni shu belgilaydi. */
   deltaGood?: boolean | null;
   /**
-   * Tor ustunda vertikal joylashganda — kichikroq ikona va raqam,
+   * Tor ustunda vertikal joylashganda - kichikroq ikona va raqam,
    * ixchamroq chetlash.
    */
   compact?: boolean;
@@ -287,7 +287,7 @@ export function MiniStat({
 }
 
 /**
- * Tezkor ko'rsatkich — 2×2 to'r ichidagi ixcham element.
+ * Tezkor ko'rsatkich - 2×2 to'r ichidagi ixcham element.
  * Panel EMAS, panel ICHIDA ishlatiladi.
  */
 export function QuickMetric({
@@ -319,7 +319,7 @@ export function QuickMetric({
       )}
       <div className="min-w-0">
         {/*
-          `truncate` — tor panelda "Maks. yuklama" ikki qatorga bo'linib,
+          `truncate` - tor panelda "Maks. yuklama" ikki qatorga bo'linib,
           yonidagi katakdan balandroq bo'lib qolardi. To'liq matn `title`
           atributida qoladi.
         */}
@@ -337,7 +337,7 @@ export function QuickMetric({
   );
 }
 
-/** Status chipi — DOIM ikona + matn (rang yolg'iz ishlatilmaydi). */
+/** Status chipi - DOIM ikona + matn (rang yolg'iz ishlatilmaydi). */
 export function StatusChip({
   status, label, size = 'sm',
 }: {

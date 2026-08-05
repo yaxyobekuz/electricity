@@ -15,7 +15,7 @@ const responsibleBody = z.object({
 });
 
 const refRoutes: FastifyPluginAsync = async (app) => {
-  /** Bitta so'rovda barcha spravochniklar — klient startida chaqiriladi. */
+  /** Bitta so'rovda barcha spravochniklar - klient startida chaqiriladi. */
   app.get('/bootstrap', async (req) => bootstrap(req.ctx));
 
   app.get('/mfy/:id', async (req, reply) => {
@@ -25,14 +25,14 @@ const refRoutes: FastifyPluginAsync = async (app) => {
     return mfy;
   });
 
-  /** Fider bo'yicha ma'sul shaxs — belgilanmagan bo'lsa `null`. */
+  /** Fider bo'yicha ma'sul shaxs - belgilanmagan bo'lsa `null`. */
   app.get('/mfy/:id/responsible', async (req) => {
     const { id } = idParam.parse(req.params);
     return getMfyResponsible(req.ctx, id);
   });
 
   /*
-   * HOZIRCHA LOGINSIZ HAM YOZISH MUMKIN — tizim hali umumiy ochiq rejimda
+   * HOZIRCHA LOGINSIZ HAM YOZISH MUMKIN - tizim hali umumiy ochiq rejimda
    * sinovdan o'tkazilmoqda, foydalanuvchi hisoblari keyinroq yoqiladi.
    * Auth qaytarilganda bu yerga `{ onRequest: [app.requireAuth] }` va
    * `app.assertMfyWrite` tekshiruvi qaytariladi (naqsh: `entry.ts`).

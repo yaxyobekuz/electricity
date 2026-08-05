@@ -1,13 +1,13 @@
 /**
- * Sparkline — qo'lda yozilgan inline SVG.
+ * Sparkline - qo'lda yozilgan inline SVG.
  *
  * Nima uchun Nivo emas: bir ekranda 8 ta KPI kartasi bor. 8 ta
  * `ResponsiveLine` = 8 ta ResizeObserver + 8 ta layout hisobi, atigi
  * 30 nuqta uchun. Bu isrof.
  *
  * Ikki ko'rinish:
- *   bars — mockupdagi asosiy variant (KPI kartalarida)
- *   line — uzluksiz kattaliklar uchun
+ *   bars - mockupdagi asosiy variant (KPI kartalarida)
+ *   line - uzluksiz kattaliklar uchun
  */
 import { useId, useMemo } from 'react';
 
@@ -41,7 +41,7 @@ export function Sparkline({
   );
 }
 
-/** Ustunli variant — KPI kartalarida. Oxirgi ustunlar to'yingan rangda. */
+/** Ustunli variant - KPI kartalarida. Oxirgi ustunlar to'yingan rangda. */
 function SparkBars({
   values, color, width, height, className,
 }: {
@@ -53,7 +53,7 @@ function SparkBars({
 }) {
   const bars = useMemo(() => {
     if (values.length === 0) return null;
-    // Ko'rinish uchun oxirgi 24 nuqta yetarli — ustunlar juda ingichka bo'lmaydi.
+    // Ko'rinish uchun oxirgi 24 nuqta yetarli - ustunlar juda ingichka bo'lmaydi.
     const data = values.slice(-24);
     const max = Math.max(...data);
     const min = Math.min(...data);
@@ -70,13 +70,13 @@ function SparkBars({
         y: height - h,
         w: barW,
         h,
-        // Oxirgi 4 ta ustun — to'liq to'yingan, qolganlari shaffofroq.
+        // Oxirgi 4 ta ustun - to'liq to'yingan, qolganlari shaffofroq.
         opacity: i >= data.length - 4 ? 1 : 0.42,
       };
     });
   }, [values, width, height]);
 
-  // Ma'lumot bo'lmasa ham JOY BAND QILINADI (className bilan birga) — aks
+  // Ma'lumot bo'lmasa ham JOY BAND QILINADI (className bilan birga) - aks
   // holda ma'lumotsiz karta qo'shnisidan past bo'lib, qator notekis chiqadi.
   if (!bars) return <div aria-hidden="true" className={className} style={{ height }} />;
 
@@ -94,7 +94,7 @@ function SparkBars({
       {bars.map((b, i) => (
         /*
           Ustunlar chapdan o'ngga navbat bilan o'sib chiqadi.
-          `transform-box: fill-box` + `transform-origin: bottom` —
+          `transform-box: fill-box` + `transform-origin: bottom` -
           SVG'da o'sish PASTDAN yuqoriga bo'lishi uchun shart.
         */
         <rect
@@ -117,7 +117,7 @@ function SparkBars({
   );
 }
 
-/** Chiziqli variant — maydon to'ldirishi bilan. */
+/** Chiziqli variant - maydon to'ldirishi bilan. */
 function SparkLine({
   values, color, accent, width, height, fill, className,
 }: {

@@ -1,9 +1,9 @@
 /**
- * Hisobot menyusi — yuqori chiziqdagi ixcham tugma.
+ * Hisobot menyusi - yuqori chiziqdagi ixcham tugma.
  *
  * Ilgari bu "Hisobot davri: Kunlik" ko'rinishidagi ALOHIDA panel edi va
  * ekranning bir qismini egallab turardi, ustiga tanlov hech narsaga
- * ta'sir qilmasdi. Endi bitta tugma — bosilganda fayl darhol yuklanadi.
+ * ta'sir qilmasdi. Endi bitta tugma - bosilganda fayl darhol yuklanadi.
  *
  * Barcha fayllar SERVERDA hosil bo'ladi va lokal yuklanadi; tashqi xizmat
  * ishlatilmaydi (tizimning offline talabi).
@@ -14,7 +14,7 @@ import { Download, FileSpreadsheet, FileText, Printer } from 'lucide-react';
 import { useUi } from '../../lib/ui-store.ts';
 
 interface ReportMenuProps {
-  /** MFY hisoboti uchun — bo'lmasa tuman hisoboti olinadi. */
+  /** MFY hisoboti uchun - bo'lmasa tuman hisoboti olinadi. */
   mfyId?: number;
   /** Chop etish oynasi uchun yo'l. */
   printScope?: 'tuman' | 'mfy';
@@ -59,13 +59,13 @@ export function ReportMenu({ mfyId, printScope = 'tuman' }: ReportMenuProps) {
             window.location.href = `/api/report/period/${id}.xlsx${qs}`;
           }}
         >
-          <Dropdown.Item id="passport-xlsx" textValue="Pasport — Excel">
+          <Dropdown.Item id="passport-xlsx" textValue="Pasport - Excel">
             <FileSpreadsheet className="size-4" />
-            Pasport — Excel
+            Pasport - Excel
           </Dropdown.Item>
-          <Dropdown.Item id="passport-pdf" textValue="Pasport — PDF">
+          <Dropdown.Item id="passport-pdf" textValue="Pasport - PDF">
             <FileText className="size-4" />
-            Pasport — PDF
+            Pasport - PDF
           </Dropdown.Item>
           <Dropdown.Item id="print" textValue="Chop etish">
             <Printer className="size-4" />

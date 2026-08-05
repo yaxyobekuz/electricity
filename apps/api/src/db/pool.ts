@@ -1,7 +1,7 @@
 /**
  * Postgres ulanish hovuzi va so'rov yordamchilari.
  *
- * Analitik so'rovlar QO'LDA yozilgan SQL bilan bajariladi — window funksiya,
+ * Analitik so'rovlar QO'LDA yozilgan SQL bilan bajariladi - window funksiya,
  * FILTER, LATERAL va REFRESH MATERIALIZED VIEW ni ORM faqat yomonlashtiradi.
  */
 import pg from 'pg';
@@ -12,9 +12,9 @@ import { config } from '../config.ts';
 // Bizning barcha numeric qiymatlar JS number aniqligiga bemalol sig'adi
 // (eng kattasi ~5×10^6 kWh, 2 kasr).
 pg.types.setTypeParser(1700, (v: string) => (v === null ? null : Number.parseFloat(v)));
-// int8 (OID 20) — count(*) natijalari. Bizda hech qachon 2^53 dan oshmaydi.
+// int8 (OID 20) - count(*) natijalari. Bizda hech qachon 2^53 dan oshmaydi.
 pg.types.setTypeParser(20, (v: string) => (v === null ? null : Number.parseInt(v, 10)));
-// date (OID 1082) — vaqt mintaqasi siljishisiz, YYYY-MM-DD holicha.
+// date (OID 1082) - vaqt mintaqasi siljishisiz, YYYY-MM-DD holicha.
 pg.types.setTypeParser(1082, (v: string) => v);
 
 export const pool = new pg.Pool({
@@ -45,7 +45,7 @@ export const SYSTEM_CONTEXT: AppContext = {
 
 /**
  * Tranzaksiya ichida ilova kontekstini o'rnatadi.
- * Bu BIR JOYDA bajariladi — audit triggeri ham, RLS siyosatlari ham shundan oziqlanadi.
+ * Bu BIR JOYDA bajariladi - audit triggeri ham, RLS siyosatlari ham shundan oziqlanadi.
  */
 async function applyContext(client: pg.PoolClient, ctx: AppContext): Promise<void> {
   await client.query(
@@ -114,7 +114,7 @@ export async function withTransaction<T>(
 }
 
 /**
- * Advisory lock ostida bajarish. Lock band bo'lsa `null` qaytaradi —
+ * Advisory lock ostida bajarish. Lock band bo'lsa `null` qaytaradi -
  * bir nechta instans matview ni ikki marta yangilamasligi uchun.
  */
 export async function withAdvisoryLock<T>(

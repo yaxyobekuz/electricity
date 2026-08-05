@@ -1,5 +1,5 @@
 /**
- * Domen konstantalari — API va Web ikkalasi uchun yagona manba.
+ * Domen konstantalari - API va Web ikkalasi uchun yagona manba.
  *
  * Bu yerdagi raqamlar mijozning haqiqiy PASPORT hujjatlaridan olingan.
  * Ularni o'zgartirish seed kalibrovkasini va tekshiruv testlarini buzadi.
@@ -219,7 +219,7 @@ export const VIOLATION_STATUS_LABEL_UZ: Record<ViolationStatus, string> = {
 };
 
 /**
- * Dalolatnoma TOIFASI — `status` dan farqli o'laroq, holat qanday
+ * Dalolatnoma TOIFASI - `status` dan farqli o'laroq, holat qanday
  * baholanganini bildiradi (harakat holatini emas).
  */
 export const VIOLATION_CASE_TYPES = ['ADMINISTRATIVE', 'CRIMINAL', 'NO_FAULT'] as const;
@@ -231,7 +231,7 @@ export const VIOLATION_CASE_LABEL_UZ: Record<ViolationCaseType, string> = {
   NO_FAULT: 'Iste’molchi aybsiz',
 };
 
-/** Har bir toifaning ma'nosi — kartadagi "nima asosida?" oynasi uchun. */
+/** Har bir toifaning ma'nosi - kartadagi "nima asosida?" oynasi uchun. */
 export const VIOLATION_CASE_MEANING_UZ: Record<ViolationCaseType, string> = {
   ADMINISTRATIVE:
     'Tekshiruvda qoidabuzarlik tasdiqlangan va ma’muriy javobgarlik qo‘llanilgan: '
@@ -242,7 +242,7 @@ export const VIOLATION_CASE_MEANING_UZ: Record<ViolationCaseType, string> = {
     + 'takroriy holat.',
   NO_FAULT:
     'Reyd yoki tekshiruv o‘tkazilgan, dalolatnoma rasmiylashtirilgan, ammo '
-    + 'iste’molchining aybi tasdiqlanmagan — jarima solinmaydi. Bu holat hisobdan '
+    + 'iste’molchining aybi tasdiqlanmagan - jarima solinmaydi. Bu holat hisobdan '
     + 'chiqarilmaydi: tekshiruv statistikasi to‘liq bo‘lishi kerak.',
 };
 

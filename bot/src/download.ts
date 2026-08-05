@@ -2,19 +2,19 @@
  * `download_report` asbobi qaytargan faylni olib, Telegram hujjat sifatida
  * yuboradi.
  *
- * `fileNameFrom()` — `apps/web/src/lib/download.ts` dagi funksiya bilan bir
+ * `fileNameFrom()` - `apps/web/src/lib/download.ts` dagi funksiya bilan bir
  * xil: `Content-Disposition` sarlavhasidan fayl nomini ajratadi, avval RFC
  * 5987 UTF-8 nusxasini sinab ko'radi (kirill/lotin nomlar shu yerda), aks
  * holda oddiy `filename=` ga tushadi.
  *
  * MANZIL QURILISHI: `action.payload.url` server tomonidan APi-NISBIY
- * beriladi, masalan "/report/period/monthly.xlsx?period=2026-07" — `/api`
+ * beriladi, masalan "/report/period/monthly.xlsx?period=2026-07" - `/api`
  * prefiksisiz (`apps/api/src/services/ai-tools.ts`dagi izohga qarang: "klient
  * uni apiUrl() bilan qo'shadi"). Veb klientda `apiUrl()`/`apiFetchRaw()`
  * buni `${BASE}${path}` qilib qo'shadi, `BASE` esa `/api` bilan tugaydigan
  * to'liq manzil (`apps/web/src/lib/api.ts`). `BOT_API_BASE_URL` xuddi shu
  * `BASE` vazifasini o'taydi (standart holatda ham `/api` bilan tugaydi),
- * shuning uchun bu yerda ham KESIB OLINMAYDI — to'g'ridan-to'g'ri
+ * shuning uchun bu yerda ham KESIB OLINMAYDI - to'g'ridan-to'g'ri
  * qo'shiladi. Aks holda `/api/report` prefiksi (`apps/api/src/app.ts`dagi
  * `app.register(reportRoutes, { prefix: '/api/report' })`) tushib qolib,
  * so'rov 404 bilan tugaydi.
@@ -30,7 +30,7 @@ function fileNameFrom(header: string | null, fallback: string): string {
     try {
       return decodeURIComponent(utf8[1]);
     } catch {
-      /* buzuq kodlash — oddiy nomga tushamiz */
+      /* buzuq kodlash - oddiy nomga tushamiz */
     }
   }
 
@@ -38,7 +38,7 @@ function fileNameFrom(header: string | null, fallback: string): string {
   return plain?.[1] ?? fallback;
 }
 
-/** Fayl olinib, xabar sifatida yuborilsa `true` qaytaradi — chaqiruvchi shunga qarab xabar ko'rsatadi. */
+/** Fayl olinib, xabar sifatida yuborilsa `true` qaytaradi - chaqiruvchi shunga qarab xabar ko'rsatadi. */
 export async function sendReportFile(
   api: Api, chatId: number, apiBaseUrl: string, url: string,
 ): Promise<boolean> {
@@ -51,17 +51,17 @@ export async function sendReportFile(
     await api.sendDocument(chatId, new InputFile(buf, name));
     return true;
   } catch {
-    // Tarmoq xatosi — chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
+    // Tarmoq xatosi - chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
     return false;
   }
 }
 
 /**
  * `show_chart` asbobi qaytargan PNG'ni olib, Telegramga RASM sifatida (hujjat
- * emas) yuboradi — `sendReportFile` bilan bir xil manzil qurish/fetch/xato
+ * emas) yuboradi - `sendReportFile` bilan bir xil manzil qurish/fetch/xato
  * naqshi, faqat `sendDocument` o'rniga `sendPhoto` chaqiriladi, shunda chat
  * ichida diagramma to'g'ridan-to'g'ri ko'rinadi. Rasmlar uchun foydalanuvchiga
- * ko'rinadigan haqiqiy fayl nomi shart emas — shuning uchun `fileNameFrom` ham
+ * ko'rinadigan haqiqiy fayl nomi shart emas - shuning uchun `fileNameFrom` ham
  * chaqirilmaydi, doim 'chart.png'.
  */
 export async function sendChartPhoto(
@@ -75,14 +75,14 @@ export async function sendChartPhoto(
     await api.sendPhoto(chatId, new InputFile(buf, 'chart.png'));
     return true;
   } catch {
-    // Tarmoq xatosi — chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
+    // Tarmoq xatosi - chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
     return false;
   }
 }
 
 /**
  * `sendChartPhoto` bilan bir xil, lekin PNG baytlari chaqiruvchida
- * ALLAQACHON tayyor bo'lganda (fetch shart emas) — masalan 'chart'
+ * ALLAQACHON tayyor bo'lganda (fetch shart emas) - masalan 'chart'
  * action'ining payload.url'i 'data:image/png;base64,...' inline rasm
  * bo'lsa ('render_table'/'render_custom_chart' asboblari qaytargan,
  * ai-tools.ts'ga qarang). Baytlar base64'dan `index.ts`da dekodlanadi,
@@ -95,7 +95,7 @@ export async function sendChartBuffer(
     await api.sendPhoto(chatId, new InputFile(buf, 'chart.png'));
     return true;
   } catch {
-    // Tarmoq xatosi — chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
+    // Tarmoq xatosi - chaqiruvchi foydalanuvchiga qisqa xabar yozadi.
     return false;
   }
 }

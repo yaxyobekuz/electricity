@@ -1,10 +1,10 @@
 /**
- * Diagramma rasmlari (PNG) — AI yordamchi va Telegram bot uchun.
+ * Diagramma rasmlari (PNG) - AI yordamchi va Telegram bot uchun.
  *
- * NEGA BU FAYL: chatda raqamlar ro'yxati ba'zan yetarli emas — hokim "grafik
+ * NEGA BU FAYL: chatda raqamlar ro'yxati ba'zan yetarli emas - hokim "grafik
  * ko'rsat" desa, unga rasm kerak, jadval emas. Fayl `@napi-rs/canvas` bilan
  * QO'LDA chizadi (chart.js yoki shunga o'xshash kutubxona YO'Q): bu loyiha
- * hisoblash mumkin bo'lgan narsani og'ir tashqi paketga topshirmaydi — xuddi
+ * hisoblash mumkin bo'lgan narsani og'ir tashqi paketga topshirmaydi - xuddi
  * `analytics.ts` chiziqli regressiyani o'zi hisoblagani kabi.
  *
  * Bu fayl `db/queries/dashboard.ts` va `analytics.ts` dagi MAVJUD
@@ -33,7 +33,7 @@ const PLOT_Y = MARGIN.top;
 const PLOT_W = WIDTH - MARGIN.left - MARGIN.right;
 const PLOT_H = HEIGHT - MARGIN.top - MARGIN.bottom;
 
-/** Barcha 4 diagramma bir xil kichik palitradan foydalanadi — vizual izchillik uchun. */
+/** Barcha 4 diagramma bir xil kichik palitradan foydalanadi - vizual izchillik uchun. */
 const COLORS = {
   primary: '#2563eb',
   green: '#16a34a',
@@ -45,16 +45,16 @@ const COLORS = {
   bg: '#ffffff',
 };
 
-/** 1048000 → "1 048 000". `ai.ts` dagi `n()` bilan bir xil — chat va rasm bir xil raqam ko'rsatishi kerak. */
+/** 1048000 → "1 048 000". `ai.ts` dagi `n()` bilan bir xil - chat va rasm bir xil raqam ko'rsatishi kerak. */
 function n(v: number | null | undefined, digits = 0): string {
-  if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+  if (v === null || v === undefined || !Number.isFinite(v)) return '-';
   return v.toLocaleString('en-US', {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).replace(/,/g, ' ');
 }
 
-/** "2026-07-23" → "23.07" — X o'qida joy tejash uchun qisqa Uzbek sana ko'rinishi. */
+/** "2026-07-23" → "23.07" - X o'qida joy tejash uchun qisqa Uzbek sana ko'rinishi. */
 function formatDayLabel(dateStr: string): string {
   const [, mm, dd] = dateStr.split('-');
   return `${dd}.${mm}`;
@@ -84,7 +84,7 @@ function drawTitle(ctx: SKRSContext2D, title: string): void {
 
 /**
  * Sarlavhani chizadi va, agar ma'lumot bo'lmasa, markazga izoh yozib
- * `true` qaytaradi — chaqiruvchi shu holda qolgan chizishni o'tkazib
+ * `true` qaytaradi - chaqiruvchi shu holda qolgan chizishni o'tkazib
  * yuboradi. Xato TASHLAMAYDI: bo'sh grafik ham to'g'ri PNG bo'lib qoladi.
  */
 function tryDrawEmpty(ctx: SKRSContext2D, title: string, isEmpty: boolean, message?: string): boolean {
@@ -98,7 +98,7 @@ function tryDrawEmpty(ctx: SKRSContext2D, title: string, isEmpty: boolean, messa
   return true;
 }
 
-/** "Chiroyli" (yumaloq) qadam — 1/2/5 × 10^n ko'rinishidagi qiymat. */
+/** "Chiroyli" (yumaloq) qadam - 1/2/5 × 10^n ko'rinishidagi qiymat. */
 function niceNum(range: number, round: boolean): number {
   const exponent = Math.floor(Math.log10(range || 1));
   const fraction = range / 10 ** exponent;
@@ -132,7 +132,7 @@ function niceTicks(min: number, max: number, tickCount = 5): number[] {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// (a) Chiziqli grafik — bir yoki bir nechta seriya
+// (a) Chiziqli grafik - bir yoki bir nechta seriya
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface LineSeries {
@@ -141,7 +141,7 @@ interface LineSeries {
   values: number[];
   /**
    * Shu indeksdan boshlangan segmentlar (va nuqtalar) ikkinchi uslubda
-   * chiziladi — masalan yo'qotish prognozida "tarix" va "prognoz"ni
+   * chiziladi - masalan yo'qotish prognozida "tarix" va "prognoz"ni
    * ajratish uchun. Berilmasa butun chiziq bir xil uslubda.
    */
   splitIndex?: number;
@@ -153,7 +153,7 @@ interface LineChartConfig {
   title: string;
   categories: string[];
   series: LineSeries[];
-  /** Y o'qi qiymatlariga qo'shiladigan belgi, masalan "%". Standart — yo'q (kWh raqamlar `n()` bilan). */
+  /** Y o'qi qiymatlariga qo'shiladigan belgi, masalan "%". Standart - yo'q (kWh raqamlar `n()` bilan). */
   valueSuffix?: string;
   /** X o'qida bir vaqtda ko'rsatiladigan yorliqlarning taxminiy chegarasi. */
   maxXLabels?: number;
@@ -211,7 +211,7 @@ function drawLineChart(ctx: SKRSContext2D, cfg: LineChartConfig): void {
    * X yorliqlari SEYRAKLASHTIRILADI: kunlik 60 nuqtali seriyada har bir
    * kunni yozish yorliqlarni bir-birining ustiga chiqarib, o'qib
    * bo'lmaydigan qilib qo'yardi. Chiziqning o'zi esa BARCHA nuqtalardan
-   * o'tadi — faqat yorliq tashlab ketiladi.
+   * o'tadi - faqat yorliq tashlab ketiladi.
    */
   const maxLabels = cfg.maxXLabels ?? 12;
   const step = Math.max(1, Math.ceil(cfg.categories.length / maxLabels));
@@ -246,7 +246,7 @@ function drawLineChart(ctx: SKRSContext2D, cfg: LineChartConfig): void {
     });
   }
 
-  // Afsona — faqat bir nechta seriya bo'lsa (bitta seriyali grafikda ortiqcha).
+  // Afsona - faqat bir nechta seriya bo'lsa (bitta seriyali grafikda ortiqcha).
   if (cfg.series.length > 1) {
     ctx.font = '12px sans-serif';
     const widths = cfg.series.map((s) => 24 + ctx.measureText(s.labelUz).width + 24);
@@ -293,7 +293,7 @@ function drawHorizontalBarChart(ctx: SKRSContext2D, cfg: BarChartConfig): void {
   const barH = Math.min(34, (PLOT_H - gap * Math.max(0, count - 1)) / count);
   const totalH = barH * count + gap * Math.max(0, count - 1);
   const startY = PLOT_Y + Math.max(0, (PLOT_H - totalH) / 2);
-  // Ustun uzunligi uchun joy — o'ngda qiymat yozuviga joy qoldiriladi.
+  // Ustun uzunligi uchun joy - o'ngda qiymat yozuviga joy qoldiriladi.
   const barAreaW = PLOT_W - 90;
 
   const fmt = cfg.valueFormatter ?? ((v: number) => n(v));
@@ -339,7 +339,7 @@ function drawDonutChart(ctx: SKRSContext2D, cfg: DonutChartConfig): void {
   const innerR = outerR * 0.55;
 
   /*
-   * Ulush FOIZDA yoziladi, lekin matn tilim ICHIGA emas — ingichka
+   * Ulush FOIZDA yoziladi, lekin matn tilim ICHIGA emas - ingichka
    * tilimlarda matn o'qilmay qoladi. Buning o'rniga rangli kvadrat +
    * yorliq afsonada, tilimning yonida turadi.
    */
@@ -372,7 +372,7 @@ function drawDonutChart(ctx: SKRSContext2D, cfg: DonutChartConfig): void {
     ctx.fillStyle = slice.color;
     ctx.fillRect(legendX, legendY - 7, 14, 14);
     ctx.fillStyle = COLORS.ink;
-    ctx.fillText(`${slice.label} — ${pct.toFixed(1)}%`, legendX + 22, legendY);
+    ctx.fillText(`${slice.label} - ${pct.toFixed(1)}%`, legendX + 22, legendY);
     legendY += rowH;
   }
 }
@@ -382,9 +382,9 @@ function drawDonutChart(ctx: SKRSContext2D, cfg: DonutChartConfig): void {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Energiya balansi dinamikasi — oxirgi 60 kun (kirgan / sotilgan).
+ * Energiya balansi dinamikasi - oxirgi 60 kun (kirgan / sotilgan).
  *
- * DIQQAT: `period` bu yerda SO'ROV uchun ishlatilmaydi — grafik doim
+ * DIQQAT: `period` bu yerda SO'ROV uchun ishlatilmaydi - grafik doim
  * mavjud eng so'nggi kunlarni ko'rsatadi, tanlangan oyga bog'lanib
  * qolmaydi. Parametr faqat `renderChart` dispatcheridagi bir xil chaqiruv
  * shakli uchun saqlanadi.
@@ -421,10 +421,10 @@ export async function buildEnergyTrendChart(
 }
 
 const TP_RANKING_TITLES: Record<string, string> = {
-  kwh: 'TP lar — eng ko‘p iste’mol',
-  disconnected: 'TP lar — eng ko‘p uzilgan abonent',
-  off_share: 'TP lar — uzilganlar ulushi eng yuqori',
-  consumers: 'TP lar — eng ko‘p abonent',
+  kwh: 'TP lar - eng ko‘p iste’mol',
+  disconnected: 'TP lar - eng ko‘p uzilgan abonent',
+  off_share: 'TP lar - uzilganlar ulushi eng yuqori',
+  consumers: 'TP lar - eng ko‘p abonent',
 };
 
 /** TP larni saralab, top N tasini gorizontal ustunlarda ko'rsatadi. */
@@ -438,7 +438,7 @@ export async function buildTpRankingChart(
   const rows = await q.tpMonthly(ctx, period, feederId);
 
   /*
-   * SARALASH — `ai-tools.ts` dagi `list_tps` bilan AYNAN bir xil mantiq.
+   * SARALASH - `ai-tools.ts` dagi `list_tps` bilan AYNAN bir xil mantiq.
    * Diagramma modelning matnda aytgan reytingi bilan bir xil tartibda
    * chiqishi kerak: aks holda "eng ko'p iste'mol qiluvchi" degan gap bilan
    * grafikdagi birinchi ustun mos kelmay qoladi.
@@ -473,7 +473,7 @@ export async function buildTpRankingChart(
   return canvas.toBuffer('image/png');
 }
 
-/** Yo'qotish tuzilmasi — sotilgan / texnologik / tijoriy, donut ko'rinishida. */
+/** Yo'qotish tuzilmasi - sotilgan / texnologik / tijoriy, donut ko'rinishida. */
 export async function buildLossBreakdownChart(
   ctx: AppContext, feederId: number | null, period: string,
 ): Promise<Buffer> {
@@ -481,7 +481,7 @@ export async function buildLossBreakdownChart(
   const title = 'Yo‘qotish tuzilmasi';
 
   /*
-   * `feederMonthly` FIDER darajasidagi kirish hisoblagichiga bog'liq —
+   * `feederMonthly` FIDER darajasidagi kirish hisoblagichiga bog'liq -
    * butun tuman bo'yicha yig'indisi yo'q (har bir fiderning boshlang'ich
    * hisoblagichi alohida). Fider tanlanmagan bo'lsa xato tashlanmaydi,
    * grafik shunchaki buni tushuntirib qo'yadi.
@@ -512,7 +512,7 @@ export async function buildLossBreakdownChart(
 }
 
 /**
- * Yo'qotish % prognozi — tarix (yaxlit chiziq) + kelasi oylar (kesik chiziq),
+ * Yo'qotish % prognozi - tarix (yaxlit chiziq) + kelasi oylar (kesik chiziq),
  * bitta uzluksiz seriya sifatida.
  */
 export async function buildLossForecastChart(
@@ -562,14 +562,14 @@ export interface RenderChartParams {
 /**
  * Diagramma turi bo'yicha tegishli quruvchini chaqiradi va PNG baytlarini
  * qaytaradi. HTTP marshrut qatlami (bu faylni chaqiruvchi) `kind`ni
- * validatsiya qilmaydi deb hisoblanmasin — bu yerda ham tekshiriladi va
+ * validatsiya qilmaydi deb hisoblanmasin - bu yerda ham tekshiriladi va
  * noma'lum tur uchun aniq xato tashlanadi, u yerda 400 ga aylantiriladi.
  */
 export async function renderChart(
   ctx: AppContext, kind: string, params: RenderChartParams,
 ): Promise<{ buffer: Buffer; filename: string }> {
   /*
-   * Davr markazlashtirilgan holda hal qilinadi — TP reytingi va yo'qotish
+   * Davr markazlashtirilgan holda hal qilinadi - TP reytingi va yo'qotish
    * tuzilmasi diagrammalariga aniq davr KERAK, model esa uni har doim ham
    * bermaydi. `ai.ts`dagi `buildSnapshot` bilan bir xil qoida: berilmasa
    * eng so'nggi to'liq davr olinadi.
@@ -601,12 +601,12 @@ export async function renderChart(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// AI yordamchi uchun erkin chizish — `render_table` / `render_custom_chart`
+// AI yordamchi uchun erkin chizish - `render_table` / `render_custom_chart`
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // Yuqoridagi 4 ta quruvchidan farqli o'laroq bular DB ga murojaat qilmaydi:
 // model o'zi bergan (chatda hisoblangan yoki aytgan) raqamlarni sinxron
-// ravishda rasmga aylantiradi — shuning uchun `async` emas va `AppContext`
+// ravishda rasmga aylantiradi - shuning uchun `async` emas va `AppContext`
 // qabul qilmaydi. `ai-tools.ts` natijani darhol `buffer.toString('base64')`
 // bilan ishlatadi.
 
@@ -617,23 +617,23 @@ const MAX_TABLE_ROWS = 30;
 const MAX_TABLE_COLS = 8;
 const MAX_CUSTOM_CHART_ITEMS = 60;
 
-/** Katakcha matni: raqamlar `n()` bilan (kWh uslubidagi bo'shliqli minglik), qolgani — matn sifatida. */
+/** Katakcha matni: raqamlar `n()` bilan (kWh uslubidagi bo'shliqli minglik), qolgani - matn sifatida. */
 function formatTableCell(v: string | number): string {
   if (typeof v === 'number') {
-    return Number.isFinite(v) ? n(v, Number.isInteger(v) ? 0 : 2) : '—';
+    return Number.isFinite(v) ? n(v, Number.isInteger(v) ? 0 : 2) : '-';
   }
   return v === null || v === undefined ? '' : String(v);
 }
 
 /**
  * Oddiy, toza jadval: sarlavha zolotasi (rangli fon) + qatorlar (bir
- * qatordan keyin och chiziq). Ustunlar `PLOT_W` bo'ylab teng taqsimlanadi —
+ * qatordan keyin och chiziq). Ustunlar `PLOT_W` bo'ylab teng taqsimlanadi -
  * xuddi boshqa 4 diagramma bilan bir xil chegaralardan foydalanadi.
  * Qiymatlar matn bo'lsa chapga, raqam bo'lsa o'ngga tekislanadi.
  *
  * Chaqiruvchi (`ai-tools.ts`) allaqachon 8 ustun / 30 qatorgacha qisqartirib
  * beradi, lekin bu funksiya QANDAY chaqirilishidan qat'iy nazar hech qachon
- * qulamasligi kerak — shuning uchun chegaralar shu yerda ham majburlanadi.
+ * qulamasligi kerak - shuning uchun chegaralar shu yerda ham majburlanadi.
  */
 export function renderTable(title: string, columns: string[], rows: (string | number)[][]): Buffer {
   const { canvas, ctx: c } = newCanvas();
@@ -670,7 +670,7 @@ export function renderTable(title: string, columns: string[], rows: (string | nu
     c.restore();
   });
 
-  // Qatorlar — juft indekslarda och-kulrang zolota o'qishni osonlashtiradi.
+  // Qatorlar - juft indekslarda och-kulrang zolota o'qishni osonlashtiradi.
   clampedRows.forEach((row, ri) => {
     const y = startY + headerH + ri * rowH;
     if (ri % 2 === 1) {
@@ -706,7 +706,7 @@ export function renderTable(title: string, columns: string[], rows: (string | nu
 /**
  * Modelning erkin {label, value[, series]} ma'lumotini MAVJUD chizish
  * primitivlariga (`drawLineChart` / `drawHorizontalBarChart` /
- * `drawDonutChart`) mos shaklga keltirib, shularni chaqiradi — bu yerda
+ * `drawDonutChart`) mos shaklga keltirib, shularni chaqiradi - bu yerda
  * yangi chizish mantig'i YO'Q, faqat qayta shakllantirish.
  */
 export function renderCustomChart(
@@ -719,7 +719,7 @@ export function renderCustomChart(
   const emptyMessage = 'Ma\'lumot yo\'q';
 
   if (chartType === 'line') {
-    // Seriyalarga guruhlash — dastlabki paydo bo'lish tartibi saqlanadi.
+    // Seriyalarga guruhlash - dastlabki paydo bo'lish tartibi saqlanadi.
     const seriesOrder: string[] = [];
     const seriesPoints = new Map<string, { label: string; value: number }[]>();
     for (const it of capped) {
@@ -733,7 +733,7 @@ export function renderCustomChart(
       pts.push({ label: it.label, value: it.value });
     }
 
-    // X o'qi kategoriyalari — eng uzun seriyaning yorliqlaridan olinadi.
+    // X o'qi kategoriyalari - eng uzun seriyaning yorliqlaridan olinadi.
     let categories: string[] = [];
     for (const key of seriesOrder) {
       const pts = seriesPoints.get(key)!;

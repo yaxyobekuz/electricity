@@ -6,7 +6,7 @@
  *
  * Umumiy qoidalar:
  *   • "Jami" ustunlari FAQAT O'QISH uchun va jonli hisoblanadi
- *   • Birliklar maydon ICHIDA (InputGroup.Suffix) — birlik chalkashligi yo'q
+ *   • Birliklar maydon ICHIDA (InputGroup.Suffix) - birlik chalkashligi yo'q
  *   • Avtosaqlash 800 ms kechikish bilan
  *   • Xatolar tuzatilmaguncha yuborib bo'lmaydi
  */
@@ -107,7 +107,7 @@ export default function EntryForm() {
           { label: periodLabel(period) },
         ]}
         subtitle={`${DOMAIN_LABEL_UZ[domain as keyof typeof DOMAIN_LABEL_UZ] ?? domain} · revision ${submission.revision}`}
-        title={`${mfy?.nameUz ?? ''} — ${periodLabel(period)}`}
+        title={`${mfy?.nameUz ?? ''} - ${periodLabel(period)}`}
       />
 
       {submission.status === 'rejected' && submission.reviewNote && (
@@ -162,7 +162,7 @@ export default function EntryForm() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Kunlik energiya balansi — oylik jadval
+// Kunlik energiya balansi - oylik jadval
 // ═══════════════════════════════════════════════════════════════════════════
 
 function EnergyBalanceGrid({
@@ -217,7 +217,7 @@ function EnergyBalanceGrid({
     },
   });
 
-  /** Avtosaqlash — 800 ms kechikish. */
+  /** Avtosaqlash - 800 ms kechikish. */
   const scheduleSave = useCallback(
     (next: Record<string, EnergyBalanceDay>) => {
       if (readOnly) return;
@@ -407,7 +407,7 @@ function EnergyBalanceGrid({
 
                 return (
                   <tr key={date} className={mismatch ? 'bg-danger/5' : undefined}>
-                    {/* Yil sarlavhada turibdi — har qatorda takrorlanmaydi. */}
+                    {/* Yil sarlavhada turibdi - har qatorda takrorlanmaydi. */}
                     <td className="sticky left-0 z-10 bg-surface font-medium">
                       {dateDayMonth(date)}
                     </td>
@@ -438,7 +438,7 @@ function EnergyBalanceGrid({
                       value={row.kwhLossIllegal}
                       onChange={(v) => update(date, { kwhLossIllegal: v })}
                     />
-                    {/* HISOBLANADI — kiritilmaydi */}
+                    {/* HISOBLANADI - kiritilmaydi */}
                     <td className="num bg-surface-secondary font-semibold">
                       {num(lossTotal, 1)}
                     </td>
@@ -475,7 +475,7 @@ function EnergyBalanceGrid({
   );
 }
 
-/** Raqamli katakcha — birlik maydon ichida ko'rsatilmaydi (jadvalda joy tejaladi). */
+/** Raqamli katakcha - birlik maydon ichida ko'rsatilmaydi (jadvalda joy tejaladi). */
 function NumCell({
   value, onChange, readOnly, invalid,
 }: {
@@ -505,7 +505,7 @@ function NumCell({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Oylik hisobot — pasportning 1, 5, 6, 7, 13-qatorlari
+// Oylik hisobot - pasportning 1, 5, 6, 7, 13-qatorlari
 // ═══════════════════════════════════════════════════════════════════════════
 
 const EMPTY_RETURN: MonthlyReturn = {
@@ -739,7 +739,7 @@ function MonthlyReturnForm({
   );
 }
 
-/** Kiritiladigan raqamli maydon — birlik MAYDON ICHIDA. */
+/** Kiritiladigan raqamli maydon - birlik MAYDON ICHIDA. */
 function NumInput({
   label, value, onChange, unit, hint, error, readOnly, decimals = 0,
 }: {
@@ -776,7 +776,7 @@ function NumInput({
   );
 }
 
-/** Hisoblanadigan maydon — FAQAT O'QISH. Jamilar hech qachon kiritilmaydi. */
+/** Hisoblanadigan maydon - FAQAT O'QISH. Jamilar hech qachon kiritilmaydi. */
 function ComputedField({
   label, value, unit, decimals = 0,
 }: {

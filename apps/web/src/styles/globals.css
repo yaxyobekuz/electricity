@@ -2,7 +2,7 @@
  * Global CSS.
  *
  * HeroUI v3 talabi: `tailwindcss` BIRINCHI, keyin `@heroui/styles`.
- * Tartibni o'zgartirmang — hujjatlarda alohida ogohlantirilgan.
+ * Tartibni o'zgartirmang - hujjatlarda alohida ogohlantirilgan.
  */
 @layer theme, base, components, utilities;
 
@@ -10,18 +10,18 @@
 @import "@heroui/styles";
 
 /*
- * Inter — LOKAL bundle qilinadi (`@fontsource-variable/inter`).
+ * Inter - LOKAL bundle qilinadi (`@fontsource-variable/inter`).
  * Google Fonts yoki boshqa CDN ISHLATILMAYDI: `.woff2` fayllari npm paketidan
  * keladi va Vite ularni `dist/assets/` ga nusxalaydi.
  *
- * `wght.css` — o'zgaruvchan (variable) og'irlik o'qi, faqat normal uslub
+ * `wght.css` - o'zgaruvchan (variable) og'irlik o'qi, faqat normal uslub
  * (kursiv alohida faylda va bizga kerak emas). Ichida har bir subset uchun
  * `unicode-range` bor, shuning uchun brauzer FAQAT kerakli qismini yuklaydi:
- *   • latin        — U+02BB-02BC ni ham qamraydi, ya'ni oʻ / gʻ ishlaydi
- *   • latin-ext    — kengaytirilgan lotin
- *   • cyrillic     — ў ъ ш …
- *   • cyrillic-ext — қ ғ ҳ  (o'zbek kirili uchun MAJBURIY)
- *   • greek        — Σ (manba formulalarida ishlatiladi)
+ *   • latin        - U+02BB-02BC ni ham qamraydi, ya'ni oʻ / gʻ ishlaydi
+ *   • latin-ext    - kengaytirilgan lotin
+ *   • cyrillic     - ў ъ ш …
+ *   • cyrillic-ext - қ ғ ҳ  (o'zbek kirili uchun MAJBURIY)
+ *   • greek        - Σ (manba formulalarida ishlatiladi)
  */
 @import "@fontsource-variable/inter/wght.css";
 
@@ -30,7 +30,7 @@
 @import "./print.css";
 
 @theme inline {
-  /* Inter yuklanmasa — tizim shriftlariga tushadi (ular ham lokal). */
+  /* Inter yuklanmasa - tizim shriftlariga tushadi (ular ham lokal). */
   --font-sans: "Inter Variable", "Inter", "Segoe UI", system-ui, -apple-system,
     "Noto Sans", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "Consolas", ui-monospace, "SF Mono", Menlo, monospace;
@@ -43,8 +43,8 @@ html {
 
   /*
    * Inter'ning belgilarni farqlash to'plami. Ma'lumot paneli uchun muhim:
-   *   cv05 — dumli kichik "l"  (1 / l / I ni ajratadi)
-   *   cv08 — serifli katta "I"
+   *   cv05 - dumli kichik "l"  (1 / l / I ni ajratadi)
+   *   cv08 - serifli katta "I"
    * TP kodlari (TR-0102), abonent raqamlari va login'lar aniq o'qiladi.
    */
   font-feature-settings: "cv05" 1, "cv08" 1;
@@ -55,7 +55,7 @@ body {
 }
 
 /*
- * Raqamlar ustunlarda tekis turishi uchun — jadval va KPI kartalarida.
+ * Raqamlar ustunlarda tekis turishi uchun - jadval va KPI kartalarida.
  * `tnum` bilan birga yuqoridagi belgi-farqlash to'plami ham saqlanadi
  * (`font-feature-settings` merosga o'tmaydi, qayta yozilsa eskisi yo'qoladi).
  */

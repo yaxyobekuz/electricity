@@ -1,11 +1,11 @@
 /**
- * Raqamning sanalib chiqishi — 0 dan joriy qiymatga.
+ * Raqamning sanalib chiqishi - 0 dan joriy qiymatga.
  *
  * IKKI QOIDA:
  *   1. `prefers-reduced-motion` yoqilgan bo'lsa animatsiya UMUMAN
- *      bo'lmaydi — qiymat darhol chiqadi. Bu shunchaki did masalasi emas:
+ *      bo'lmaydi - qiymat darhol chiqadi. Bu shunchaki did masalasi emas:
  *      harakat ba'zi foydalanuvchilarda bosh aylanishiga sabab bo'ladi.
- *   2. Ekranda ko'rinmaguncha boshlanmaydi (`IntersectionObserver`) —
+ *   2. Ekranda ko'rinmaguncha boshlanmaydi (`IntersectionObserver`) -
  *      pastdagi panellar foydalanuvchi ularga yetganda jonlanadi.
  *
  * Kutubxona ishlatilmaydi: `requestAnimationFrame` yetarli va bu tizim
@@ -13,7 +13,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 
-/** easeOutCubic — oxiriga borib sekinlashadi, "to'xtash" tabiiy ko'rinadi. */
+/** easeOutCubic - oxiriga borib sekinlashadi, "to'xtash" tabiiy ko'rinadi. */
 const ease = (t: number): number => 1 - (1 - t) ** 3;
 
 const prefersReducedMotion = (): boolean =>
@@ -21,7 +21,7 @@ const prefersReducedMotion = (): boolean =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 interface CountUpProps {
-  /** Yakuniy qiymat. O'zgarsa — o'sha joydan yangisiga suriladi. */
+  /** Yakuniy qiymat. O'zgarsa - o'sha joydan yangisiga suriladi. */
   value: number | null;
   /** Har bir kadrda qiymatni matnga aylantiradi. */
   format: (v: number) => string;
@@ -36,7 +36,7 @@ export function CountUp({ value, format, durationMs = 900, className }: CountUpP
   const [shown, setShown] = useState(() => (prefersReducedMotion() ? target : 0));
   const [visible, setVisible] = useState(false);
 
-  // Ko'rinish kuzatuvi — sahifa pastidagi raqamlar bekorga sanalmasin.
+  // Ko'rinish kuzatuvi - sahifa pastidagi raqamlar bekorga sanalmasin.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -84,7 +84,7 @@ export function CountUp({ value, format, durationMs = 900, className }: CountUpP
 
   return (
     <span ref={ref} className={className}>
-      {value === null ? '—' : format(shown)}
+      {value === null ? '-' : format(shown)}
     </span>
   );
 }

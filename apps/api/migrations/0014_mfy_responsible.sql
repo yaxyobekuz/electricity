@@ -1,9 +1,9 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0014_mfy_responsible.sql — fider uchun ma'sul shaxs
+-- 0014_mfy_responsible.sql - fider uchun ma'sul shaxs
 --
--- Har bir fider (`ref.mfy` qatori) uchun BITTA amaldagi ma'sul shaxs yozuvi —
+-- Har bir fider (`ref.mfy` qatori) uchun BITTA amaldagi ma'sul shaxs yozuvi -
 -- F.I.Sh., lavozimi, telefon raqami. Dashboardda ko'rsatiladi, alohida
--- sozlamalar sahifasida tahrirlanadi. Tarix saqlanmaydi — faqat joriy holat
+-- sozlamalar sahifasida tahrirlanadi. Tarix saqlanmaydi - faqat joriy holat
 -- kerak, shuning uchun `mfy_id` PRIMARY KEY (bitta fider = bitta yozuv).
 -- ═══════════════════════════════════════════════════════════════════════════
 
@@ -17,7 +17,7 @@ CREATE TABLE ref.mfy_responsible (
 );
 
 COMMENT ON TABLE ref.mfy_responsible IS
-  'Fider bo''yicha ma''sul shaxs — bitta fider uchun bitta amaldagi yozuv';
+  'Fider bo''yicha ma''sul shaxs - bitta fider uchun bitta amaldagi yozuv';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON ref.mfy_responsible TO beap_app;
 

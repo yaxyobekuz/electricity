@@ -28,11 +28,11 @@
 /* ── Animatsiya o'zgaruvchilari ─────────────────────────────────────────── */
 
 /*
- * `@property` — brauzerga bu o'zgaruvchi BURCHAK ekanini aytadi.
+ * `@property` - brauzerga bu o'zgaruvchi BURCHAK ekanini aytadi.
  *
  * Ro'yxatdan o'tmagan `--x` o'zgaruvchi animatsiyada SAKRAB o'zgaradi
  * (brauzer uni oddiy matn deb biladi). Ro'yxatdan o'tgani silliq oraliq
- * qiymatlarni hisoblaydi — aylanuvchi ramka va to'ladigan halqa shu
+ * qiymatlarni hisoblaydi - aylanuvchi ramka va to'ladigan halqa shu
  * tufayli ishlaydi.
  */
 @property --angle {
@@ -70,11 +70,11 @@
 }
 
 /*
- * Xiralashib chiqadigan variant — FAQAT KPI kartalari uchun.
+ * Xiralashib chiqadigan variant - FAQAT KPI kartalari uchun.
  *
  * `filter: blur()` butun elementni qayta chizishga majbur qiladi.
  * Kichik kartada bu arzon, lekin ichida ECharts/Nivo turgan panelda
- * qimmat — panellar shu sababli oddiy variantda qoladi.
+ * qimmat - panellar shu sababli oddiy variantda qoladi.
  */
 @keyframes beap-rise-soft {
   from {
@@ -87,7 +87,7 @@
   }
 }
 
-/* Oddiy sahifalar — mount paytida bir marta. */
+/* Oddiy sahifalar - mount paytida bir marta. */
 .panel {
   animation: beap-rise 0.42s cubic-bezier(0.22, 0.68, 0.32, 1) backwards;
 }
@@ -97,11 +97,11 @@
 }
 
 /*
- * `MotionStage` ichida — chiqish SKROLL bilan boshqariladi.
+ * `MotionStage` ichida - chiqish SKROLL bilan boshqariladi.
  *
  * Karta ekranga kirmaguncha ko'rinmaydi (`opacity: 0`), kuzatuvchi
  * `is-in` sinfini qo'shganda jonlanadi. Navbat kechikishini JS
- * `--reveal-delay` orqali beradi — u ekranga BIRGA kirgan kartalar
+ * `--reveal-delay` orqali beradi - u ekranga BIRGA kirgan kartalar
  * bo'yicha hisoblanadi, to'rdagi qat'iy tartib bo'yicha emas.
  */
 [data-stage] .panel,
@@ -122,7 +122,7 @@
 
 /*
  * Harakat kamaytirilganda `globals.css` animatsiyani 0.01ms ga tushiradi,
- * lekin yuqoridagi `opacity: 0` CSS xossasi — u o'z-o'zidan yo'qolmaydi.
+ * lekin yuqoridagi `opacity: 0` CSS xossasi - u o'z-o'zidan yo'qolmaydi.
  * Shu sababli bu yerda ochiq bekor qilinadi, aks holda kuzatuvchi
  * ishlamagan holatda kartalar butunlay ko'rinmay qolishi mumkin.
  */
@@ -143,7 +143,7 @@
     transform 0.28s cubic-bezier(0.22, 0.68, 0.32, 1);
 }
 
-/* Sichqoncha ostida panel bir oz "ko'tariladi" — interaktivlik belgisi. */
+/* Sichqoncha ostida panel bir oz "ko'tariladi" - interaktivlik belgisi. */
 .panel:hover {
   transform: translateY(-3px);
   box-shadow:
@@ -152,7 +152,7 @@
 }
 
 /*
- * Aylanuvchi yorug' ramka — faqat hover'da.
+ * Aylanuvchi yorug' ramka - faqat hover'da.
  *
  * USUL: 1px "padding" li pseudo-element ikkita niqob bilan kesiladi
  * (`content-box` va butun quti), natijada FAQAT chekka chizig'i qoladi.
@@ -200,7 +200,7 @@
 
 /*
  * `.panel` QATLAMSIZ e'lon qilingan, shuning uchun u `flex-col` yordamchi
- * sinfini ham yengadi. Yotiq panel uchun alohida modifikator kerak —
+ * sinfini ham yengadi. Yotiq panel uchun alohida modifikator kerak -
  * `class="panel flex-row"` ISHLAMAYDI.
  */
 .panel--row {
@@ -228,12 +228,12 @@
 }
 
 /*
- * Panel pastidagi harakat havolasi — mockupdagi "Batafsil" / "Barchasi".
+ * Panel pastidagi harakat havolasi - mockupdagi "Batafsil" / "Barchasi".
  *
  * Fon chapdan o'ngga "quyiladi". Buni pseudo-element bilan qilib
  * bo'lmaydi: havola matni ORAM ELEMENTSIZ turibdi, ya'ni uni fon
  * ustiga chiqarib bo'lmaydi va pseudo-element matnni bosib qolardi.
- * `background-size` esa asl fon qatlamida qoladi — matn doim tepada.
+ * `background-size` esa asl fon qatlamida qoladi - matn doim tepada.
  */
 .panel__action {
   @apply block w-full rounded-b-xl border-t border-separator px-4 py-2
@@ -253,7 +253,7 @@
 }
 
 /*
- * O'q DOIM joy egallaydi (shaffof holda ham) — hover'da paydo bo'lganda
+ * O'q DOIM joy egallaydi (shaffof holda ham) - hover'da paydo bo'lganda
  * yorliq siljib ketmaydi.
  */
 .panel__action::after {
@@ -274,19 +274,19 @@
 /* ── KPI kartasi ────────────────────────────────────────────────────────── */
 
 /*
- * KPI kartasi — sahifadagi eng "sezgir" element.
+ * KPI kartasi - sahifadagi eng "sezgir" element.
  *
  * Uch qatlam ustma-ust turadi va tartibi MUHIM:
- *   ::before (z 0) — kursor ortidan yuradigan yorug'lik dog'i
- *   mazmun  (z 1)  — matn va raqamlar
- *   ::after (z 2)  — hover'da bir marta o'tuvchi yaltirash
+ *   ::before (z 0) - kursor ortidan yuradigan yorug'lik dog'i
+ *   mazmun  (z 1)  - matn va raqamlar
+ *   ::after (z 2)  - hover'da bir marta o'tuvchi yaltirash
  *
  * `--rx/--ry` (egilish) va `--mx/--my` (dog' markazi) ni `MotionStage`
  * yozadi. Ular berilmasa karta oddiy tekis holatda qoladi.
  */
 /*
  * Tinch holatda `transform` YOZILMAYDI. Doimiy `perspective(...)` matnni
- * alohida qatlamga chiqarib, ba'zi brauzerlarda uni xiralashtiradi —
+ * alohida qatlamga chiqarib, ba'zi brauzerlarda uni xiralashtiradi -
  * egilish esa faqat kursor ustida turganda kerak, ya'ni `:hover` yetarli.
  */
 .kpi {
@@ -297,13 +297,13 @@
     box-shadow 0.24s ease;
 }
 
-/* Mazmun yorug'lik dog'idan YUQORIDA turadi — aks holda matn xiralashadi. */
+/* Mazmun yorug'lik dog'idan YUQORIDA turadi - aks holda matn xiralashadi. */
 .kpi > * {
   position: relative;
   z-index: 1;
 }
 
-/* Kursor ostidagi yumshoq yorug'lik — kartaning "hajmi" shundan seziladi. */
+/* Kursor ostidagi yumshoq yorug'lik - kartaning "hajmi" shundan seziladi. */
 .kpi::before {
   content: '';
   position: absolute;
@@ -324,7 +324,7 @@
 }
 
 /*
- * Kartaning ustidan o'tuvchi yorug'lik — faqat hover'da bir marta.
+ * Kartaning ustidan o'tuvchi yorug'lik - faqat hover'da bir marta.
  * `overflow-hidden` bo'lgani uchun u karta chegarasidan chiqmaydi.
  */
 .kpi::after {
@@ -343,7 +343,7 @@
 }
 
 /*
- * Egilish, ko'tarilish va kattalashish — hammasi BITTA `transform` da:
+ * Egilish, ko'tarilish va kattalashish - hammasi BITTA `transform` da:
  * xossa butunicha qayta yoziladi, qismini meros qilib olib bo'lmaydi.
  * `--rx/--ry` berilmagan bo'lsa (sensorli ekran) 0deg qoladi va faqat
  * ko'tarilish ishlaydi.
@@ -378,7 +378,7 @@
   box-shadow: 0 8px 18px color-mix(in oklab, var(--tone-solid, var(--accent)) 55%, transparent);
 }
 
-/* Nishondan tarqaladigan halqa — hover'da "signal" berilayotgandek. */
+/* Nishondan tarqaladigan halqa - hover'da "signal" berilayotgandek. */
 .kpi__badge::after {
   content: '';
   position: absolute;
@@ -409,7 +409,7 @@
 }
 
 /*
- * `inline-block` — SHART: `span` odatda satr ichidagi element bo'lib,
+ * `inline-block` - SHART: `span` odatda satr ichidagi element bo'lib,
  * unga `transform` UMUMAN ta'sir qilmaydi. Hover'dagi kattalashish
  * shusiz jimgina ishlamay turadi.
  */
@@ -428,7 +428,7 @@
   @apply pb-px text-[11px] font-medium text-muted;
 }
 
-/* Tus variantlari — `theme-gov.css` dagi tokenlarga bog'lanadi. */
+/* Tus variantlari - `theme-gov.css` dagi tokenlarga bog'lanadi. */
 .tone-blue   { --tone-bg: var(--tone-blue-bg);   --tone-solid: var(--tone-blue-solid); }
 .tone-green  { --tone-bg: var(--tone-green-bg);  --tone-solid: var(--tone-green-solid); }
 .tone-orange { --tone-bg: var(--tone-orange-bg); --tone-solid: var(--tone-orange-solid); }
@@ -450,7 +450,7 @@
 }
 
 /*
- * `py-2.5` — katakning ichida ikki qatorli mazmun bo'lishi mumkin
+ * `py-2.5` - katakning ichida ikki qatorli mazmun bo'lishi mumkin
  * (yuklama chizig'i + "optimal 70%"). Undan past chetlashda qatorlar
  * bir-biriga yopishib, jadval siqilgandek ko'rinadi.
  */
@@ -462,7 +462,7 @@
 /*
  * Qatorlar yuqoridan pastga navbat bilan "to'kiladi".
  *
- * Kechikish `nth-child` bilan — jadval qatorlari JS kuzatuviga qo'shilmaydi
+ * Kechikish `nth-child` bilan - jadval qatorlari JS kuzatuviga qo'shilmaydi
  * (ular juda ko'p va tez almashadi). 12 tadan keyin kechikish oshmaydi:
  * uzun jadvalda oxirgi qator soniyalab kutib turmasligi kerak.
  */
@@ -508,7 +508,7 @@
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
-/* Hover'da yuklama chizig'i bo'ylab yugurik chiziqlar — "oqim" belgisi. */
+/* Hover'da yuklama chizig'i bo'ylab yugurik chiziqlar - "oqim" belgisi. */
 .dt tbody tr:hover .loadbar__fill::after {
   content: '';
   position: absolute;
@@ -533,7 +533,7 @@
 }
 
 /*
- * Ustuni ko'p jadval (transformatorlar holati — 7 ustun) tor kartada ham
+ * Ustuni ko'p jadval (transformatorlar holati - 7 ustun) tor kartada ham
  * sig'sin va past bo'lsin: chetlash ikki yo'nalishda ham kichrayadi.
  * Katakda bir qatorli mazmun bo'lgani uchun `py` ni kamaytirish xavfsiz.
  */
@@ -562,7 +562,7 @@
   @apply text-center;
 }
 
-/* ── Status nuqtasi — DOIM matn bilan birga ─────────────────────────────── */
+/* ── Status nuqtasi - DOIM matn bilan birga ─────────────────────────────── */
 
 .dot {
   @apply relative inline-block size-1.5 shrink-0 rounded-full;
@@ -574,7 +574,7 @@
 .dot--critical { background: var(--viz-critical); }
 
 /*
- * Tanqidiy holat nuqtasi TO'XTOVSIZ pulslaydi — ro'yxatda ko'z birinchi
+ * Tanqidiy holat nuqtasi TO'XTOVSIZ pulslaydi - ro'yxatda ko'z birinchi
  * shunga tushadi. Faqat `critical`: agar hamma nuqta pulslasa, hech biri
  * ajralib turmaydi va sahifa shovqinga aylanadi.
  */
@@ -666,7 +666,7 @@
   @apply flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10.5px] font-medium text-viz-ink-2;
 }
 
-/* Diagramma ostidagi legenda — kattaroq va markazda. */
+/* Diagramma ostidagi legenda - kattaroq va markazda. */
 .chart-frame__legend--lg {
   @apply justify-center gap-x-4 gap-y-1.5 text-[12px];
 }
@@ -691,7 +691,7 @@
  * o'rardi.
  *
  * YECHIM: Nivo konteyneri faqat POZITSIYALASH uchun qoladi (fon, chekka
- * va soyasiz — `nivoTheme` da), butun ko'rinishni shu sinf beradi va
+ * va soyasiz - `nivoTheme` da), butun ko'rinishni shu sinf beradi va
  * `white-space: nowrap` bilan qator o'ramaydi. Ko'p qatorli tooltip'lar
  * qatorlarni O'ZI aniq belgilaydi (`.chart-tooltip__row`).
  */
@@ -739,7 +739,7 @@
 
 /* ═══ «JONLI OQIM» bandi ═══════════════════════════════════════════════════
  *
- * Dashboard tepasidagi ko'rgazma element. Ikkala temada ham QORONG'I —
+ * Dashboard tepasidagi ko'rgazma element. Ikkala temada ham QORONG'I -
  * bu ataylab: sahifaning qolgani och, shu sababli band "ekran" kabi
  * ajralib turadi va ko'z birinchi shunga tushadi.
  *
@@ -769,7 +769,7 @@
 /* ── Fon qatlamlari ── */
 
 /*
- * Aurora — uchta xira rangli dog'. `-inset-24` shart: dog'lar chetdan
+ * Aurora - uchta xira rangli dog'. `-inset-24` shart: dog'lar chetdan
  * tashqarida boshlanadi, shunda surilganda bo'sh burchak ochilib qolmaydi.
  */
 .hero__aurora {
@@ -795,7 +795,7 @@
 }
 
 /*
- * Sekin suriladigan texnik panjara — "tarmoq" tuyg'usi.
+ * Sekin suriladigan texnik panjara - "tarmoq" tuyg'usi.
  *
  * Surilish `background-position` bilan emas, `transform` bilan: birinchisi
  * har kadrda butun maydonni QAYTA CHIZADI, ikkinchisi tayyor qatlamni
@@ -821,7 +821,7 @@
   }
 }
 
-/* Vaqti-vaqti bilan o'tuvchi yorug'lik — "skaner". */
+/* Vaqti-vaqti bilan o'tuvchi yorug'lik - "skaner". */
 .hero__sweep {
   @apply pointer-events-none absolute inset-y-0 left-0 w-1/4;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.13), transparent);
@@ -898,7 +898,7 @@
 /* ── Puls chizig'i ── */
 
 /*
- * Chekkalar niqob bilan so'ndiriladi — chiziq "boshlanmaydi va tugamaydi",
+ * Chekkalar niqob bilan so'ndiriladi - chiziq "boshlanmaydi va tugamaydi",
  * xuddi kesib olingan lenta kabi cheksiz oqib turadi.
  */
 .hero__ekg {
@@ -908,7 +908,7 @@
   mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 
-/* Surilish AYNAN bitta bo'g'in kengligiga (120) — ulanish joyi sezilmaydi. */
+/* Surilish AYNAN bitta bo'g'in kengligiga (120) - ulanish joyi sezilmaydi. */
 .hero__ekg-track {
   animation: beap-ekg 3.2s linear infinite;
 }
@@ -979,7 +979,7 @@
 }
 
 /*
- * Halqa — konus gradient. To'lish `--deg` bo'yicha va u `@property`
+ * Halqa - konus gradient. To'lish `--deg` bo'yicha va u `@property`
  * bilan burchak deb belgilangani uchun 0 dan qiymatgacha SILLIQ o'sadi.
  */
 .hero__ring {

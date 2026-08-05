@@ -1,7 +1,7 @@
 /**
  * Rejalashtirilgan va bajarilgan ishlar.
  *
- * Qator bosilsa dalolatnoma ochiladi — MFY dashboardidagi ro'yxat bilan
+ * Qator bosilsa dalolatnoma ochiladi - MFY dashboardidagi ro'yxat bilan
  * bir xil xatti-harakat: ish haqidagi to'liq ma'lumot va rasmlar bir joyda.
  */
 import type { WorkRow } from '@beap/shared';
@@ -51,7 +51,7 @@ export function WorksPanel({ rows, mode }: { rows: WorkRow[]; mode: 'planned' | 
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-medium leading-snug">{r.titleUz}</p>
-                {/* Fider bitta — nomini har qatorda takrorlash ma'nosiz. */}
+                {/* Fider bitta - nomini har qatorda takrorlash ma'nosiz. */}
                 <p className="mt-0.5 text-[11px] text-muted">
                   {WORK_TYPE_LABEL_UZ[r.workType] ?? r.workType}
                   {r.quantity > 0 && ` · ${num(r.quantity, 1)} ${r.unit}`}
@@ -100,7 +100,7 @@ export function WorksPanel({ rows, mode }: { rows: WorkRow[]; mode: 'planned' | 
 
       <WorkActModal workId={openId} onClose={() => setOpenId(null)} />
 
-      {/* Umumiy natija — dumbbell ko'rinishi */}
+      {/* Umumiy natija - dumbbell ko'rinishi */}
       {mode === 'completed' && (totalSaved > 0 || withEffect) && (
         <div className="border-t border-separator/50 px-4 py-3">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">

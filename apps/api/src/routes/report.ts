@@ -1,5 +1,5 @@
 /**
- * Hisobot yo'llari — Excel va PDF.
+ * Hisobot yo'llari - Excel va PDF.
  *
  * Fayl serverda hosil bo'ladi va oqim sifatida qaytadi. Kengaytma yo'lning
  * bir qismi (`/period/monthly.xlsx`), chunki brauzer `Content-Disposition`
@@ -18,7 +18,7 @@ const periodQ = z.object({ period: z.string().regex(/^\d{4}-\d{2}$/).optional() 
 const extParam = z.enum(['xlsx', 'pdf']);
 
 const chartKindParam = z.enum(['energy_trend', 'tp_ranking', 'loss_breakdown', 'loss_forecast']);
-/** `/chart/:kind.:ext` uchun so'rov satri — davr + har bir diagrammaga xos ixtiyoriy parametrlar. */
+/** `/chart/:kind.:ext` uchun so'rov satri - davr + har bir diagrammaga xos ixtiyoriy parametrlar. */
 const chartQ = periodQ.extend({
   sort_by: z.enum(['kwh', 'disconnected', 'off_share', 'consumers']).optional(),
   limit: z.coerce.number().int().min(1).max(20).optional(),
@@ -41,9 +41,9 @@ const MIME = {
 
 /**
  * Fayl nomi ikki marta beriladi: ASCII zaxira nusxa va RFC 5987 bo'yicha
- * UTF-8 nusxa — aks holda o'zbekcha nomlar Windows'da buziladi.
+ * UTF-8 nusxa - aks holda o'zbekcha nomlar Windows'da buziladi.
  *
- * `disposition` standart holda 'attachment' — Excel/PDF hisobotlar doim
+ * `disposition` standart holda 'attachment' - Excel/PDF hisobotlar doim
  * kompyuterga yuklanadi. Diagramma marshruti buni 'inline'ga o'zgartiradi:
  * PNG chatda/Telegram fotosuratida to'g'ridan-to'g'ri ko'rsatiladi, fayl
  * sifatida saqlanmaydi.
@@ -136,7 +136,7 @@ const reportRoutes: FastifyPluginAsync = async (app) => {
       scopeName: 'Baliqchi tumani',
       period: per,
       kindLabel: KIND_LABEL[kind] ?? kind,
-      // DB ustunlari snake_case — hisobot uchun bir marta camelCase'ga o'giriladi.
+      // DB ustunlari snake_case - hisobot uchun bir marta camelCase'ga o'giriladi.
       totals: {
         kwhIn: tot.kwh_in,
         kwhSold: tot.kwh_sold,
@@ -180,7 +180,7 @@ const reportRoutes: FastifyPluginAsync = async (app) => {
     if (!per) return reply.code(404).send({ error: 'no_data', message: 'Ma’lumot topilmadi' });
 
     /*
-     * Yagona fider — `ai.ts` dagi `buildSnapshot` bilan BIR XIL qoida: eng
+     * Yagona fider - `ai.ts` dagi `buildSnapshot` bilan BIR XIL qoida: eng
      * kichik `sort_order` (keyin `id`) bo'yicha birinchi amaldagi MFY. Bu
      * yerda alohida "joriy fider" jadvali yo'q, shuning uchun so'rov
      * o'sha yerdagi bilan bir xil holda takrorlanadi.
@@ -200,7 +200,7 @@ const reportRoutes: FastifyPluginAsync = async (app) => {
       const { buffer, filename } = await charts.renderChart(req.ctx, kind, {
         period: per, sortBy: sort_by, limit, monthsAhead: months_ahead, feederId,
       });
-      // `renderChart` nomi allaqachon ".png" bilan tugaydi — `send()` o'zi qo'shadi.
+      // `renderChart` nomi allaqachon ".png" bilan tugaydi - `send()` o'zi qo'shadi.
       return send(reply, buffer, filename.replace(/\.png$/, ''), 'png', 'inline');
     } catch (err) {
       req.log.error({ err }, 'Diagramma yaratib bo‘lmadi');

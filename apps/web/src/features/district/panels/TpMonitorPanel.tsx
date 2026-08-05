@@ -1,13 +1,13 @@
 /**
- * Transformatorlar holati — fiderning TP kesimi.
+ * Transformatorlar holati - fiderning TP kesimi.
  *
  * USTUNLAR MANBA HISOBOTIDAN kelib chiqadi. Ilgari bu yerda quvvat (kVA),
- * yuklama foizi va masofa turardi — bu ma'lumotlar TP pasportidan keladi va
- * hozircha tizimda yo'q. Ularni bo'sh («—») ko'rsatib turishdan ko'ra,
+ * yuklama foizi va masofa turardi - bu ma'lumotlar TP pasportidan keladi va
+ * hozircha tizimda yo'q. Ularni bo'sh («-») ko'rsatib turishdan ko'ra,
  * hisobotda HAQIQATAN bor raqamlarni ko'rsatgan foydaliroq: har bir TP ning
  * iste'molchilari, o'rtacha yuklamasi va oylik iste'moli.
  *
- * O'rtacha yuklama = oylik energiya ÷ (kun × 24). Bu CHO'QQI yuklama emas —
+ * O'rtacha yuklama = oylik energiya ÷ (kun × 24). Bu CHO'QQI yuklama emas -
  * cho'qqini bilish uchun soatlik profil kerak, u hisobotda yo'q. Shuning
  * uchun ustun ham aynan «o'rtacha» deb nomlangan.
  */
@@ -22,9 +22,9 @@ export function TpMonitorPanel({
   rows, days = 31, totalKwh,
 }: {
   rows: TpMonthlyRow[];
-  /** Davrdagi kunlar soni — o'rtacha yuklama shundan hisoblanadi. */
+  /** Davrdagi kunlar soni - o'rtacha yuklama shundan hisoblanadi. */
   days?: number;
-  /** Fider bo'yicha jami — ulush ustuni uchun. */
+  /** Fider bo'yicha jami - ulush ustuni uchun. */
   totalKwh?: number;
 }) {
   const t = useVizTokens();
@@ -54,9 +54,9 @@ export function TpMonitorPanel({
               ? (r.consumersDisconnected / r.consumersTotal) * 100
               : 0;
             /*
-              Rang — ALOQADAN CHIQQAN abonentlar ulushiga qarab. Bu hisobotda
+              Rang - ALOQADAN CHIQQAN abonentlar ulushiga qarab. Bu hisobotda
               bor yagona "muammo" signali: hisoblagichi aloqaga chiqmagan
-              abonent — tijoriy yo'qotishning bevosita manbai.
+              abonent - tijoriy yo'qotishning bevosita manbai.
             */
             const offColor = offShare >= 10 ? t.status.critical
               : offShare >= 5 ? t.status.warning
@@ -72,13 +72,13 @@ export function TpMonitorPanel({
                 <td className="num font-semibold">{num(avgKw, 1)}</td>
                 <td>
                   {r.consumersDisconnected === 0 ? (
-                    <span className="text-muted">—</span>
+                    <span className="text-muted">-</span>
                   ) : (
                     <Chip
                       className="whitespace-nowrap"
                       color={offShare >= 10 ? 'danger' : offShare >= 5 ? 'warning' : 'success'}
                       size="sm"
-                      title={`${num(r.consumersDisconnected)} ta — ${pct(offShare, 1)}`}
+                      title={`${num(r.consumersDisconnected)} ta - ${pct(offShare, 1)}`}
                       variant="soft"
                     >
                       <Chip.Label className="text-[9.5px]">
@@ -91,7 +91,7 @@ export function TpMonitorPanel({
                   {num(r.kwhMonth)}
                 </td>
                 <td className="num text-muted">
-                  {total > 0 ? pct((r.kwhMonth / total) * 100, 1) : '—'}
+                  {total > 0 ? pct((r.kwhMonth / total) * 100, 1) : '-'}
                 </td>
               </tr>
             );

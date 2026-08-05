@@ -29,7 +29,7 @@ async function main(): Promise<void> {
     process.stdout.write(`→ ${config.db.database} bazasiga demo ma'lumot yuklanmoqda…\n\n`);
 
     await client.query('BEGIN');
-    // Seed tizim nomidan yozadi — RLS va audit uchun.
+    // Seed tizim nomidan yozadi - RLS va audit uchun.
     await client.query("SET LOCAL app.role = 'system'");
 
     const result = await generateSeed(client, {
@@ -45,7 +45,7 @@ async function main(): Promise<void> {
     await client.query('SELECT agg.refresh_all(false)');
 
     const ms = Date.now() - t0;
-    process.stdout.write(`\n✓ Tayyor — ${(ms / 1000).toFixed(1)} s\n\n`);
+    process.stdout.write(`\n✓ Tayyor - ${(ms / 1000).toFixed(1)} s\n\n`);
 
     process.stdout.write(`  MFY lar:          ${result.mfyCount}\n`);
     process.stdout.write(`  Transformatorlar: ${result.tpCount}\n`);
@@ -67,10 +67,10 @@ async function main(): Promise<void> {
     }
 
     process.stdout.write('\n  Kirish ma\'lumotlari (barcha foydalanuvchilar uchun parol: Beap2026!):\n');
-    process.stdout.write('    admin              — Administrator\n');
-    process.stdout.write('    hokim              — Hokimiyat kuzatuvchisi\n');
-    process.stdout.write('    manager.baliqchi   — Elektroset menejeri\n');
-    process.stdout.write('    operator1          — MFY operatori\n\n');
+    process.stdout.write('    admin              - Administrator\n');
+    process.stdout.write('    hokim              - Hokimiyat kuzatuvchisi\n');
+    process.stdout.write('    manager.baliqchi   - Elektroset menejeri\n');
+    process.stdout.write('    operator1          - MFY operatori\n\n');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     throw err;

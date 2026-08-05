@@ -1,7 +1,7 @@
 /**
  * Fastify ilovasi.
  *
- * OFFLINE KAFOLATI: CSP `connect-src 'self'` — brauzer boshqa hostga
+ * OFFLINE KAFOLATI: CSP `connect-src 'self'` - brauzer boshqa hostga
  * so'rov yubora olmaydi. Bu "ma'lumot tashqariga chiqmasin" talabining
  * MASHINA TOMONIDAN majburlanishi.
  */
@@ -48,7 +48,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        // Tashqi so'rovlar TAQIQLANADI — offline talabining majburlanishi.
+        // Tashqi so'rovlar TAQIQLANADI - offline talabining majburlanishi.
         connectSrc: ["'self'"],
         imgSrc: ["'self'", 'data:', 'blob:'],
         fontSrc: ["'self'", 'data:'],
@@ -71,18 +71,18 @@ export async function buildApp(): Promise<FastifyInstance> {
   //
   // LAN dan kirish: sahifa `http://192.168.1.132:5173` dan ochilganda origin
   // API origin'idan farq qiladi, shuning uchun faqat LOKAL TARMOQ manzillariga
-  // ruxsat beramiz. Internet origin'lari (domenlar, publik IP) rad etiladi —
+  // ruxsat beramiz. Internet origin'lari (domenlar, publik IP) rad etiladi -
   // tizim LAN doirasidan chiqmaydi.
   if (!config.isProd) {
     const LOCAL_ORIGIN =
       /^https?:\/\/(?:localhost|\[::1\]|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(?::\d{1,5})?$/;
 
     await app.register(cors, {
-      // `origin` yo'q — bu brauzer emas (curl, server-to-server) — ruxsat.
+      // `origin` yo'q - bu brauzer emas (curl, server-to-server) - ruxsat.
       origin: (origin, cb) => {
         cb(null, !origin || LOCAL_ORIGIN.test(origin));
       },
-      // `@fastify/cors` standart holatda faqat GET,HEAD,POST ga ruxsat beradi —
+      // `@fastify/cors` standart holatda faqat GET,HEAD,POST ga ruxsat beradi -
       // PATCH/PUT/DELETE ishlatadigan barcha marshrutlar (autosave, o'chirish)
       // ochiq yozilishi shart, aks holda preflight ularni jimgina bloklaydi.
       methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
@@ -96,7 +96,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     timeWindow: '1 minute',
   });
 
-  // Dalolatnoma rasmlari — bitta so'rovda bitta fayl, 8 MB gacha.
+  // Dalolatnoma rasmlari - bitta so'rovda bitta fayl, 8 MB gacha.
   await app.register(multipart, {
     limits: { fileSize: 8 * 1024 * 1024, files: 1 },
   });
@@ -118,7 +118,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   }));
 
   // ── Marshrutlar ────────────────────────────────────────────────────────
-  // Login urinishlari marshrut darajasida cheklanadi (auth.ts ichida) —
+  // Login urinishlari marshrut darajasida cheklanadi (auth.ts ichida) -
   // `register` opsiyalari `config` maydonini qabul qilmaydi.
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(refRoutes, { prefix: '/api/ref' });

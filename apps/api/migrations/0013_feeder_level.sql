@@ -5,12 +5,12 @@
 -- Chinobod nimstansiyasining «Xaqulobod» fideri va uning 51 ta TP si.
 --
 -- SXEMA QAYTA NOMLANMAYDI: `ref.mfy` ning bitta qatori endi FIDERNI
--- ifodalaydi. Sabab — `agg.*` matview'lar, RLS siyosatlari, pasport va butun
+-- ifodalaydi. Sabab - `agg.*` matview'lar, RLS siyosatlari, pasport va butun
 -- API shu ustunga bog'langan; nomni almashtirish o'nlab fayl va migratsiyani
 -- qayta yozish demak, foydasi esa faqat atama.
 --
 -- Bu migratsiya uchta ishni qiladi:
---   1. TP quvvatini IXTIYORIY qiladi — manba hisobotlarda kVA yo'q;
+--   1. TP quvvatini IXTIYORIY qiladi - manba hisobotlarda kVA yo'q;
 --   2. fider boshidagi oylik balansni saqlash uchun jadval;
 --   3. TP kesimidagi hisoblagich va iste'molchi ma'lumoti uchun jadval.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -20,8 +20,8 @@ COMMENT ON TABLE ref.mfy IS
 
 -- ─── 1. TP quvvati ixtiyoriy ────────────────────────────────────────────────
 -- Hisobotlarda TP ning nominal quvvati (kVA) ham, masofasi ham berilmagan.
--- Nolni yozish YOLG'ON bo'lardi ("quvvati 0 kVA"), shuning uchun NULL —
--- interfeys uni «—» deb ko'rsatadi.
+-- Nolni yozish YOLG'ON bo'lardi ("quvvati 0 kVA"), shuning uchun NULL -
+-- interfeys uni «-» deb ko'rsatadi.
 
 ALTER TABLE ref.tp ALTER COLUMN rated_kva DROP NOT NULL;
 ALTER TABLE ref.tp DROP CONSTRAINT IF EXISTS tp_rated_kva_check;
@@ -31,7 +31,7 @@ ALTER TABLE ref.tp
 -- ─── 2. Fider boshidagi oylik balans ────────────────────────────────────────
 -- «Умумий ҳисобот» varag'ining aynan nusxasi: fider hisoblagichi ko'rsatkichi,
 -- koeffitsienti va shu asosda chiqadigan to'rt raqam. Balans ayniyati
--- CHECK bilan majburlanadi — hisobot o'zi bilan qarama-qarshi bo'lmaydi.
+-- CHECK bilan majburlanadi - hisobot o'zi bilan qarama-qarshi bo'lmaydi.
 
 CREATE TABLE fact.feeder_monthly (
   id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -116,5 +116,5 @@ CREATE POLICY tp_monthly_write ON fact.tp_monthly FOR ALL TO beap_app
   USING (EXISTS (SELECT 1 FROM ref.tp t WHERE t.id = tp_id AND sec.can_write_mfy(t.mfy_id)))
   WITH CHECK (EXISTS (SELECT 1 FROM ref.tp t WHERE t.id = tp_id AND sec.can_write_mfy(t.mfy_id)));
 
-COMMENT ON TABLE fact.feeder_monthly IS 'Fider boshidagi oylik balans — «Умумий ҳисобот» nusxasi';
+COMMENT ON TABLE fact.feeder_monthly IS 'Fider boshidagi oylik balans - «Умумий ҳисобот» nusxasi';
 COMMENT ON TABLE fact.tp_monthly     IS 'TP kesimidagi oylik hisoblagich va iste''molchi ma''lumoti';

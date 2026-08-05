@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0001_init.sql — sxemalar, kengaytmalar, xavfsizlik va spravochniklar
+-- 0001_init.sql - sxemalar, kengaytmalar, xavfsizlik va spravochniklar
 --
 -- PostgreSQL 17 bilan mos yoziladi (18.x da ham ishlaydi).
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -16,7 +16,7 @@ CREATE SCHEMA IF NOT EXISTS stg;   -- Excel import uchun vaqtinchalik joy
 
 COMMENT ON SCHEMA ref  IS 'Spravochniklar: elektroset, MFY, TP, tarmoq, normalar';
 COMMENT ON SCHEMA fact IS 'Qo''lda kiritiladigan faktlar. Har biri fact.submission ga tegishli';
-COMMENT ON SCHEMA agg  IS 'Agregatlar. Bu yerda hech narsa kiritilmaydi — faqat hisoblanadi';
+COMMENT ON SCHEMA agg  IS 'Agregatlar. Bu yerda hech narsa kiritilmaydi - faqat hisoblanadi';
 COMMENT ON SCHEMA sec  IS 'Foydalanuvchilar, rollar, sessiyalar, audit jurnali';
 
 
@@ -36,14 +36,14 @@ CREATE TABLE sec.app_user (
 
 COMMENT ON TABLE sec.app_user IS 'Tizim foydalanuvchilari. Parol argon2id bilan xeshlanadi';
 
--- Foydalanuvchi qaysi hududga yoza oladi. Bo'sh bo'lsa — faqat o'qiydi.
+-- Foydalanuvchi qaysi hududga yoza oladi. Bo'sh bo'lsa - faqat o'qiydi.
 CREATE TABLE sec.user_scope (
   id         int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id    int NOT NULL REFERENCES sec.app_user ON DELETE CASCADE,
   scope_type text NOT NULL CHECK (scope_type IN ('MFY','ELEKTROSET','TUMAN')),
   scope_id   int
 );
--- PRIMARY KEY ifoda qabul qilmaydi — NULL li scope_id uchun unique index.
+-- PRIMARY KEY ifoda qabul qilmaydi - NULL li scope_id uchun unique index.
 CREATE UNIQUE INDEX user_scope_uq
   ON sec.user_scope (user_id, scope_type, coalesce(scope_id, -1));
 CREATE INDEX user_scope_user ON sec.user_scope (user_id);
@@ -64,7 +64,7 @@ CREATE INDEX refresh_token_user  ON sec.refresh_token (user_id);
 CREATE INDEX refresh_token_family ON sec.refresh_token (family_id);
 
 COMMENT ON COLUMN sec.refresh_token.family_id IS
-  'Token oilasi. Ishlatilgan token qayta kelsa — butun oila bekor qilinadi (reuse detection)';
+  'Token oilasi. Ishlatilgan token qayta kelsa - butun oila bekor qilinadi (reuse detection)';
 
 -- Migratsiya jurnali (runner tomonidan boshqariladi)
 CREATE TABLE IF NOT EXISTS sec.schema_migration (
@@ -94,7 +94,7 @@ CREATE TABLE ref.mfy (
   short_name    text NOT NULL,
   sort_order    smallint NOT NULL DEFAULT 0,
   -- Heks-kartogramma uchun joy (MFY ro'yxati tasdiqlangandan keyin to'ldiriladi).
-  -- Xarita EMAS — hech qanday geografik ma'lumot va tashqi xizmat ishlatilmaydi.
+  -- Xarita EMAS - hech qanday geografik ma'lumot va tashqi xizmat ishlatilmaydi.
   grid_row      smallint,
   grid_col      smallint,
   valid_from    date NOT NULL DEFAULT '2024-01-01',
@@ -172,7 +172,7 @@ CREATE TABLE ref.norm (
 CREATE INDEX norm_lookup ON ref.norm (metric, scope_type, scope_id, effective_from DESC);
 
 COMMENT ON CONSTRAINT norm_no_overlap ON ref.norm IS
-  'Davlat auditi "o''sha kuni norma qancha edi" deb so''raydi — javob yagona bo''lishi shart';
+  'Davlat auditi "o''sha kuni norma qancha edi" deb so''raydi - javob yagona bo''lishi shart';
 
 
 -- ─── NORMANI SANAGA QARAB TOPISH ────────────────────────────────────────────

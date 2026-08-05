@@ -1,7 +1,7 @@
 /**
  * Agregatlarni yangilash.
  *
- * `pg_try_advisory_lock` ostida ishlaydi — bir nechta instans bir vaqtda
+ * `pg_try_advisory_lock` ostida ishlaydi - bir nechta instans bir vaqtda
  * yangilamaydi. Lock band bo'lsa darhol qaytadi (kutmaydi).
  */
 import type { FastifyBaseLogger } from 'fastify';

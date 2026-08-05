@@ -1,5 +1,5 @@
 /**
- * Hisobot yorliqlari — davr turi kartochkalar ko'rinishida tanlanadi,
+ * Hisobot yorliqlari - davr turi kartochkalar ko'rinishida tanlanadi,
  * so'ng Excel yoki PDF yuklab olinadi.
  *
  * Ikki bosqich ATAYLAB ajratilgan: "Kunlik" tugmasi bosilishi bilan fayl
@@ -9,7 +9,7 @@
  * Tanlov RADIO guruh: bu klaviatura bilan o'q tugmalarida yuriladigan,
  * skrinriderga "4 tadan 1-si" deb o'qiladigan yagona to'g'ri semantika.
  *
- * Barcha fayllar SERVERDA hosil bo'ladi va lokal yuklanadi — tashqi xizmat
+ * Barcha fayllar SERVERDA hosil bo'ladi va lokal yuklanadi - tashqi xizmat
  * ishlatilmaydi (tizimning offline talabi).
  */
 import { Button, Radio, RadioGroup } from '@heroui/react';
@@ -39,7 +39,7 @@ export function ReportShortcuts() {
   return (
     <div className="flex flex-col gap-3">
       <RadioGroup aria-label="Hisobot davri" value={kind} onChange={setKind}>
-        {/* Bitta qatorda 4 ta — maketdagidek; tor ekranda 2×2 ga tushadi. */}
+        {/* Bitta qatorda 4 ta - maketdagidek; tor ekranda 2×2 ga tushadi. */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {KINDS.map((k) => (
             <Radio key={k.id} value={k.id}>
@@ -66,12 +66,12 @@ export function ReportShortcuts() {
       </RadioGroup>
 
       {/*
-        Tugma matni "Excel eksport" — nima eksport qilinishini tanlangan davr
+        Tugma matni "Excel eksport" - nima eksport qilinishini tanlangan davr
         belgilaydi, shuning uchun u `aria-label` da ham aytiladi.
       */}
       <div className="grid grid-cols-2 gap-2">
         <Button
-          aria-label={`${selected} — Excel`}
+          aria-label={`${selected} - Excel`}
           className="border-viz-good/25 bg-viz-good/10 text-viz-good hover:bg-viz-good/18"
           size="sm"
           variant="secondary"
@@ -81,7 +81,7 @@ export function ReportShortcuts() {
           Excel eksport
         </Button>
         <Button
-          aria-label={`${selected} — PDF`}
+          aria-label={`${selected} - PDF`}
           className="border-viz-critical/25 bg-viz-critical/10 text-viz-critical hover:bg-viz-critical/18"
           size="sm"
           variant="secondary"

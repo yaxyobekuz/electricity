@@ -2,7 +2,7 @@
   "name": "beap",
   "version": "1.0.0",
   "private": true,
-  "description": "BEAP — Baliqchi tumani Elektr energiya Analitik Platformasi",
+  "description": "BEAP - Baliqchi tumani Elektr energiya Analitik Platformasi",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"

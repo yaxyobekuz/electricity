@@ -1,8 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0003_agg.sql — agregatlar, pasport roll-up va analitik funksiyalar
+-- 0003_agg.sql - agregatlar, pasport roll-up va analitik funksiyalar
 --
 -- Bu sxemada HECH NARSA kiritilmaydi. Hammasi fact.* dan hisoblanadi.
--- Tuman pasportini qo'lda kiritishning texnik imkoni yo'q — u SUM(MFY).
+-- Tuman pasportini qo'lda kiritishning texnik imkoni yo'q - u SUM(MFY).
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── KUNLIK BAZA ────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ CREATE INDEX        mfy_daily_date ON agg.mfy_daily (biz_date DESC);
 CREATE INDEX        mfy_daily_es   ON agg.mfy_daily (elektroset_id, biz_date DESC);
 
 
--- ─── TUMAN KUNLIK (view — matview kerak emas, MFY dan yig'iladi) ────────────
+-- ─── TUMAN KUNLIK (view - matview kerak emas, MFY dan yig'iladi) ────────────
 
 CREATE VIEW agg.v_tuman_daily AS
 SELECT
@@ -49,7 +49,7 @@ FROM agg.mfy_daily
 GROUP BY biz_date;
 
 
--- ─── OYLIK BAZA — barcha domenlar bir qatorda ───────────────────────────────
+-- ─── OYLIK BAZA - barcha domenlar bir qatorda ───────────────────────────────
 
 CREATE MATERIALIZED VIEW agg.mfy_monthly AS
 WITH spine AS (
@@ -298,7 +298,7 @@ WHERE a.technical_pct IS NOT NULL;
 
 
 -- ─── ENERGIYA SAMARADORLIK INDEKSI (0–100) ──────────────────────────────────
--- Sehrli raqam emas — hujjatlashtirilgan, takrorlanadigan formula.
+-- Sehrli raqam emas - hujjatlashtirilgan, takrorlanadigan formula.
 -- 5 komponent, vaznlari: yo'qotish 35%, qarzdorlik 20%, hisoblagich 15%,
 -- TP yuklama 15%, masofa 15%.  UI'da har bir komponent ochib ko'rsatiladi.
 
@@ -365,13 +365,13 @@ LANGUAGE sql STABLE AS $$
 $$;
 
 COMMENT ON FUNCTION agg.efficiency_index IS
-  'Hokim "nega 85?" deb so''raganda — 5 komponent va ularning vaznlari qaytariladi';
+  'Hokim "nega 85?" deb so''raganda - 5 komponent va ularning vaznlari qaytariladi';
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- PASPORT
 -- ═══════════════════════════════════════════════════════════════════════════
--- MFY pasporti — VIEW. Hech qachon pasport sifatida kiritilmaydi.
+-- MFY pasporti - VIEW. Hech qachon pasport sifatida kiritilmaydi.
 -- Har bir qator o'z manbasidan hisoblanadi (0003 dagi jadvalga qarang).
 
 CREATE VIEW agg.v_mfy_passport AS
@@ -404,7 +404,7 @@ SELECT
   a.tp_total                                        AS transformer_cnt,
   -- 3. Yuklama bilan ishlayotgan TP
   a.tp_under_load,
-  -- 4. Tarmoqlar (registrdan SUM — kiritilmaydi)
+  -- 4. Tarmoqlar (registrdan SUM - kiritilmaydi)
   coalesce(ln.line_km_total, 0)                     AS line_km_total,
   coalesce(ln.line_km_04, 0)                        AS line_km_04,
   coalesce(ln.line_km_10, 0)                        AS line_km_10,
@@ -434,7 +434,7 @@ LEFT JOIN lines ln ON ln.mfy_id = a.mfy_id
 LEFT JOIN substations ss ON ss.mfy_id = a.mfy_id;
 
 
--- Tuman pasporti — SOF ROLL-UP. Qo'lda kiritish imkoni yo'q.
+-- Tuman pasporti - SOF ROLL-UP. Qo'lda kiritish imkoni yo'q.
 CREATE VIEW agg.v_tuman_passport AS
 SELECT
   p.period_month,

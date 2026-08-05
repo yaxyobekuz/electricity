@@ -87,7 +87,7 @@ async function main(): Promise<void> {
     const last = lastRows[0] as Record<string, unknown> | undefined;
 
     if (!last) {
-      add('Oxirgi oy pasporti mavjud', false, 'Ma\'lumot yo\'q — seed ishga tushirilganmi?');
+      add('Oxirgi oy pasporti mavjud', false, 'Ma\'lumot yo\'q - seed ishga tushirilganmi?');
     } else {
       const expectations: [string, number, number][] = [
         ['Aholi iste\'molchilari', num(last['consumers_population']), dt['consumersPopulation']!],
@@ -109,17 +109,17 @@ async function main(): Promise<void> {
       ];
 
       for (const [label, actual, expected] of expectations) {
-        add(`Kalibrovka — ${label}`, close(actual, expected), `${actual} (kutilgan ${expected})`);
+        add(`Kalibrovka - ${label}`, close(actual, expected), `${actual} (kutilgan ${expected})`);
       }
 
-      // Hujjatdagi ma'lum nomuvofiqlik — bu XATO emas, ogohlantirish.
+      // Hujjatdagi ma'lum nomuvofiqlik - bu XATO emas, ogohlantirish.
       const statedTotal = dt['_consumersTotalStated'];
       const computedTotal = num(last['consumers_total']);
       if (statedTotal !== undefined && statedTotal !== computedTotal) {
         add(
           'Hujjat nomuvofiqligi (kutilgan)',
           true,
-          `Pasportda jami ${statedTotal}, bo'laklar yig'indisi ${computedTotal} — tizim bo'laklardan hisoblaydi`,
+          `Pasportda jami ${statedTotal}, bo'laklar yig'indisi ${computedTotal} - tizim bo'laklardan hisoblaydi`,
         );
       }
     }

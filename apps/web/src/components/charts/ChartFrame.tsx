@@ -2,10 +2,10 @@
  * Diagramma ramkasi.
  *
  * Har bir diagramma shu ramka ichida bo'ladi va u uchta narsani kafolatlaydi:
- *   1. LEGENDA — ikki va undan ortiq seriya bo'lsa DOIM ko'rinadi
- *   2. JADVAL-EGIZAK — aynan shu ma'lumot jadval ko'rinishida
+ *   1. LEGENDA - ikki va undan ortiq seriya bo'lsa DOIM ko'rinadi
+ *   2. JADVAL-EGIZAK - aynan shu ma'lumot jadval ko'rinishida
  *      (a11y javobi va past kontrastli ranglar uchun yechim)
- *   3. CSV eksport — hech qanday tashqi xizmatsiz, brauzerda hosil qilinadi
+ *   3. CSV eksport - hech qanday tashqi xizmatsiz, brauzerda hosil qilinadi
  */
 import { Button, ToggleButton, ToggleButtonGroup, cn } from '@heroui/react';
 import { BarChart3, Download, Table2 } from 'lucide-react';
@@ -46,7 +46,7 @@ interface ChartFrameProps<T> {
   className?: string;
   /**
    * Boshqaruv tugmalarini panel sarlavhasi qatoriga ko'chirish.
-   * Standart — ko'chiriladi: karta ichida bo'sh qator qolmaydi.
+   * Standart - ko'chiriladi: karta ichida bo'sh qator qolmaydi.
    */
   hoistControls?: boolean;
   /**
@@ -80,7 +80,7 @@ export function ChartFrame<T>({
       )
       .join('\n');
 
-    // BOM — Excel UTF-8 ni to'g'ri o'qishi uchun
+    // BOM - Excel UTF-8 ni to'g'ri o'qishi uchun
     const blob = new Blob([`﻿${head}\n${body}`], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -109,7 +109,7 @@ export function ChartFrame<T>({
     ) : null;
 
   /*
-   * Sarlavha bo'lmasa legenda AYNAN SHU qatorda chapda turadi — aks holda
+   * Sarlavha bo'lmasa legenda AYNAN SHU qatorda chapda turadi - aks holda
    * yuqorida faqat tugmalar turgan bo'sh qator paydo bo'lardi.
    * Panelning o'z sarlavhasi bor bo'lgan hollarda shunday bo'ladi.
    */
@@ -117,14 +117,14 @@ export function ChartFrame<T>({
 
   /*
    * Tugmalar sarlavha qatoriga FAQAT diagrammaning o'z sarlavhasi bo'lmaganda
-   * ko'chiriladi — bunda sarlavha panelniki, ya'ni ular bir xil kartaga tegishli.
+   * ko'chiriladi - bunda sarlavha panelniki, ya'ni ular bir xil kartaga tegishli.
    */
   const hoist = hoistControls && Boolean(headerSlot) && !title && !subtitle;
 
   const controls =
     actions || hasTable ? (
       /*
-        `ml-auto` — legenda keng bo'lib tugmalar keyingi qatorga tushganda
+        `ml-auto` - legenda keng bo'lib tugmalar keyingi qatorga tushganda
         ham ular O'NGDA qoladi. `justify-between` yolg'iz o'zi bunday
         holatda yagona elementni chapga tashlab yuboradi.
       */
@@ -181,7 +181,7 @@ export function ChartFrame<T>({
         </div>
       )}
 
-      {/* Legenda — ≥2 seriya bo'lsa doim ko'rinadi */}
+      {/* Legenda - ≥2 seriya bo'lsa doim ko'rinadi */}
       {!legendInHeader && !atBottom && legendList}
 
       {view === 'chart' ? (

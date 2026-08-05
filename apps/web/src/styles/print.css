@@ -1,5 +1,5 @@
 /*
- * Chop etish uslubi — rasmiy pasport hujjati uchun.
+ * Chop etish uslubi - rasmiy pasport hujjati uchun.
  * `/passport/print/...` marshruti chrome'siz shu uslubda chiqadi.
  */
 
@@ -9,7 +9,7 @@
     margin: 12mm;
   }
 
-  /* Chop etishda doim yorug' tema — siyoh tejaladi va hujjat rasmiy ko'rinadi. */
+  /* Chop etishda doim yorug' tema - siyoh tejaladi va hujjat rasmiy ko'rinadi. */
   :root {
     color-scheme: light !important;
     --background: #ffffff !important;
@@ -20,7 +20,7 @@
   }
 
   /*
-   * «Jonli oqim» bandi — faqat ekran uchun. Qog'ozda u qora to'rtburchakka
+   * «Jonli oqim» bandi - faqat ekran uchun. Qog'ozda u qora to'rtburchakka
    * aylanadi va hech qanday yangi ma'lumot bermaydi (raqamlari pastdagi
    * KPI kartalarida bor), shuning uchun butunlay olib tashlanadi.
    */
@@ -32,7 +32,7 @@
     display: none !important;
   }
 
-  /* Chop etishda kartalar DOIM ko'rinadi — skroll animatsiyasi ishlamaydi. */
+  /* Chop etishda kartalar DOIM ko'rinadi - skroll animatsiyasi ishlamaydi. */
   [data-stage] .panel,
   [data-stage] .kpi {
     opacity: 1 !important;

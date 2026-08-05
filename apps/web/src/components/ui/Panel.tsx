@@ -1,14 +1,14 @@
-/** Dashboard paneli — barcha kartalarning yagona ramkasi. */
+/** Dashboard paneli - barcha kartalarning yagona ramkasi. */
 import { cn } from '@heroui/react';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
 /**
- * Sarlavha qatoridagi BO'SH JOY — panel ichidagi diagramma o'z boshqaruv
+ * Sarlavha qatoridagi BO'SH JOY - panel ichidagi diagramma o'z boshqaruv
  * tugmalarini (jadval/diagramma almashtirgichi, CSV) shu yerga portal orqali
  * ko'chiradi.
  *
- * Shuning uchun: har bir kartada BITTA qator — chapda sarlavha, o'ngda barcha
+ * Shuning uchun: har bir kartada BITTA qator - chapda sarlavha, o'ngda barcha
  * tugmalar. Ilgari tugmalar diagramma ustida alohida qator egallab turardi.
  */
 const PanelHeaderSlotContext = createContext<HTMLElement | null>(null);
@@ -27,7 +27,7 @@ interface PanelProps {
   bodyClassName?: string;
   /** Ichki chetlashsiz (jadval va diagrammalar uchun). */
   flush?: boolean;
-  /** Panel pastidagi havola — mockupdagi "Batafsil" / "Barchasi". */
+  /** Panel pastidagi havola - mockupdagi "Batafsil" / "Barchasi". */
   footerAction?: { label: string; to: string } | undefined;
 }
 
@@ -47,7 +47,7 @@ export function Panel({
           <div className="flex shrink-0 items-center gap-1.5">
             {actions}
             {/*
-              `display: contents` — bu o'ram QUTI hosil qilmaydi, portal bilan
+              `display: contents` - bu o'ram QUTI hosil qilmaydi, portal bilan
               kelgan tugmalar to'g'ridan-to'g'ri yuqoridagi flex qatorining
               bandlari bo'ladi va `gap` ular uchun ham ishlaydi.
             */}

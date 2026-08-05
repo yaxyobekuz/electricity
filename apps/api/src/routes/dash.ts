@@ -10,13 +10,15 @@ import { z } from 'zod';
 
 import * as q from '../db/queries/dashboard.ts';
 import { getMfy } from '../db/queries/ref.ts';
+import * as tq from '../db/queries/tpLoss.ts';
+import * as analytics from '../services/analytics.ts';
 
 const periodQ = z.object({ period: z.string().regex(/^\d{4}-\d{2}$/).optional() });
 
 /**
  * Vaqt qatori so'rovi.
  *
- * `last` — oxirgi nechta NUQTA qaytsin. Diagrammada 7 kun ko'rsatilsa ham
+ * `last` - oxirgi nechta NUQTA qaytsin. Diagrammada 7 kun ko'rsatilsa ham
  * 90 kunlik javob yuborish isrof; kesish serverda bo'ladi, chunki oxirgi
  * sana ma'lumotga bog'liq va mijoz uni oldindan bilmaydi.
  */
@@ -95,7 +97,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
    * MAHALLALARNI SOLISHTIRUVCHI marshrutlar olib tashlandi (reyting, reyting
    * tarixi, texnik yo'qotish farqi, masofa analitikasi, yo'qotish xaritasi,
    * ogohlantirishlar, tuman qarzdorligi va natijadorligi). Tizim qamrovi
-   * bitta fider — solishtiradigan ikkinchi obyekt yo'q.
+   * bitta fider - solishtiradigan ikkinchi obyekt yo'q.
    */
 
   app.get('/district/works', async (req) => {
@@ -106,7 +108,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
   app.get('/district/series', async (req) => {
     const { from, to, bucket, last } = seriesQ.parse(req.query);
 
-    // Oyni vakillik qiladigan davr bo'yicha tugatamiz — aks holda qisman
+    // Oyni vakillik qiladigan davr bo'yicha tugatamiz - aks holda qisman
     // to'ldirilgan joriy oy grafikda "qulash" bo'lib ko'rinadi.
     const p = await q.latestPeriod(req.ctx);
     const end = to ?? (p ? await q.latestDateInPeriod(req.ctx, p) : null);
@@ -131,7 +133,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return p ? q.violations(req.ctx, p) : null;
   });
 
-  /** Bitta ish — dalolatnoma oynasi va chop etish sahifasi uchun. */
+  /** Bitta ish - dalolatnoma oynasi va chop etish sahifasi uchun. */
   app.get('/work/:id', async (req, reply) => {
     const { id } = idParam.parse(req.params);
     const row = await q.workDetail(req.ctx, id);
@@ -143,7 +145,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
    * Yangi ish yozadi.
    *
    * Bugungacha `fact.work` uchun yozish yo'li umuman yo'q edi (faqat rasm
-   * biriktirish, `routes/files.ts`) — bu marshrut AI asboblari ("ish tavsiya
+   * biriktirish, `routes/files.ts`) - bu marshrut AI asboblari ("ish tavsiya
    * qilish") va kelajakda qo'lda kiritish formasi uchun umumiy kirish nuqtasi.
    * Tekshiruv ikki qatlamli: `workSchema` (shu yerda) + Postgres CHECK/RLS.
    */
@@ -172,7 +174,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
    *
    * Berilmagan maydonlar MAVJUD qiymatdan olinadi va `workSchema` bilan QAYTA
    * to'liq tekshiriladi (`entry.ts`dagi `saveMonthlyReturn` bilan bir xil
-   * "birlashtir, keyin tekshir" naqshi) — aks holda masalan faqat
+   * "birlashtir, keyin tekshir" naqshi) - aks holda masalan faqat
    * `{status:'COMPLETED'}` yuborilsa, `actual_end`/`progress_pct` mosligi
    * tekshirilmay, xato Postgres CHECK darajasida (o'qib bo'lmas ko'rinishda)
    * chiqib ketardi.
@@ -316,7 +318,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return p ? q.operational(req.ctx, id, p) : null;
   });
 
-  /** Fider boshidagi oylik balans — hisoblagich ko'rsatkichlari bilan. */
+  /** Fider boshidagi oylik balans - hisoblagich ko'rsatkichlari bilan. */
   app.get('/mfy/:id/feeder-monthly', async (req) => {
     const { id } = idParam.parse(req.params);
     const { period } = periodQ.parse(req.query);
@@ -324,7 +326,7 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return p ? q.feederMonthly(req.ctx, p, id) : null;
   });
 
-  /** TP kesimi — transformatorlar sahifasi uchun. */
+  /** TP kesimi - transformatorlar sahifasi uchun. */
   app.get('/mfy/:id/tp-monthly', async (req) => {
     const { id } = idParam.parse(req.params);
     const { period } = periodQ.parse(req.query);
@@ -343,6 +345,19 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     const { id } = idParam.parse(req.params);
     const { status } = z.object({ status: z.string().optional() }).parse(req.query);
     return q.works(req.ctx, id, status ?? null, 60);
+  });
+
+  /** TP darajasidagi kunlik chiziqli yo'qotish - har bir TP uchun eng so'nggi o'qish. */
+  app.get('/mfy/:id/tp-loss', async (req) => {
+    const { id } = idParam.parse(req.params);
+    const { limit } = z.object({ limit: z.coerce.number().int().min(1).max(500).default(60) })
+      .parse(req.query);
+    return tq.tpLossLatestByTp(req.ctx, id, limit);
+  });
+
+  app.get('/mfy/:id/tp-loss-anomalies', async (req) => {
+    const { id } = idParam.parse(req.params);
+    return analytics.detectTpLossAnomalies(req.ctx, id);
   });
 
   app.get('/mfy/:id/results', async (req) => {

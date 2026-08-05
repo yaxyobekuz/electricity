@@ -2,10 +2,10 @@
  * Migratsiya runneri.
  *
  * Qoidalar:
- *  1. `pg_advisory_lock(4242)` ostida ishlaydi — ikkita jarayon bir vaqtda
+ *  1. `pg_advisory_lock(4242)` ostida ishlaydi - ikkita jarayon bir vaqtda
  *     migratsiya qila olmaydi.
  *  2. Har bir faylning sha256 xeshi yoziladi. Allaqachon qo'llangan faylning
- *     mazmuni o'zgargan bo'lsa — RUNNER TO'XTAYDI. Bu "jimgina buzilish" ni
+ *     mazmuni o'zgargan bo'lsa - RUNNER TO'XTAYDI. Bu "jimgina buzilish" ni
  *     oldini oladi.
  *  3. Har bir fayl o'z tranzaksiyasida bajariladi.
  *
@@ -116,7 +116,7 @@ async function main(): Promise<void> {
             `MIGRATSIYA O'ZGARTIRILGAN: ${file.filename}\n` +
               `  yozilgan xesh: ${prev}\n` +
               `  hozirgi xesh:  ${file.hash}\n` +
-              `  Qo'llangan migratsiyani tahrirlash mumkin emas — yangi fayl qo'shing.`,
+              `  Qo'llangan migratsiyani tahrirlash mumkin emas - yangi fayl qo'shing.`,
           );
         }
         continue;

@@ -2,8 +2,8 @@
  * Yagona validatsiya manbasi.
  *
  * Bu modulni Fastify route ham, React forma ham AYNAN bir xil import qiladi.
- * DB `CHECK` cheklovlari — uchinchi nusxa; `schemas.test.ts` uchalasi mos ekanini
- * tekshiradi. Qoidani o'zgartirsangiz — uchala joyda o'zgartiring.
+ * DB `CHECK` cheklovlari - uchinchi nusxa; `schemas.test.ts` uchalasi mos ekanini
+ * tekshiradi. Qoidani o'zgartirsangiz - uchala joyda o'zgartiring.
  */
 import { z } from 'zod';
 
@@ -28,7 +28,7 @@ export const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Sana YYYY-MM-
 /** `YYYY-MM` */
 export const periodSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Davr YYYY-MM ko‘rinishida bo‘lishi kerak');
 
-/** Bo'sh input `undefined` bo'lib kelishi mumkin — 0 deb qabul qilamiz. */
+/** Bo'sh input `undefined` bo'lib kelishi mumkin - 0 deb qabul qilamiz. */
 const qty = (max = 1e12) =>
   z.coerce.number().nonnegative('Manfiy qiymat bo‘lishi mumkin emas').max(max).default(0);
 
@@ -82,7 +82,7 @@ export const energyBalanceDaySchema = z
 
 export type EnergyBalanceDay = z.infer<typeof energyBalanceDaySchema>;
 
-/** Bir oylik konvert — kunlik qatorlar to'plami. */
+/** Bir oylik konvert - kunlik qatorlar to'plami. */
 export const energyBalancePatchSchema = z.object({
   rows: z.array(energyBalanceDaySchema).min(1).max(31),
 });
@@ -90,7 +90,7 @@ export type EnergyBalancePatch = z.infer<typeof energyBalancePatchSchema>;
 
 // ─── 2. Oylik hisobot (pasport 1, 5, 6, 7, 13-qatorlar) ──────────────────────
 // DB: fact.mfy_monthly_return
-//   JAMI ustunlar GENERATED — bu yerda ham hisoblanadi, kiritilmaydi.
+//   JAMI ustunlar GENERATED - bu yerda ham hisoblanadi, kiritilmaydi.
 
 export const monthlyReturnSchema = z
   .object({
@@ -324,6 +324,24 @@ export const violationActSchema = z
 export type ViolationAct = z.infer<typeof violationActSchema>;
 
 export const violationsPatchSchema = z.object({ rows: z.array(violationActSchema).max(500) });
+
+// ─── 9. TP kunlik chiziqli yo'qotish (fact.tp_loss_daily) ────────────────────
+// DB: fact.tp_loss_daily - submission oqimiga o'ralmagan, to'g'ridan-to'g'ri UPSERT.
+
+export const tpLossDailyRowSchema = z
+  .object({
+    tpCode: z.string().regex(/^TP-\d{2,}$/, 'TP kodi "TP-179" ko‘rinishida bo‘lishi kerak'),
+    bizDate: dateSchema,
+    kwhBalanceMeter: qty(1_000_000),
+    kwhConsumersAttached: qty(1_000_000),
+    inspectionNote: z.string().max(64).nullish(),
+  })
+  .superRefine((v, ctx) => {
+    if (isFuture(v.bizDate)) {
+      ctx.addIssue({ code: 'custom', path: ['bizDate'], message: 'Kelajakdagi sana kiritib bo‘lmaydi' });
+    }
+  });
+export type TpLossDailyRowInput = z.infer<typeof tpLossDailyRowSchema>;
 
 // ─── Submission boshqaruvi ───────────────────────────────────────────────────
 

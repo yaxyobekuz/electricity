@@ -1,12 +1,12 @@
 /**
  * MA'LUMOTLAR BAZASI CHEKLOVLARI TESTI.
  *
- * Prinsip: "Hech narsani rad etganini ko'rmagan cheklov — cheklov emas."
+ * Prinsip: "Hech narsani rad etganini ko'rmagan cheklov - cheklov emas."
  *
  * Har bir test ATAYLAB noto'g'ri ma'lumot yozishga urinadi va DB uni
- * rad etishini kutadi. Rad etmasa — test yiqiladi.
+ * rad etishini kutadi. Rad etmasa - test yiqiladi.
  *
- * Barcha yozuvlar SAVEPOINT ichida bajariladi va qaytariladi — baza
+ * Barcha yozuvlar SAVEPOINT ichida bajariladi va qaytariladi - baza
  * o'zgarmaydi.
  */
 import pg from 'pg';
@@ -17,13 +17,13 @@ interface Case {
   name: string;
   /**
    * Kutilayotgan cheklov nomi (yoki xato matni bo'lagi).
-   * Ro'yxat berilsa — istalgan biri mos kelsa yetarli. Bu ba'zi noto'g'ri
+   * Ro'yxat berilsa - istalgan biri mos kelsa yetarli. Bu ba'zi noto'g'ri
    * qatorlar BIR NECHTA cheklovni bir vaqtda buzgani uchun kerak: Postgres
-   * qaysi birini birinchi tekshirsa, o'shani xabar qiladi. Test maqsadi —
+   * qaysi birini birinchi tekshirsa, o'shani xabar qiladi. Test maqsadi -
    * "noto'g'ri ma'lumot RAD ETILADI", muayyan cheklov nomi emas.
    */
   expect: string | string[];
-  /** Qaytarilgan qiymat ahamiyatsiz — muhimi, chaqiruv XATO berishi. */
+  /** Qaytarilgan qiymat ahamiyatsiz - muhimi, chaqiruv XATO berishi. */
   run: (c: pg.PoolClient, ctx: Ctx) => Promise<unknown>;
 }
 
@@ -46,7 +46,7 @@ async function run(client: pg.PoolClient, ctx: Ctx, c: Case): Promise<void> {
     results.push({
       name: c.name,
       ok: false,
-      detail: `RAD ETILMADI — "${c.expect}" cheklovi ishlamadi`,
+      detail: `RAD ETILMADI - "${c.expect}" cheklovi ishlamadi`,
     });
   } catch (err) {
     await client.query('ROLLBACK TO SAVEPOINT tc');
@@ -67,7 +67,7 @@ async function run(client: pg.PoolClient, ctx: Ctx, c: Case): Promise<void> {
 const CASES: Case[] = [
   {
     // Sotilgan > kirim bo'lganda yo'qotish MANFIY bo'lib qoladi, tarkib esa
-    // manfiy bo'la olmaydi — shu sababli qator ikkala cheklovni bir vaqtda
+    // manfiy bo'la olmaydi - shu sababli qator ikkala cheklovni bir vaqtda
     // buzadi. Muhimi: qator RAD ETILADI.
     name: 'Sotilgan energiya kirimdan ko‘p bo‘la olmaydi',
     expect: ['eb_sold_le_in', 'eb_components'],
@@ -106,7 +106,7 @@ const CASES: Case[] = [
   },
   {
     // Balans ayniyatini BUZMAYDIGAN manfiy qiymat: kirim = sotilgan = −50,
-    // demak yo'qotish 0 va tarkib 0 — faqat "manfiy bo'lmasin" cheklovi qoladi.
+    // demak yo'qotish 0 va tarkib 0 - faqat "manfiy bo'lmasin" cheklovi qoladi.
     name: 'Manfiy energiya qiymati qabul qilinmaydi',
     expect: ['kwh_in', 'kwh_sold'],
     run: (c, x) =>
@@ -254,11 +254,11 @@ const CASES: Case[] = [
         `SELECT content_sha256 FROM fact.passport_snapshot WHERE id = $1`,
         [id],
       );
-      // RULE ... DO INSTEAD NOTHING xato bermaydi — o'zgarish sodir BO'LMAYDI.
+      // RULE ... DO INSTEAD NOTHING xato bermaydi - o'zgarish sodir BO'LMAYDI.
       if (check.rows[0]?.content_sha256 === 'HACKED') {
-        throw new Error('UPDATE_SUCCEEDED — snapshot himoyalanmagan!');
+        throw new Error('UPDATE_SUCCEEDED - snapshot himoyalanmagan!');
       }
-      throw new Error('APPEND_ONLY — UPDATE e‘tiborsiz qoldirildi (kutilgan xatti-harakat)');
+      throw new Error('APPEND_ONLY - UPDATE e‘tiborsiz qoldirildi (kutilgan xatti-harakat)');
     },
   },
 ];
@@ -286,7 +286,7 @@ async function main(): Promise<void> {
 
     const r = ref.rows[0];
     if (!r?.mfy_id || !r.submission_id) {
-      throw new Error('Baza bo‘sh — avval `npm run seed` bajaring');
+      throw new Error('Baza bo‘sh - avval `npm run seed` bajaring');
     }
 
     const ctx: Ctx = {

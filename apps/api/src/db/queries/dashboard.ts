@@ -2,7 +2,7 @@
  * Dashboard o'qish modellari.
  *
  * Qoida: bitta HTTP so'rov = bitta panel GURUHI. Panel boshiga so'rov EMAS.
- * Barcha SQL qo'lda yozilgan va shu yerda — grep qilinadi, EXPLAIN qilinadi.
+ * Barcha SQL qo'lda yozilgan va shu yerda - grep qilinadi, EXPLAIN qilinadi.
  */
 import type {
   CapacityInfo, ConsumerBreakdown, DebtBreakdown, EfficiencyBreakdown,
@@ -23,7 +23,7 @@ import { type AppContext, isPgError, query, queryOne, withTransaction } from '..
  * Dashboard uchun standart davr.
  *
  * DIQQAT: bu shunchaki `max(period_month)` EMAS. Joriy oy odatda qisman
- * to'ldirilgan bo'ladi (bir-ikki MFY bir necha kun kiritgan) — uni ko'rsatish
+ * to'ldirilgan bo'ladi (bir-ikki MFY bir necha kun kiritgan) - uni ko'rsatish
  * hokimga "abonentlar 0 ta, yo'qotish 6%" degan YOLG'ON manzara beradi.
  *
  * Shuning uchun MFY larning kamida yarmida ma'lumot bo'lgan eng so'nggi oy
@@ -44,7 +44,7 @@ export async function latestPeriod(ctx: AppContext): Promise<string | null> {
   );
   if (row?.p) return row.p;
 
-  // Zaxira: hech qanday oy mezonga javob bermasa — mavjud eng so'nggisi.
+  // Zaxira: hech qanday oy mezonga javob bermasa - mavjud eng so'nggisi.
   const fallback = await queryOne<{ p: string }>(
     `SELECT to_char(max(period_month), 'YYYY-MM') AS p FROM agg.mfy_monthly WHERE days_filled > 0`,
     [], ctx,
@@ -54,7 +54,7 @@ export async function latestPeriod(ctx: AppContext): Promise<string | null> {
 
 /**
  * Berilgan oydagi ma'lumot mavjud eng so'nggi kun.
- * Reyting paneli shu kunni "bugun" deb oladi — qisman to'ldirilgan joriy
+ * Reyting paneli shu kunni "bugun" deb oladi - qisman to'ldirilgan joriy
  * oyning tasodifiy kuni emas.
  */
 export async function latestDateInPeriod(ctx: AppContext, period: string): Promise<string | null> {
@@ -145,10 +145,10 @@ async function periodTotals(
   /*
    * TP soni va quvvati REGISTRDAN olinadi, oylik holat hisobotidan emas.
    *
-   * `agg.mfy_monthly` dagi `tp_total` — o'sha oyda HOLATI KIRITILGAN TP lar
+   * `agg.mfy_monthly` dagi `tp_total` - o'sha oyda HOLATI KIRITILGAN TP lar
    * soni. Holat hisoboti hali kelmagan bo'lsa u 0 chiqadi va hokim "tumanda
    * transformator yo'q" degan manzarani ko'radi. Nechta TP borligi esa
-   * registrda aniq turadi — savol "qancha bor?", "qanchasi hisobot berdi?"
+   * registrda aniq turadi - savol "qancha bor?", "qanchasi hisobot berdi?"
    * emas. Quvvat ham shu yerdan: u TP pasportining xossasi.
    */
   const reg = await queryOne<{ tp_cnt: number; kva: number | null }>(
@@ -168,7 +168,7 @@ async function periodTotals(
   };
 }
 
-/** Oxirgi 30 kunlik qiymatlar — sparkline uchun. */
+/** Oxirgi 30 kunlik qiymatlar - sparkline uchun. */
 interface Sparks {
   kwhIn: number[]; kwhSold: number[]; kwhLoss: number[]; kwhLossTechnical: number[];
   consumersTotal: number[]; consumersActive: number[];
@@ -259,7 +259,7 @@ export async function districtOverview(
   const p = prev ?? cur;
 
   /**
-   * Kartani bir joyda quramiz — `prevValue` va `deltaPct` DOIM bitta
+   * Kartani bir joyda quramiz - `prevValue` va `deltaPct` DOIM bitta
    * manbadan chiqadi. Ilgari har biri alohida yozilgani uchun solishtirish
    * qiymatini qo'shishni unutish oson edi.
    */
@@ -298,7 +298,7 @@ export async function districtOverview(
     /*
      * Yo'qotish MIQDORDA beriladi, foizda emas.
      *
-     * "34.8%" degan plitka yonidagi "1.0 mln kWh" bilan bir o'lchovda emas —
+     * "34.8%" degan plitka yonidagi "1.0 mln kWh" bilan bir o'lchovda emas -
      * hokim ikkalasini solishtira olmaydi. Foiz plitkaning izohida qoladi,
      * asosiy raqam esa kWh: yo'qolgan energiyani sotilgan energiya bilan
      * bevosita taqqoslash mumkin bo'lsin.
@@ -316,7 +316,7 @@ export async function districtOverview(
     /*
      * Qarzdorlik o'rniga UMUMIY ABONENTLAR.
      *
-     * Qarzdorlik manbasi fider darajasidagi hisobotlarda yo'q — plitka doim
+     * Qarzdorlik manbasi fider darajasidagi hisobotlarda yo'q - plitka doim
      * "0.0 mln so'm" ko'rsatib turardi, bu esa "qarz yo'q" degan noto'g'ri
      * xulosaga olib keladi. Abonentlarning umumiy soni esa hisobotda bor va
      * yonidagi faol/uzilgan plitkalari uchun MAXRAJ bo'lib xizmat qiladi:
@@ -421,7 +421,7 @@ export async function efficiency(
 
   const forecast = linearForecast(hist.map((h) => Number(h.loss_pct)), period, 6);
 
-  // O'tgan oyning bahosi — AYNAN shu funksiya, faqat bir oy orqada.
+  // O'tgan oyning bahosi - AYNAN shu funksiya, faqat bir oy orqada.
   const prev = await queryOne<{ score: number | null }>(
     `SELECT score FROM agg.efficiency_index($1, $2, (($3 || '-01')::date - INTERVAL '1 month')::date)`,
     [scope, mfyId, period], ctx,
@@ -429,7 +429,7 @@ export async function efficiency(
 
   /*
    * Tavsiya xulosasi: normadan oshgan mahallalar soni va yo'qotishning
-   * NORMATIV darajasi (energiya bo'yicha o'rtachalangan). Bu qoida —
+   * NORMATIV darajasi (energiya bo'yicha o'rtachalangan). Bu qoida -
    * SQL, model emas: "qaysi mahalla normadan oshdi" savoli aniq javobga ega.
    */
   const adv = await queryOne<{ cnt: number; target_pct: number | null; cur_pct: number | null }>(
@@ -512,7 +512,7 @@ export async function tpMonitoring(
     avg_distance_m: number | null; distance_compliant: boolean | null;
   }>(`/*
         REGISTRDAN boshlanadi, jamlanmadan emas.
-        Oylik holat hisoboti kelmagan TP ham ro'yxatda KO'RINISHI kerak —
+        Oylik holat hisoboti kelmagan TP ham ro'yxatda KO'RINISHI kerak -
         yuklama va holat ustunlari bo'sh bo'ladi, lekin transformatorning
         o'zi yo'qolib qolmaydi. Ilgari so'rov jamlanmadan boshlanardi va
         holati kiritilmagan TP butunlay ko'rinmasdi.
@@ -535,7 +535,7 @@ export async function tpMonitoring(
         Ilgari faqat "ORDER BY load_pct DESC" edi va bu panelni yolg'onchi
         qilardi: mahallada nosoz transformator bo'lsa-yu, uning yuklamasi
         past bo'lsa (masalan 65%), u ro'yxatning pastiga tushib, kartaning
-        birinchi 5 qatoriga KIRMASDI — "Transformatorlar HOLATI" kartasi
+        birinchi 5 qatoriga KIRMASDI - "Transformatorlar HOLATI" kartasi
         aynan buzilgan transformatorni yashirardi.
 
         Tartib UI dagi rang og'irligiga mos: ortiqcha yuklama (qizil) →
@@ -570,7 +570,7 @@ export async function tpMonitoring(
  * Fider boshidagi oylik balans.
  *
  * Jadvalda hisoblagich ko'rsatkichlari va to'rt raqam turadi; o'rtacha
- * yuklama va qamrov ulushi shu yerda HISOBLANADI — ular saqlanmaydi, chunki
+ * yuklama va qamrov ulushi shu yerda HISOBLANADI - ular saqlanmaydi, chunki
  * manba raqamlardan bir qatorda kelib chiqadi.
  */
 export async function feederMonthly(
@@ -614,7 +614,7 @@ export async function feederMonthly(
 }
 
 /**
- * TP kesimidagi oylik hisobot — hisoblagich ko'rsatkichlari va iste'molchilar.
+ * TP kesimidagi oylik hisobot - hisoblagich ko'rsatkichlari va iste'molchilar.
  *
  * Bu «Тўлиқ ҳисобот» varag'ining aynan o'zi: transformatorlar sahifasi shu
  * ma'lumotni ko'rsatadi, chunki fider darajasidagi tizimda asosiy tafsilot
@@ -690,14 +690,14 @@ export async function debtBreakdown(
 }
 
 /**
- * Qarzdorni ISM bo'yicha loyqa qidirish — AI yordamchining "TP kodi emas,
+ * Qarzdorni ISM bo'yicha loyqa qidirish - AI yordamchining "TP kodi emas,
  * odam nomi" so'rovlari uchun.
  *
  * ILIKE va `similarity()` BIRGA ishlatiladi: foydalanuvchi ismning bir
  * qismini aniq yozgan bo'lsa ILIKE uni albatta topadi (masalan familiya
  * boshi), imlo xatosi yoki so'z tartibi boshqacha bo'lsa esa trigram
  * o'xshashligi yordam beradi. `dt_name_trgm` indeksi ikkalasini ham
- * tezlashtiradi — yangi indeks yaratilmaydi, mavjudi ishlatiladi.
+ * tezlashtiradi - yangi indeks yaratilmaydi, mavjudi ishlatiladi.
  *
  * Davr bo'yicha CHEKLANMAYDI: qidiruv "bu odam qachondir qarzdorlar
  * ro'yxatida bo'lganmi" degan savolga javob beradi, faqat joriy oyga emas.
@@ -722,7 +722,7 @@ export async function searchDebtor(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Yo'qotish xaritasi (treemap) — XARITA EMAS, geo ma'lumot ishlatilmaydi
+// Yo'qotish xaritasi (treemap) - XARITA EMAS, geo ma'lumot ishlatilmaydi
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function lossMap(ctx: AppContext, period: string): Promise<LossMapCell[]> {
@@ -802,11 +802,11 @@ export async function works(
 }
 
 /**
- * Aniqlangan qoidabuzarliklar — toifa bo'yicha soni va summasi.
+ * Aniqlangan qoidabuzarliklar - toifa bo'yicha soni va summasi.
  *
  * DAVR: tanlangan oy bilan tugaydigan 12 oy. Bitta oy olinsa karta ko'pincha
  * bo'sh chiqadi (bir mahallada oyiga bitta dalolatnoma ham bo'lmasligi
- * mumkin), holbuki savol "qancha aniqlandi?" — bu yig'ma ko'rsatkich.
+ * mumkin), holbuki savol "qancha aniqlandi?" - bu yig'ma ko'rsatkich.
  *
  * Har bir toifa bilan birga DALOLATNOMALAR RO'YXATI qaytadi: foydalanuvchi
  * raqam ustiga bosganda "bu qayerdan chiqdi?" degan savolga javob shu yerda,
@@ -842,7 +842,7 @@ export async function violations(
     caseType: r.case_type as ViolationActRow['caseType'],
   }));
 
-  // Toifalar DOIM uchtasi ham qaytadi — nol ham javob, bo'sh qator emas.
+  // Toifalar DOIM uchtasi ham qaytadi - nol ham javob, bo'sh qator emas.
   const summary = VIOLATION_CASE_TYPES.map((caseType) => {
     const mine = acts.filter((a) => a.caseType === caseType);
     return {
@@ -861,7 +861,7 @@ export async function violations(
   return { from: start.toISOString().slice(0, 7), to: period, rows: summary };
 }
 
-/** Bitta ish — dalolatnoma ko'rinishi uchun to'liq, rasmlari bilan. */
+/** Bitta ish - dalolatnoma ko'rinishi uchun to'liq, rasmlari bilan. */
 export async function workDetail(ctx: AppContext, id: number): Promise<WorkDetail | null> {
   const row = await queryOne<Record<string, unknown>>(
     `SELECT w.id, w.mfy_id, m.name_uz AS mfy_name, m.code AS mfy_code, t.code AS tp_code,
@@ -878,7 +878,7 @@ export async function workDetail(ctx: AppContext, id: number): Promise<WorkDetai
   if (!row) return null;
 
   /*
-   * Tartib: avval "ishgacha", keyin "keyin", oxirida hujjatlar — dalolatnoma
+   * Tartib: avval "ishgacha", keyin "keyin", oxirida hujjatlar - dalolatnoma
    * qog'ozda ham shu ketma-ketlikda o'qiladi.
    */
   const photos = await query<Record<string, unknown>>(
@@ -920,9 +920,9 @@ export async function workDetail(ctx: AppContext, id: number): Promise<WorkDetai
 /**
  * Yangi ish yozadi.
  *
- * Validatsiya BU YERDA emas — chaqiruvchi (marshrut yoki AI asbob) `workSchema`
+ * Validatsiya BU YERDA emas - chaqiruvchi (marshrut yoki AI asbob) `workSchema`
  * bilan tekshirgan qiymatni beradi, xuddi `entry.saveMonthlyReturn`dagi
- * qatlamlanish kabi. Postgres RLS (`0004_security.sql`) ustidan ham turadi —
+ * qatlamlanish kabi. Postgres RLS (`0004_security.sql`) ustidan ham turadi -
  * bu yerdagi tekshiruv ikkinchi qatlam, birinchisi emas.
  */
 export async function createWork(ctx: AppContext, input: Work): Promise<WorkRow> {
@@ -952,10 +952,10 @@ export async function createWork(ctx: AppContext, input: Work): Promise<WorkRow>
     });
   } catch (err) {
     /*
-     * `mfy_id`/`tp_id` chet kalit (FK) bilan tekshiriladi — bu yerda
+     * `mfy_id`/`tp_id` chet kalit (FK) bilan tekshiriladi - bu yerda
      * ATAYLAB oldindan SELECT bilan tekshirilmaydi (qo'shimcha so'rov, va
      * baribir poyga sharoiti qoladi). Buning o'rniga Postgres xatosi
-     * (23503) tushunarli xabarga aylantiriladi — aks holda AI asbobi xom
+     * (23503) tushunarli xabarga aylantiriladi - aks holda AI asbobi xom
      * "violates foreign key constraint work_mfy_id_fkey" matnini
      * foydalanuvchiga aytib bera boshlaydi (sinovda aynan shu ko'rindi:
      * model buni o'zicha "fider raqami noto'g'ri" deb noaniq izohladi).
@@ -963,7 +963,7 @@ export async function createWork(ctx: AppContext, input: Work): Promise<WorkRow>
     if (isPgError(err) && err.code === '23503') {
       const field = err.constraint?.includes('tp_id') ? 'TP (transformator)' : 'MFY (fider)';
       throw Object.assign(
-        new Error(`${field} topilmadi — berilgan ID mavjud emas`), { statusCode: 400 },
+        new Error(`${field} topilmadi - berilgan ID mavjud emas`), { statusCode: 400 },
       );
     }
     throw err;
@@ -974,8 +974,8 @@ export async function createWork(ctx: AppContext, input: Work): Promise<WorkRow>
  * Ish holatini (va unga bog'liq bajarilish maydonlarini) yangilaydi.
  *
  * `patch` TO'LIQ, chaqiruvchi tomonidan allaqachon tekshirilgan qiymatlarni
- * kutadi (status/progressPct/actualEnd birga mos kelishi — DB CHECK
- * `work_completed` shuni talab qiladi) — shuning uchun bu yerda `coalesce`
+ * kutadi (status/progressPct/actualEnd birga mos kelishi - DB CHECK
+ * `work_completed` shuni talab qiladi) - shuning uchun bu yerda `coalesce`
  * yo'q: qisman yangilash yolg'on-to'liq holatga olib kelishi mumkin edi.
  */
 export async function updateWorkStatus(
@@ -1001,10 +1001,10 @@ export async function updateWorkStatus(
 }
 
 /**
- * Ta'mirlanmagan tarmoq uzunligi (km) — kuchlanish klassi bo'yicha.
+ * Ta'mirlanmagan tarmoq uzunligi (km) - kuchlanish klassi bo'yicha.
  *
  * `fact.network_defect` hozirgacha ilova kodida HECH QAYERDA o'qilmagan
- * (faqat pasport qatori sifatida kiritiladi) — ish tavsiyasi uchun qimmatli,
+ * (faqat pasport qatori sifatida kiritiladi) - ish tavsiyasi uchun qimmatli,
  * ilgari ishlatilmagan signal: qaysi MFY/kuchlanish klassida ta'mirlash
  * "qarzi" ko'p to'planganini ko'rsatadi.
  */
@@ -1069,7 +1069,7 @@ export async function timeSeries(
 /**
  * Tarmoq quvvati.
  *
- * TP pasportlari (kVA) kiritilmagan bo'lsa `null` qaytadi — panel "ma'lumot
+ * TP pasportlari (kVA) kiritilmagan bo'lsa `null` qaytadi - panel "ma'lumot
  * yo'q" holatini ko'rsatadi. Nolli gauge chizish YOLG'ON bo'lardi: "quvvat
  * 0 kVA" degan xulosa "quvvat noma'lum" dan butunlay boshqa narsa.
  */
@@ -1092,7 +1092,7 @@ export async function consumers(ctx: AppContext, mfyId: number, period: string):
    * `consumers_disconnected_new` ATAYLAB fakt jadvalidan olinadi.
    *
    * U `agg.mfy_monthly` matview'ida yo'q, matview'ni esa faqat DROP +
-   * CREATE bilan o'zgartirish mumkin — bu unga bog'liq boshqa view'larni
+   * CREATE bilan o'zgartirish mumkin - bu unga bog'liq boshqa view'larni
    * ham qayta qurishni talab qiladi. Bitta ustun uchun bunday xavf
    * o'rinsiz: bu yerda so'rov bitta MFY va bitta oy bo'yicha, ya'ni
    * arzon.
@@ -1134,11 +1134,11 @@ export async function lossStructure(
   const pct = (v: number): number => (total > 0 ? Number(((v / total) * 100).toFixed(1)) : 0);
 
   /*
-   * Tabiiy va texnik — ikkalasi ham TARMOQDAGI fizik yo'qotish, ular
+   * Tabiiy va texnik - ikkalasi ham TARMOQDAGI fizik yo'qotish, ular
    * bitta "texnologik" toifaga yig'iladi. Noqonuniy foydalanish esa
    * hisobga olinmagan iste'mol, ya'ni TIJORIY yo'qotish.
    *
-   * Bazadagi uchta ustun o'z holicha qoladi — bu faqat ko'rsatish toifasi.
+   * Bazadagi uchta ustun o'z holicha qoladi - bu faqat ko'rsatish toifasi.
    */
   const technological = (row?.nat ?? 0) + (row?.tech ?? 0);
   const commercial = row?.ill ?? 0;

@@ -30,11 +30,11 @@ Restarting 'src/server.ts'
 Restarting 'src/server.ts'
 [21:49:27] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
 [21:49:27] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
-[21:49:27] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:49:27] [32mINFO[39m: [36mBEAP API tayyor - http://0.0.0.0:3001/api[39m
 Restarting 'src/server.ts'
 [21:49:28] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
 [21:49:28] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
-[21:49:28] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:49:28] [32mINFO[39m: [36mBEAP API tayyor - http://0.0.0.0:3001/api[39m
 [21:49:28] [32mINFO[39m: [36mincoming request[39m
     [35mreqId[39m: "a5gksmkyym"
     [35mreq[39m: {
@@ -53,7 +53,7 @@ Restarting 'src/server.ts'
 Restarting 'src/server.ts'
 [21:49:32] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
 [21:49:32] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
-[21:49:32] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:49:32] [32mINFO[39m: [36mBEAP API tayyor - http://0.0.0.0:3001/api[39m
 [21:49:32] [32mINFO[39m: [36mincoming request[39m
     [35mreqId[39m: "bzkivx2jqv"
     [35mreq[39m: {
@@ -132,7 +132,7 @@ Restarting 'src/server.ts'
 Restarting 'src/server.ts'
 [21:49:48] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
 [21:49:48] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
-[21:49:48] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:49:48] [32mINFO[39m: [36mBEAP API tayyor - http://0.0.0.0:3001/api[39m
 [21:49:49] [32mINFO[39m: [36mincoming request[39m
     [35mreqId[39m: "lzgye97pjc"
     [35mreq[39m: {
@@ -228,7 +228,7 @@ Restarting 'src/server.ts'
 Restarting 'src/server.ts'
 [21:50:09] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
 [21:50:09] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
-[21:50:09] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:50:09] [32mINFO[39m: [36mBEAP API tayyor - http://0.0.0.0:3001/api[39m
 [21:50:10] [32mINFO[39m: [36mincoming request[39m
     [35mreqId[39m: "w4bd1wcif"
     [35mreq[39m: {
@@ -262,7 +262,7 @@ Restarting 'src/server.ts'
 Restarting 'src/server.ts'
 [21:50:15] [32mINFO[39m: [36mServer listening at http://127.0.0.1:3001[39m
 [21:50:15] [32mINFO[39m: [36mServer listening at http://192.168.1.132:3001[39m
-[21:50:15] [32mINFO[39m: [36mBEAP API tayyor — http://0.0.0.0:3001/api[39m
+[21:50:15] [32mINFO[39m: [36mBEAP API tayyor - http://0.0.0.0:3001/api[39m
 [21:50:16] [32mINFO[39m: [36mincoming request[39m
     [35mreqId[39m: "end43t28vk"
     [35mreq[39m: {

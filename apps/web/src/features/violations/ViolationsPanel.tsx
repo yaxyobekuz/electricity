@@ -1,10 +1,10 @@
 /**
- * Aniqlangan qoidabuzarliklar — toifa bo'yicha soni va summasi.
+ * Aniqlangan qoidabuzarliklar - toifa bo'yicha soni va summasi.
  *
  * Har bir qator BOSILADI va "bu raqam nima asosida chiqdi?" degan savolga
  * to'liq javob beradi: toifaning ta'rifi, manba jadval, hisoblash qoidasi va
  * raqamni tashkil qilgan DALOLATNOMALAR RO'YXATI. Davlat panelida har bir
- * son izohlanishi shart — aks holda unga ishonib bo'lmaydi.
+ * son izohlanishi shart - aks holda unga ishonib bo'lmaydi.
  */
 import type { ViolationSummaryRow } from '@beap/shared';
 import {
@@ -28,7 +28,7 @@ const TONE: Record<string, string> = {
   NO_FAULT: 'var(--viz-good)',
 };
 
-/** Oynadagi xulosa raqami — yorliq ustida, qiymat ostida. */
+/** Oynadagi xulosa raqami - yorliq ustida, qiymat ostida. */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-surface-secondary px-3 py-2">
@@ -42,7 +42,7 @@ export function ViolationsPanel({
   rows, from, to,
 }: {
   rows: ViolationSummaryRow[];
-  /** Hisob oralig'i — `YYYY-MM`. */
+  /** Hisob oralig'i - `YYYY-MM`. */
   from: string;
   to: string;
 }) {
@@ -54,7 +54,7 @@ export function ViolationsPanel({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-[10.5px] text-muted">
-        {periodLabel(from)} — {periodLabel(to)} · jami {num(total)} ta dalolatnoma
+        {periodLabel(from)} - {periodLabel(to)} · jami {num(total)} ta dalolatnoma
       </p>
 
       {rows.map((r) => (
@@ -89,7 +89,7 @@ export function ViolationsPanel({
           </span>
 
           <span className="tabular w-24 shrink-0 text-right text-[12.5px] font-semibold">
-            {r.fineMln > 0 ? money(r.fineMln).text : '—'}
+            {r.fineMln > 0 ? money(r.fineMln).text : '-'}
           </span>
         </button>
       ))}
@@ -116,7 +116,7 @@ export function ViolationsPanel({
                   </section>
 
                   {/*
-                    Uch xulosa raqami — jadval nomlari va ustunlar EMAS.
+                    Uch xulosa raqami - jadval nomlari va ustunlar EMAS.
                     Bu oynani hokim o'qiydi: unga "qancha, qanchaga, qancha
                     energiya" kerak, ma'lumotlar bazasining tuzilishi emas.
                   */}
@@ -124,11 +124,11 @@ export function ViolationsPanel({
                     <Stat label="Dalolatnoma" value={`${num(open.count)} ta`} />
                     <Stat
                       label="Solingan jarima"
-                      value={open.fineMln > 0 ? money(open.fineMln).text : '—'}
+                      value={open.fineMln > 0 ? money(open.fineMln).text : '-'}
                     />
                     <Stat
                       label="Aniqlangan energiya"
-                      value={open.kwhIdentified > 0 ? `${num(open.kwhIdentified)} kWh` : '—'}
+                      value={open.kwhIdentified > 0 ? `${num(open.kwhIdentified)} kWh` : '-'}
                     />
                   </section>
 
@@ -162,7 +162,7 @@ export function ViolationsPanel({
 
                     {open.acts.length === 0 ? (
                       <p className="text-[12px] text-muted">
-                        Bu toifada dalolatnoma yo‘q — shuning uchun ko‘rsatkich 0.
+                        Bu toifada dalolatnoma yo‘q - shuning uchun ko‘rsatkich 0.
                       </p>
                     ) : (
                       <div className="scroll-y max-h-72 overflow-x-auto">
@@ -183,16 +183,16 @@ export function ViolationsPanel({
                                 <td className="font-semibold">{a.actNo}</td>
                                 <td className="whitespace-nowrap">{dateShort(a.actDate)}</td>
                                 <td className="truncate" title={a.consumerRef ?? ''}>
-                                  {a.consumerRef ?? '—'}
+                                  {a.consumerRef ?? '-'}
                                   {a.tpCode && (
                                     <span className="block text-[10px] text-muted">{a.tpCode}</span>
                                   )}
                                 </td>
                                 <td className="num whitespace-nowrap">
-                                  {a.kwhIdentified > 0 ? `${num(a.kwhIdentified)} kWh` : '—'}
+                                  {a.kwhIdentified > 0 ? `${num(a.kwhIdentified)} kWh` : '-'}
                                 </td>
                                 <td className="num whitespace-nowrap">
-                                  {a.fineMln > 0 ? money(a.fineMln).text : '—'}
+                                  {a.fineMln > 0 ? money(a.fineMln).text : '-'}
                                 </td>
                                 <td>
                                   <Chip size="sm" variant="soft">
@@ -209,11 +209,11 @@ export function ViolationsPanel({
                     )}
                   </section>
 
-                  {/* Ishonch uchun: ma'lumot qayerdan keladi — bir jumlada */}
+                  {/* Ishonch uchun: ma'lumot qayerdan keladi - bir jumlada */}
                   <p className="border-t border-separator pt-2.5 text-[11px] leading-relaxed text-muted">
                     Ma’lumot mahalla operatori rasmiylashtirgan va elektroset menejeri
-                    tasdiqlagan dalolatnomalardan olinadi. Hisob-kitob emas — har bir raqam
-                    ortida yuqoridagi hujjatlar turadi. Oraliq: {periodLabel(from)} —{' '}
+                    tasdiqlagan dalolatnomalardan olinadi. Hisob-kitob emas - har bir raqam
+                    ortida yuqoridagi hujjatlar turadi. Oraliq: {periodLabel(from)} -{' '}
                     {periodLabel(to)}.
                   </p>
                 </div>

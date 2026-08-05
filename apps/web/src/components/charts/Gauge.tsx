@@ -1,7 +1,7 @@
 /**
- * Gauge — ECharts.
+ * Gauge - ECharts.
  *
- * Nivo da gauge YO'Q (`radial-bar` — radial ustun, gauge emas). Shu sababli
+ * Nivo da gauge YO'Q (`radial-bar` - radial ustun, gauge emas). Shu sababli
  * ECharts faqat ikki holat uchun ishlatiladi: gauge va juda uzun vaqt qatorlari.
  * `echarts/core` dan faqat kerakli modullar ro'yxatdan o'tkaziladi (~150 KB),
  * 1 MB lik umumiy build EMAS.
@@ -68,7 +68,7 @@ export function Gauge({
   }, [value, min, max, resolvedBands, t]);
 
   /*
-   * O'LCHAMGA BOG'LIQ TIPOGRAFIYA — bu yerda majburiy.
+   * O'LCHAMGA BOG'LIQ TIPOGRAFIYA - bu yerda majburiy.
    *
    * ECharts gauge radiusini konteynerning KICHIK tomonidan hisoblaydi,
    * matn o'lchami esa qat'iy piksel edi. Natijada past panelda halqa
@@ -82,7 +82,7 @@ export function Gauge({
       ring: Math.max(7, Math.round(r * 0.2)),
       detail: Math.max(13, Math.round(r * 0.4)),
       title: Math.max(9, Math.round(r * 0.15)),
-      /** Yorliq faqat joy yetganda — aks holda raqamga tegib ketadi. */
+      /** Yorliq faqat joy yetganda - aks holda raqamga tegib ketadi. */
       showTitle: Boolean(label) && r >= 46,
     };
   }, [box, height, label]);
@@ -95,7 +95,7 @@ export function Gauge({
     chart.setOption(
       {
         backgroundColor: 'transparent',
-        // Canvas CSS shriftini meros qilmaydi — aniq berish SHART.
+        // Canvas CSS shriftini meros qilmaydi - aniq berish SHART.
         textStyle: { fontFamily: CHART_FONT },
         series: [
           {
@@ -107,7 +107,7 @@ export function Gauge({
             radius: '92%',
             // 240° yoy: pastda bo'shliq bor, shuning uchun markaz tepada.
             center: ['50%', '57%'],
-            // Ignasiz "progress" ko'rinishi — o'qish osonroq.
+            // Ignasiz "progress" ko'rinishi - o'qish osonroq.
             pointer: { show: false },
             progress: {
               show: true,
@@ -157,7 +157,7 @@ export function Gauge({
     return undefined;
   }, [value, min, max, label, suffix, activeColor, geom, t]);
 
-  // O'lcham o'zgarishini kuzatish — tipografiya ham shundan qayta hisoblanadi.
+  // O'lcham o'zgarishini kuzatish - tipografiya ham shundan qayta hisoblanadi.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;

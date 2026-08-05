@@ -3,7 +3,7 @@
  *
  * Ro'yxatdagi qator bosilganda ochiladi: ishning HAMMA maydoni, rasmlari va
  * chop etish tugmasi shu yerda. Chop etish alohida sahifada ochiladi
- * (`/works/act/:id/print`) — modalni bevosita chop etsa, orqa fondagi butun
+ * (`/works/act/:id/print`) - modalni bevosita chop etsa, orqa fondagi butun
  * dashboard ham qog'ozga tushib ketardi.
  */
 import { Button, Modal, Spinner } from '@heroui/react';
@@ -20,7 +20,7 @@ const CAN_EDIT = ['mfy_operator', 'elektroset_manager', 'admin'];
 export function WorkActModal({
   workId, onClose,
 }: {
-  /** `null` — oyna yopiq. */
+  /** `null` - oyna yopiq. */
   workId: number | null;
   onClose: () => void;
 }) {
@@ -51,7 +51,7 @@ export function WorkActModal({
             {!work.isLoading && !work.data && <EmptyPanel message="Ish topilmadi" />}
             {work.data && <WorkAct work={work.data} />}
 
-            {/* Rasm biriktirish — faqat kiritish huquqi borlarga */}
+            {/* Rasm biriktirish - faqat kiritish huquqi borlarga */}
             {work.data && canEdit && (
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-separator pt-3">
                 <select

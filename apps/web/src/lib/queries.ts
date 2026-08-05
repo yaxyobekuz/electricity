@@ -1,7 +1,7 @@
 /**
  * TanStack Query kalitlari va hook'lar.
  *
- * `placeholderData: keepPreviousData` — davr almashganda skeleton CHAQNAMAYDI,
+ * `placeholderData: keepPreviousData` - davr almashganda skeleton CHAQNAMAYDI,
  * oldingi render kamaytirilgan shaffoflikda turadi. Skeleton faqat birinchi
  * yuklashda ko'rinadi.
  */
@@ -9,6 +9,7 @@ import type {
   Bootstrap, CapacityInfo, CompletenessCell, ConsumerBreakdown, DebtBreakdown,
   DistrictOverview, EfficiencyBreakdown, EnergyBalanceNode, FeederMonthly, LossStructure,
   MfyOverview, MfyResponsible, OperationalMetrics, ResultsSummary, Submission, TimeSeriesPoint,
+  TpLossAnomalyReport, TpLossConfirmResponse, TpLossDailyRow, TpLossPreviewResponse,
   TpMonitorRow, TpMonthlyRow, ViolationSummary, WorkDetail, WorkRow,
 } from '@beap/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -42,7 +43,7 @@ export function useBootstrap() {
 }
 
 /**
- * Kunlik ogohlantirish digest'i — yuqori chiziqdagi qo'ng'iroq belgisi uchun.
+ * Kunlik ogohlantirish digest'i - yuqori chiziqdagi qo'ng'iroq belgisi uchun.
  *
  * Server tarafida kesh cron orqali kuniga bir marta yangilanadi, shuning
  * uchun mijozda ham tez-tez so'rashning hojati yo'q: 5 daqiqalik
@@ -92,7 +93,7 @@ export function useTpMonitoring(period?: string, limit = 60) {
   });
 }
 
-/** Fider boshidagi oylik balans — hisoblagich ko'rsatkichlari bilan. */
+/** Fider boshidagi oylik balans - hisoblagich ko'rsatkichlari bilan. */
 export function useFeederMonthly(id: number, period?: string) {
   return useQuery({
     queryKey: keys.mfy(id, 'feeder-monthly', { period }),
@@ -101,7 +102,7 @@ export function useFeederMonthly(id: number, period?: string) {
   });
 }
 
-/** TP kesimidagi oylik hisobot — hisoblagich, iste'molchilar, iste'mol. */
+/** TP kesimidagi oylik hisobot - hisoblagich, iste'molchilar, iste'mol. */
 export function useTpMonthly(period?: string) {
   return useQuery({
     queryKey: keys.district('tp-monthly', { period }),
@@ -126,7 +127,7 @@ export function useMfyViolations(id: number, period?: string) {
   });
 }
 
-/** Bitta ish — dalolatnoma oynasi. `null` bo'lsa so'rov yuborilmaydi. */
+/** Bitta ish - dalolatnoma oynasi. `null` bo'lsa so'rov yuborilmaydi. */
 export function useWork(id: number | null) {
   return useQuery({
     queryKey: ['dash', 'work', id] as const,
@@ -215,7 +216,7 @@ export function useMfyTp(id: number, period?: string) {
   });
 }
 
-/** Fiderning TP kesimi — hisoblagich, iste'molchilar, oylik iste'mol. */
+/** Fiderning TP kesimi - hisoblagich, iste'molchilar, oylik iste'mol. */
 export function useMfyTpMonthly(id: number, period?: string) {
   return useQuery({
     queryKey: keys.mfy(id, 'tp-monthly', { period }),
@@ -256,6 +257,23 @@ export function useMfyWorks(id: number) {
   });
 }
 
+/** TP darajasidagi kunlik chiziqli yo'qotish - har bir TP uchun eng so'nggi o'qish. */
+export function useMfyTpLoss(id: number, limit = 60) {
+  return useQuery({
+    queryKey: keys.mfy(id, 'tp-loss', { limit }),
+    queryFn: ({ signal }) => api.get<TpLossDailyRow[]>(`/dash/mfy/${id}/tp-loss${qs({ limit })}`, signal),
+    ...DASH_OPTIONS,
+  });
+}
+
+export function useMfyTpLossAnomalies(id: number) {
+  return useQuery({
+    queryKey: keys.mfy(id, 'tp-loss-anomalies'),
+    queryFn: ({ signal }) => api.get<TpLossAnomalyReport>(`/dash/mfy/${id}/tp-loss-anomalies`, signal),
+    ...DASH_OPTIONS,
+  });
+}
+
 export function useMfyResults(id: number, period?: string, months = 12) {
   return useQuery({
     queryKey: keys.mfy(id, 'results', { period, months }),
@@ -264,7 +282,7 @@ export function useMfyResults(id: number, period?: string, months = 12) {
   });
 }
 
-/** Fider bo'yicha ma'sul shaxs — belgilanmagan bo'lsa `null`. */
+/** Fider bo'yicha ma'sul shaxs - belgilanmagan bo'lsa `null`. */
 export function useMfyResponsible(id: number) {
   return useQuery({
     queryKey: keys.mfy(id, 'responsible'),
@@ -274,7 +292,7 @@ export function useMfyResponsible(id: number) {
   });
 }
 
-/** Ma'sul shaxsni belgilash / o'zgartirish — sozlamalar sahifasida ishlatiladi. */
+/** Ma'sul shaxsni belgilash / o'zgartirish - sozlamalar sahifasida ishlatiladi. */
 export function useUpdateMfyResponsible(id: number) {
   const qc = useQueryClient();
   return useMutation({
@@ -305,5 +323,36 @@ export function useReviewQueue(enabled = true) {
     queryFn: ({ signal }) => api.get<Submission[]>('/entry/review-queue', signal),
     enabled,
     staleTime: 15_000,
+  });
+}
+
+/**
+ * TP kunlik yo'qotish faylini OLDINDAN KO'RISH - hech narsa yozmaydi, faqat
+ * qaysi qatorlar saqlanishini va qaysi TP kodlari topilmaganini ko'rsatadi.
+ */
+export function usePreviewTpLoss() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await apiFetchRaw('/entry/tp-daily-loss/preview', { method: 'POST', body: form });
+      return (await res.json()) as TpLossPreviewResponse;
+    },
+  });
+}
+
+/** TP kunlik yo'qotish faylini TASDIQLAYDI - haqiqatan UPSERT qiladi. */
+export function useConfirmTpLoss() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await apiFetchRaw('/entry/tp-daily-loss/confirm', { method: 'POST', body: form });
+      return (await res.json()) as TpLossConfirmResponse;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['dash'] });
+    },
   });
 }

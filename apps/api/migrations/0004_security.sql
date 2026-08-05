@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 0004_security.sql — audit jurnali va Row Level Security
+-- 0004_security.sql - audit jurnali va Row Level Security
 --
 -- Aktor har bir tranzaksiya boshida API tomonidan o'rnatiladi:
 --   SET LOCAL app.user_id = '5'; SET LOCAL app.role = 'mfy_operator';
 --   SET LOCAL app.mfy_ids = '3,7'; SET LOCAL app.request_id = '...';
--- Bitta joy — unutish imkoni yo'q.
+-- Bitta joy - unutish imkoni yo'q.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 CREATE TABLE sec.audit_log (
@@ -21,7 +21,7 @@ CREATE TABLE sec.audit_log (
   before       jsonb,
   after        jsonb,
   -- Generated ustun bo'la olmaydi (PostgreSQL generation ifodasida subquery
-  -- taqiqlaydi) — trigger to'ldiradi.
+  -- taqiqlaydi) - trigger to'ldiradi.
   changed_keys text[]
 );
 CREATE INDEX audit_log_at    ON sec.audit_log (at DESC);
@@ -95,7 +95,7 @@ BEGIN
 END $$;
 
 COMMENT ON FUNCTION sec.trg_audit IS
-  'AFTER trigger. NULL qaytaradi — natijaga ta''sir qilmaydi';
+  'AFTER trigger. NULL qaytaradi - natijaga ta''sir qilmaydi';
 
 
 -- Auditni barcha fakt va spravochnik jadvallariga ulash.
@@ -125,7 +125,7 @@ END $$;
 -- yoza olmaydi. Tasdiqlangan qator storage darajasida o'zgarmas bo'lib qoladi.
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Rol: ilova shu rol ostida ulanadi (superuser EMAS — aks holda RLS chetlab o'tiladi).
+-- Rol: ilova shu rol ostida ulanadi (superuser EMAS - aks holda RLS chetlab o'tiladi).
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'beap_app') THEN
@@ -142,7 +142,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON sec.app_user, sec.user_scope, sec.refres
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ref, fact, sec, stg TO beap_app;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ref, agg, sec TO beap_app;
 
--- Snapshot faqat qo'shiladi — o'zgartirilmaydi, o'chirilmaydi.
+-- Snapshot faqat qo'shiladi - o'zgartirilmaydi, o'chirilmaydi.
 REVOKE UPDATE, DELETE ON fact.passport_snapshot FROM beap_app;
 
 

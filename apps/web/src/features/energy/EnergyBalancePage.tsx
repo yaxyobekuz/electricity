@@ -1,7 +1,7 @@
 /**
  * Energiya balansi sahifasi.
  *
- * Savol: "fiderga kirgan energiya QAYERGA ketdi?" — sankey oqimi va davr
+ * Savol: "fiderga kirgan energiya QAYERGA ketdi?" - sankey oqimi va davr
  * bo'yicha dinamika bitta ekranda.
  *
  * Barcha "jami" qiymatlar HISOBLANADI: sahifada kiritiladigan maydon yo'q.
@@ -98,7 +98,7 @@ export default function EnergyBalancePage() {
           value={
             totals && totals.kwhIn > 0
               ? ((totals.kwhSold / totals.kwhIn) * 100).toFixed(2)
-              : '—'
+              : '-'
           }
         />
       </div>

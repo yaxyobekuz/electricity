@@ -1,8 +1,8 @@
 /**
- * Ma'sul shaxs sozlamalari — fider dashboardidagi "Ma'sul shaxs" panelini
+ * Ma'sul shaxs sozlamalari - fider dashboardidagi "Ma'sul shaxs" panelini
  * boshqaruvchi alohida sahifa.
  *
- * Tizim qamrovi bitta fider, shuning uchun "qaysi fider?" degan tanlov yo'q —
+ * Tizim qamrovi bitta fider, shuning uchun "qaysi fider?" degan tanlov yo'q -
  * xuddi `MfyDashboard` dagi kabi registrdagi yagona fider olinadi.
  */
 import {

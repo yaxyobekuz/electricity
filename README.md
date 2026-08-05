@@ -1,4 +1,4 @@
-# BEAP — Baliqchi tumani Elektr energiya Analitik Platformasi
+# BEAP - Baliqchi tumani Elektr energiya Analitik Platformasi
 
 Mahalla (MFY) kesimida elektr energiya iste'moli, yo'qotishlari, qarzdorlik va
 tarmoq holatini kuzatish tizimi. Ikki qismdan iborat:
@@ -11,8 +11,8 @@ tarmoq holatini kuzatish tizimi. Ikki qismdan iborat:
 > **Tizim ODATIY holatda TO'LIQ OFFLINE ishlaydi.** Xarita, CDN, tashqi shrift
 > va telemetriya umuman ishlatilmaydi, ma'lumot ichki tarmoqdan chiqmaydi.
 > Ikkita ATAYLAB qo'shilgan, IXTIYORIY va faqat serverda ishlaydigan istisno
-> bor — AI yordamchi (`OPENAI_API_KEY`) va Telegram bot (`TELEGRAM_BOT_TOKEN`)
-> — kalit/token bo'sh bo'lsa ikkalasi ham butunlay o'chiq turadi, brauzer esa
+> bor - AI yordamchi (`OPENAI_API_KEY`) va Telegram bot (`TELEGRAM_BOT_TOKEN`)
+> - kalit/token bo'sh bo'lsa ikkalasi ham butunlay o'chiq turadi, brauzer esa
 > hech qachon o'zi tashqariga so'rov yubormaydi (`CSP connect-src 'self'`).
 > Bu va'da `npm run verify:offline` bilan mashina tomonidan tekshiriladi.
 
@@ -38,7 +38,7 @@ npm run dev
 
 Brauzerda: **http://localhost:5173**
 
-> Windows'da Vite IPv6 (`::1`) ga bog'lanadi — `127.0.0.1:5173` emas,
+> Windows'da Vite IPv6 (`::1`) ga bog'lanadi - `127.0.0.1:5173` emas,
 > **`localhost:5173`** manzilidan foydalaning.
 
 ### Demo hisoblar
@@ -56,30 +56,30 @@ Parol barchasi uchun: `Beap2026!`
 
 ## Prezentatsiya uchun ssenariy
 
-1. **`/dashboard`** — tuman paneli. 8 ta KPI, hududiy yo'qotish taqsimoti
+1. **`/dashboard`** - tuman paneli. 8 ta KPI, hududiy yo'qotish taqsimoti
    (treemap), energiya balansi (sankey), samaradorlik indeksi.
-2. **Har bir KPI kartasidagi «i» tugmasi** — raqamning MANBASINI ko'rsatadi:
+2. **Har bir KPI kartasidagi «i» tugmasi** - raqamning MANBASINI ko'rsatadi:
    qo'lda kiritiladimi yoki hisoblanadimi.
-3. **Samaradorlik indeksi «i»** — «nega 90.9?» degan savolga javob: 5 komponent
+3. **Samaradorlik indeksi «i»** - «nega 90.9?» degan savolga javob: 5 komponent
    va ularning vaznlari.
 4. **Treemapdagi eng katta qizil plitka** (Chinobod) → bosing → MFY paneli
    ochiladi, yorug' temada.
-5. **`/passport`** → *Solishtirish* tabi — MFY pasportlari yig'indisi tuman
+5. **`/passport`** → *Solishtirish* tabi - MFY pasportlari yig'indisi tuman
    pasporti bilan qator-baqator solishtiriladi. **Tuman pasporti qo'lda
    kiritilmaydi.**
-6. **`/entry`** — to'liqlik matritsasi. Gulshan MFY joriy oyda qoralamada
+6. **`/entry`** - to'liqlik matritsasi. Gulshan MFY joriy oyda qoralamada
    (sariq katak), Obod MFY tasdiqlashga yuborilgan (ko'k).
 7. **`operator1` bilan kiring** → `/entry` → Sarnaul → Energiya balansi →
    bir kunga noto'g'ri raqam kiriting → pastdagi **nazorat qatori** darhol
    qizaradi va aniq farqni ko'rsatadi.
-8. **Eng ishonarli 20 soniya** — terminalda:
+8. **Eng ishonarli 20 soniya** - terminalda:
 
    ```bash
    npm run seed
    ```
 
    Chiqishda: *«Trigger bloklandi: IMPLAUSIBLE_DEBT …»*
-   Bu — Go'ravon MFY pasportida tuman qarzdorligi MFY qatoriga ko'chirib
+   Bu - Go'ravon MFY pasportida tuman qarzdorligi MFY qatoriga ko'chirib
    qo'yilgan haqiqiy xato. Tizim uni **texnik jihatdan imkonsiz** qiladi.
 
 ---
@@ -100,7 +100,7 @@ Mijoz bergan PASPORT hujjatlarida **4 ta arifmetik nomuvofiqlik** topildi:
 Va **Go'ravon MFY pasportiga tumanning qarzdorlik raqamlari ko'chirib
 qo'yilgan**.
 
-**Natijaviy qaror:** tizimda har qanday «jami» va «shundan» qiymati —
+**Natijaviy qaror:** tizimda har qanday «jami» va «shundan» qiymati -
 `GENERATED ALWAYS AS ... STORED` ustun yoki view ifodasi. **Hech qachon input
 maydoni emas.** Xodim faqat bo'laklarni kiritadi.
 
@@ -114,27 +114,27 @@ Bu uch qatlamda majburlanadi:
 
 ### Xarita o'rniga treemap
 
-Mijoz talabi: ma'lumot tashqariga chiqmasin. Shu sababli xarita yo'q — tile
+Mijoz talabi: ma'lumot tashqariga chiqmasin. Shu sababli xarita yo'q - tile
 server, geokodlash va geo-ma'lumot ishlatilmaydi.
 
 O'rnida **`@nivo/treemap`**: plitka **maydoni** = tarmoqqa kirgan energiya,
 plitka **rangi** = amaldagi yo'qotish % − norma %. Xarita bir vaqtda hajm va
-darajani ko'rsata olmaydi — treemap ko'rsatadi.
+darajani ko'rsata olmaydi - treemap ko'rsatadi.
 
-### «AI Agent» paneli — keyin ixtiyoriy istisno sifatida qo'shildi
+### «AI Agent» paneli - keyin ixtiyoriy istisno sifatida qo'shildi
 
 Boshida mijoz AI hozircha kerak emas dedi. Uning o'rnida **«Diqqat talab
-qiladigan holatlar»** paneli qurildi — deterministik SQL qoidalari (yo'qotish
+qiladigan holatlar»** paneli qurildi - deterministik SQL qoidalari (yo'qotish
 normadan oshgan, TP ortiqcha yuklangan, MFY ma'lumot yubormagan, qarzdorlik
 keskin o'sgan). Bu qoidalar hozir ham ishlaydi, LLM'siz.
 
 Keyinroq **ixtiyoriy** AI yordamchi qo'shildi: `OPENAI_API_KEY` bo'sh bo'lsa
 xususiyat butunlay o'chiq turadi (panelda tugma ham chiqmaydi) va tizim
 avvalgidek to'liq offline ishlaydi. Xuddi shu tamoyilda **ixtiyoriy** Telegram
-bot ham bor (`TELEGRAM_BOT_TOKEN`) — foydalanuvchilar bir xil yordamchidan
+bot ham bor (`TELEGRAM_BOT_TOKEN`) - foydalanuvchilar bir xil yordamchidan
 Telegram orqali savol so'rashi va kunlik ogohlantirish digestini olishi
 mumkin, veb panelga qo'shimcha yoki o'rniga. Ikkalasi ham faqat serverda
-ishlaydi; kalit/token berilmasa — tashqi xizmatga birorta so'rov ketmaydi.
+ishlaydi; kalit/token berilmasa - tashqi xizmatga birorta so'rov ketmaydi.
 
 ---
 
@@ -145,7 +145,7 @@ electricity/
 ├─ packages/shared/        zod sxemalar + tiplar + formatlash + metrika manbasi
 │                          → API va Web AYNAN shu modulni import qiladi
 ├─ apps/api/               Fastify 5 + pg (qo'lda yozilgan SQL)
-│  ├─ migrations/          0001…0007 — sha256 bilan qulflangan
+│  ├─ migrations/          0001…0007 - sha256 bilan qulflangan
 │  ├─ seed/                mfy.seed.json + generate.ts
 │  ├─ scripts/             migrate · seed · verify-passport · test-constraints
 │  └─ src/db/queries/      barcha analitik SQL shu yerda
@@ -185,7 +185,7 @@ filtri bilan view orqali boradi, shuning uchun tarix buzilmaydi.
 ## Tekshirish
 
 ```bash
-npm run verify:passport   # pasport yaxlitligi — 19 ta tekshiruv
+npm run verify:passport   # pasport yaxlitligi - 19 ta tekshiruv
 npm run verify:offline    # offline (air-gap) kafolati
 npm run migrate           # sxema dolzarbligi
 npm run typecheck         # TypeScript
@@ -203,7 +203,7 @@ Joriy holat:
 
 **`test-constraints.ts` haqida:** har bir test ataylab noto'g'ri ma'lumot
 yozishga urinadi va DB uni rad etishini kutadi. *Hech narsani rad etganini
-ko'rmagan cheklov — cheklov emas.*
+ko'rmagan cheklov - cheklov emas.*
 
 ### Kalibrovka
 
@@ -230,7 +230,7 @@ Inter **5.3.0** (`@fontsource-variable/inter`)
 
 ### Shrift
 
-**Inter Variable**, lokal bundle qilingan — Google Fonts ISHLATILMAYDI.
+**Inter Variable**, lokal bundle qilingan - Google Fonts ISHLATILMAYDI.
 `.woff2` fayllari npm paketidan keladi va Vite ularni `dist/assets/` ga
 nusxalaydi, ya'ni air-gap muhitda ham ishlaydi.
 
@@ -238,24 +238,24 @@ nusxalaydi, ya'ni air-gap muhitda ham ishlaydi.
 
 | Sahifa | Yuklanadi |
 |---|---|
-| Lotin | `latin` — 47 KB |
-| Kirill | `latin` + `cyrillic` + `cyrillic-ext` — ~91 KB |
+| Lotin | `latin` - 47 KB |
+| Kirill | `latin` + `cyrillic` + `cyrillic-ext` - ~91 KB |
 
 Qamrov tekshirildi: `oʻ gʻ` (U+02BB–02BC, `latin` subsetida) va
-`ў қ ғ ҳ` (U+045E / U+049B / U+0493 / U+04B3 — `cyrillic` va `cyrillic-ext`).
+`ў қ ғ ҳ` (U+045E / U+049B / U+0493 / U+04B3 - `cyrillic` va `cyrillic-ext`).
 
 Ikki nozik joy:
 
-1. **ECharts canvas'ga chizadi va CSS shriftini meros qilib olmaydi** —
+1. **ECharts canvas'ga chizadi va CSS shriftini meros qilib olmaydi** -
    `fontFamily` aniq beriladi (`lib/chart-theme.ts` dagi `CHART_FONT`).
    Aks holda gauge'dagi katta raqam boshqa shriftda chiqardi.
-2. Inter'ning `cv05`/`cv08` belgi-farqlash to'plami yoqilgan — `1 / l / I`
+2. Inter'ning `cv05`/`cv08` belgi-farqlash to'plami yoqilgan - `1 / l / I`
    ajraladi, TP kodlari (`TR-0102`) va abonent raqamlari aniq o'qiladi.
 
 Backend: Node **24** · Fastify **5.11** · pg **8.22** · zod **4.4.3** ·
 jose **6.2.5** · argon2 **0.45.1** · PostgreSQL **17+**
 
-**Ataylab ishlatilmagan:** `xlsx` (npm nusxasi CVE-2023-30533 bilan qotgan —
+**Ataylab ishlatilmagan:** `xlsx` (npm nusxasi CVE-2023-30533 bilan qotgan -
 `exceljs` ishlatiladi) · `@tremor/react` (React 18 only) · `react-leaflet`
 (Hippocratic litsenziya, OSI emas) · TimescaleDB (TSL litsenziya) ·
 har qanday xarita, CDN, telemetriya va LLM kutubxonasi.
@@ -263,7 +263,7 @@ har qanday xarita, CDN, telemetriya va LLM kutubxonasi.
 ### HeroUI v3 haqida ikki eslatma
 
 1. Brend rangi **`--accent`**, `--primary` **mavjud emas**.
-2. `NumberField` da **`locale` propi yo'q** — hujjatlar jadvalidagi yozuv
+2. `NumberField` da **`locale` propi yo'q** - hujjatlar jadvalidagi yozuv
    haqiqiy tiplarga mos kelmaydi. Lokal `<I18nProvider locale="uz-Latn-UZ">`
    orqali butun ilova uchun bir marta beriladi (`app.tsx`).
 
@@ -272,11 +272,11 @@ har qanday xarita, CDN, telemetriya va LLM kutubxonasi.
 ## Til
 
 O'zbek **lotin** (asosiy) va **kirill**. Kirill uchun alohida tarjima fayli
-saqlanmaydi — transliteratsiya deterministik bo'lgani uchun i18next
+saqlanmaydi - transliteratsiya deterministik bo'lgani uchun i18next
 post-processori orqali ish vaqtida hosil qilinadi. Shuning uchun yangi kalit
 qo'shilganda ikki fayl orasida drift bo'lmaydi.
 
-MFY nomlari kabi atoqli otlar bundan mustasno — ular uchun bazada
+MFY nomlari kabi atoqli otlar bundan mustasno - ular uchun bazada
 `name_uz_cyr` ustuni bor va u transliteratsiyadan ustun turadi.
 
 ---
@@ -286,22 +286,22 @@ MFY nomlari kabi atoqli otlar bundan mustasno — ular uchun bazada
 Bular ishni bloklamaydi (seed'dan ishlaydi), lekin ishlatishdan oldin
 tasdiqlanishi kerak:
 
-1. **MFY ro'yxati** — hozir 22 ta. Sarnaul va Go'ravon PDF'dan tasdiqlangan,
+1. **MFY ro'yxati** - hozir 22 ta. Sarnaul va Go'ravon PDF'dan tasdiqlangan,
    8 tasi mockupdan, 12 tasi generatsiya qilingan.
    → `apps/api/seed/mfy.seed.json` da bitta fayl o'zgaradi.
-2. **10-qator birligi** — tijoriy yo'qotish «12,642» kWh mi yoki ming kWh?
+2. **10-qator birligi** - tijoriy yo'qotish «12,642» kWh mi yoki ming kWh?
    Yozilganicha oylik oqimdan oshib ketadi.
-3. **«Tijoriy yo'qotish» va «jami yo'qotish»** — Sarnaulda 20.7%, dashboardda
+3. **«Tijoriy yo'qotish» va «jami yo'qotish»** - Sarnaulda 20.7%, dashboardda
    6.4%. Bir xil o'lchovmi? Samaradorlik indeksi shunga bog'liq.
-4. **4-qator** — 10 kV tarmoq 466.5 km ekanini tasdiqlash.
-5. **Kunlik energiya manbasi** — Elektrosetlarda billing/SCADA dan eksport
+4. **4-qator** - 10 kV tarmoq 466.5 km ekanini tasdiqlash.
+5. **Kunlik energiya manbasi** - Elektrosetlarda billing/SCADA dan eksport
    qilish imkoni bormi, yoki operator kuniga 22 qator yozadimi?
-   *Ro'yxatdagi eng ta'sirli savol* — fayl bo'lsa Excel import asosiy yo'lga
+   *Ro'yxatdagi eng ta'sirli savol* - fayl bo'lsa Excel import asosiy yo'lga
    aylanadi.
-6. **Qarzdorlik birligi** — saqlash uchun mln so'm deb olindi.
+6. **Qarzdorlik birligi** - saqlash uchun mln so'm deb olindi.
 7. **Abonent darajasidagi yozuvlar** kiradimi? (44,884 qator)
-8. **Deploy** — Windows server yoki Linux VM?
-9. **E-IMZO** — muzlatilgan pasportga elektron imzo kerakmi?
+8. **Deploy** - Windows server yoki Linux VM?
+9. **E-IMZO** - muzlatilgan pasportga elektron imzo kerakmi?
    (`content_sha256` ustuni shuning uchun qo'yilgan.)
 
 ---
@@ -315,7 +315,7 @@ bot (ikkalasi ham ixtiyoriy, faqat serverda).
 Qolgan:
 
 - Kiritish formalari: TP holati, tarmoq nuqsonlari, ishlar, dalolatnomalar
-  *(DB va API tayyor — faqat UI kerak)*
+  *(DB va API tayyor - faqat UI kerak)*
 - Excel import/eksport (`exceljs`) va PDF (`pdfmake` + DejaVu shrifti)
 - Postgres RLS'ni ishlatish uchun API'ni `beap_app` roli ostida ulash
   *(siyosatlar yozilgan, hozir superuser sifatida ulanadi)*
