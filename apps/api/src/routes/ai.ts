@@ -230,18 +230,20 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
      *
      * Buning o'rniga til `prompt` orqali "majburlanadi": OpenAI'ning o'zi
      * xato xabarida aynan shuni maslahat beradi - "Try adding the language
-     * name to your prompt". `prompt` - modelga transkripsiya USLUBI va
-     * lug'atini ko'rsatuvchi namuna matn; shu yerda o'zbekcha so'z va tizim
-     * atamalari bilan boshlansa, Whisper talaffuzi yaqin tillarga (rus,
-     * qozoq) chalg'imasdan, aynan o'zbekcha (lotin yozuvida) transkripsiya
-     * qiladi. Bu hech qachon 400 bermaydi - eng yomon holatda shunchaki
-     * e'tiborga olinmaydi.
+     * name to your prompt".
+     *
+     * PROMPT ATAYLAB JUDA QISQA: birinchi urinishda bu yerga to'liq namuna
+     * gap ("Assalomu alaykum, TP-067 dagi...") yozilgan edi, lekin sinovda
+     * aniqlandi - `gpt-4o-transcribe` audio noaniq/xira bo'lgan joyларda
+     * PROMPT MATNINING O'ZINI transkripsiya sifatida qaytarib yuboradi
+     * (haqiqiy nutqni emas, prompt ichidagi namuna gapni "eshitadi"). Uzun
+     * prompt qancha "to'liq gap"ga o'xshasa, bu xavf shuncha yuqori -
+     * shuning uchun endi faqat til nomi qoldirilgan: bunda ham xuddi shu
+     * xavf bor (nol audio bo'lsa "O'zbek tili." deb qaytarishi mumkin),
+     * lekin zarari 1-2 so'z bilan chegaralanadi, butun xabar prompt bilan
+     * ALMASHTIRILMAYDI.
      */
-    const UZBEK_TRANSCRIBE_PROMPT =
-      "Quyidagi audio o'zbek tilida, lotin yozuvida yozib olinadi. Mavzu - "
-      + "elektr energiyasi, transformator, fider, mahalla, yo'qotish foizi, "
-      + 'hisobot va ish holati: "Assalomu alaykum, TP-067 dagi yo\'qotish darajasi '
-      + 'qancha, qaysi mahallada ish rejalashtirilgan?"';
+    const UZBEK_TRANSCRIBE_PROMPT = "O'zbek tili.";
 
     const form = new FormData();
     form.append('file', new Blob([buf], { type: file.mimetype || 'audio/ogg' }), 'voice.ogg');
