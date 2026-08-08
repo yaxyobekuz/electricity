@@ -1,6 +1,6 @@
 /**
- * TP kunlik yo'qotish uchun DEMO tarixiy ma'lumot — 2026-07-01 dan bugungacha
- * (2026-08-05), barcha 51 TP uchun.
+ * TP kunlik yo'qotish uchun DEMO tarixiy ma'lumot — 2026-07-01 dan bugungacha,
+ * barcha 51 TP uchun.
  *
  * Haqiqiy (`source='EXCEL'`, `8-2-2026.xlsx`dan import qilingan 14 qator)
  * HECH QACHON ustidan yozilmaydi — faqat hali BO'SH bo'lgan (tp, sana)
@@ -32,7 +32,8 @@ function gauss(mean = 0, sd = 1): number {
 const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, x));
 
 const FROM = '2026-07-01';
-const TO = '2026-08-05'; // bugun — kelajak sana YO'Q
+/** Fider kodi — `load-feeder-data.ts` shu kod bilan yozadi (`mfy_id` qat'iy emas). */
+const FEEDER_CODE = 'FIDER-XAQULOBOD';
 const TECH_NORM_PCT = 3.2; // ref.norm_value('TECHNICAL_LOSS_PCT', 25, ...) bilan tasdiqlangan
 const MIN_BASELINE_KWH = 30; // kwh_month=0 bo'lgan TP uchun (masalan TP-039) pastki chegara
 
@@ -86,14 +87,25 @@ function dayWeight(date: string): number {
 }
 
 async function main(): Promise<void> {
+  /*
+   * Oxirgi kun — BUGUN, ma'lumotlar bazasidan. `fact.tp_loss_daily` dagi
+   * `tld_no_future` CHECK ham shu `CURRENT_DATE` ga qaraydi, shuning uchun
+   * sana bu yerda qo'lda yozilmaydi (aks holda ertaga skript o'zi buzilardi).
+   */
+  const todayRows = await query<{ today: string }>(
+    'SELECT CURRENT_DATE::text AS today', [], SYSTEM_CONTEXT,
+  );
+  const TO = todayRows[0]!.today;
+
   const tps = await query<{ id: number; code: string; kwh_month: number | null }>(
     `SELECT t.id, t.code, m.kwh_month
        FROM ref.tp t
-       LEFT JOIN fact.tp_monthly m ON m.tp_id = t.id AND m.period_month = '2026-07-01'
-      WHERE t.mfy_id = 25
+       JOIN ref.mfy f ON f.id = t.mfy_id AND f.code = $1
+       LEFT JOIN fact.tp_monthly m ON m.tp_id = t.id AND m.period_month = $2::date
       ORDER BY t.code`,
-    [], SYSTEM_CONTEXT,
+    [FEEDER_CODE, FROM], SYSTEM_CONTEXT,
   );
+  if (tps.length === 0) throw new Error(`${FEEDER_CODE} fideri yoki uning TP lari topilmadi`);
 
   const existing = await query<{ tp_id: number; biz_date: string }>(
     'SELECT tp_id, biz_date::text FROM fact.tp_loss_daily', [], SYSTEM_CONTEXT,
@@ -125,7 +137,10 @@ async function main(): Promise<void> {
     }
   }
 
-  process.stdout.write(`Generatsiya qilinmoqda: ${rows.length} ta yangi qator, ${skipped} ta o'tkazib yuborildi (allaqachon mavjud)…\n`);
+  process.stdout.write(
+    `Davr: ${FROM} … ${TO} (${dates.length} kun × ${tps.length} TP)\n`
+    + `Generatsiya qilinmoqda: ${rows.length} ta yangi qator, ${skipped} ta o'tkazib yuborildi (allaqachon mavjud)…\n`,
+  );
 
   const { inserted, updated } = await upsertTpLossDaily(SYSTEM_CONTEXT, rows);
   process.stdout.write(`\nYozildi: ${inserted} yangi, ${updated} yangilangan.\n`);

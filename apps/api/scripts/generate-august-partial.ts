@@ -1,6 +1,6 @@
 /**
- * Avgust oyi uchun QISMAN (2026-08-01 - 2026-08-05, bugungacha) rasmiy oylik
- * hisobot demo davomi - iyul ma'lumotlaridan PROPORTSIONAL hisoblanadi.
+ * Avgust oyi uchun QISMAN (oy boshidan BUGUNGACHA) rasmiy oylik hisobot demo
+ * davomi - iyul ma'lumotlaridan PROPORTSIONAL hisoblanadi.
  *
  * SABAB: davr tanlagich (`PeriodPicker.tsx`) va standart davr (`q.latestPeriod()`,
  * `db/queries/dashboard.ts:22-53`) faqat `fact.submission` (status='approved')
@@ -24,11 +24,9 @@ import { config } from '../src/config.ts';
 
 const TECH_LOSS_RATE = 0.12; // load-feeder-data.ts bilan bir xil norma
 const PREV_PERIOD = '2026-07-01';
+const PREV_DAYS = 31; // iyul
 const PERIOD = '2026-08';
 const FROM_DATE = `${PERIOD}-01`;
-const TO_DATE = '2026-08-05'; // bugun - kelajak sana yo'q
-const DAYS = 5;
-const SCALE = DAYS / 31; // iyulning necha qismi bosib o'tildi
 
 const SEED = 20260806;
 function mulberry32(a: number): () => number {
@@ -61,14 +59,35 @@ function split(total: number, weights: number[]): number[] {
   return out;
 }
 
-/** Kunlik ritm - 5 kunlik oynada kichik tasodifiy tebranish. */
-const DAY_WEIGHTS = Array.from({ length: DAYS }, () => 0.95 + rand() * 0.15);
-
 async function main(): Promise<void> {
   const pool = new pg.Pool({ ...config.db, max: 2 });
   const c = await pool.connect();
 
   try {
+    /*
+     * Oyning necha kuni bosib o'tildi - BUGUNGI sana ma'lumotlar bazasidan
+     * olinadi (`new Date()` emas): kunlik jadvallardagi "kelajak sana yo'q"
+     * cheklovlari ham xuddi shu `CURRENT_DATE` ga qaraydi, ikkalasi bir xil
+     * soatdan o'qisin. Oy tugagan bo'lsa - to'liq oy.
+     */
+    const today = await c.query<{ d: string; day: number; dim: number }>(
+      `SELECT CURRENT_DATE::text AS d,
+              extract(day FROM CURRENT_DATE)::int AS day,
+              extract(day FROM (date_trunc('month', $1::date) + interval '1 month - 1 day'))::int AS dim`,
+      [FROM_DATE],
+    );
+    const cur = today.rows[0]!;
+    const inPeriod = cur.d.slice(0, 7) === PERIOD;
+    const DAYS = inPeriod ? cur.day : cur.d > FROM_DATE ? cur.dim : 0;
+    if (DAYS === 0) throw new Error(`${PERIOD} hali boshlanmagan - generatsiya qilinmaydi`);
+    const TO_DATE = `${PERIOD}-${String(DAYS).padStart(2, '0')}`;
+    const SCALE = DAYS / PREV_DAYS; // iyulning necha qismi bosib o'tildi
+
+    console.log(`Davr: ${FROM_DATE} … ${TO_DATE} (${DAYS} kun, iyulning ${(SCALE * 100).toFixed(0)}% i)`);
+
+    /** Kunlik ritm - qisqa oynada kichik tasodifiy tebranish. */
+    const DAY_WEIGHTS = Array.from({ length: DAYS }, () => 0.95 + rand() * 0.15);
+
     const trg = await c.query<{ sch: string; tbl: string }>(`
       SELECT n.nspname AS sch, c.relname AS tbl
       FROM pg_trigger t

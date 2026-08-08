@@ -654,8 +654,20 @@ export async function feederMonthly(
     `SELECT to_char(f.period_month, 'YYYY-MM') AS period_month, f.substation, f.input_name,
             f.meter_prev, f.meter_curr, f.meter_coef,
             f.kwh_in, f.kwh_tp_sum, f.kwh_tech_loss, f.kwh_commercial_loss,
-            extract(day FROM (f.period_month + INTERVAL '1 month - 1 day'))::int AS days
+            /*
+             * O'rtacha yuklama qaysi songa BO'LINADI. Joriy oy hali tugamagan
+             * bo'lsa (masalan 7 kunlik ma'lumot) taqvim kunlari bilan bo'lish
+             * o'rtachani sun'iy ravishda 4 barobar pasaytirib yuborardi -
+             * shuning uchun HAQIQATDA to'ldirilgan kunlar olinadi, ma'lumot
+             * bo'lmasa taqvimga qaytadi.
+             */
+            coalesce(
+              nullif(a.days_filled, 0),
+              extract(day FROM (f.period_month + INTERVAL '1 month - 1 day'))::int
+            )::int AS days
        FROM fact.feeder_monthly f
+       LEFT JOIN agg.mfy_monthly a
+              ON a.mfy_id = f.mfy_id AND a.period_month = f.period_month
       WHERE f.mfy_id = $1 AND f.period_month = ($2 || '-01')::date`,
     [mfyId, period], ctx,
   );
@@ -1263,19 +1275,36 @@ export async function results(
        AND ($3::int IS NULL OR a.mfy_id = $3)
      GROUP BY 1 ORDER BY 1`, [period, months, mfyId], ctx);
 
+  /*
+   * Oyna yuqoridan HAM yopiladi. Aks holda tanlangan davrdan KEYIN tugagan
+   * ish ham qo'shilib ketardi - iyulni tanlaganda avgustdagi natija ko'rinib,
+   * karta davr tanlagichga umuman javob bermay qolardi. Yuqori chegara
+   * yo'qotish qatoridagi `period_month <= $1` bilan bir xil ma'noni beradi:
+   * "tanlangan oy va undan oldingi 12 oy".
+   */
   const saved = await queryOne<{ kwh: number }>(
     `SELECT coalesce(sum(effect_saving_kwh_month), 0) AS kwh
      FROM fact.work
      WHERE status = 'COMPLETED' AND ($1::int IS NULL OR mfy_id = $1)
-       AND actual_end > ($2 || '-01')::date - ($3 || ' months')::interval`,
+       AND actual_end >  ($2 || '-01')::date - ($3 || ' months')::interval
+       AND actual_end <  ($2 || '-01')::date + INTERVAL '1 month'`,
     [mfyId, period, months], ctx);
 
   const first = rows[0];
   const last = rows.at(-1);
+  /*
+   * Bitta oylik ma'lumot bo'lsa `first` va `last` AYNAN bir qator bo'ladi -
+   * "30.9% → 30.9%, yaxshilanish 0.0 p.p." degan bo'sh taqqoslash chiqardi,
+   * go'yo o'zgarish o'lchangandek. Taqqoslash uchun kamida IKKI oy kerak,
+   * aks holda `improvementPp` NULL (interfeys belgini butunlay yashiradi).
+   */
+  const comparable = rows.length >= 2 && first && last;
   return {
     lossPctStart: first ? Number(first.loss_pct) : null,
     lossPctEnd: last ? Number(last.loss_pct) : null,
-    improvementPp: first && last ? Number((Number(first.loss_pct) - Number(last.loss_pct)).toFixed(2)) : null,
+    improvementPp: comparable
+      ? Number((Number(first.loss_pct) - Number(last.loss_pct)).toFixed(2))
+      : null,
     savedKwh: Number(saved?.kwh ?? 0),
     periodFrom: first?.p ?? period,
     periodTo: last?.p ?? period,
