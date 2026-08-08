@@ -12,6 +12,9 @@
     "seed": "node --experimental-strip-types scripts/seed.ts",
     "demo:sarnaul": "node --experimental-strip-types scripts/demo-sarnaul.ts",
     "load:mfy": "node --experimental-strip-types scripts/load-mfy-data.ts",
+    "load:july": "node --experimental-strip-types scripts/load-chinobod-july.ts",
+    "load:august": "node --experimental-strip-types scripts/load-chinobod-august.ts",
+    "fill:derived": "node --experimental-strip-types scripts/fill-derived-data.ts",
     "verify:passport": "node --experimental-strip-types scripts/verify-passport.ts",
     "import:tp-loss": "node --experimental-strip-types scripts/import-tp-daily-loss.ts",
     "test": "vitest run"

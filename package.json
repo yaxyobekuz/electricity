@@ -22,6 +22,7 @@
     "migrate": "npm run migrate --workspace @beap/api",
     "migrate:reset": "npm run migrate:reset --workspace @beap/api",
     "seed": "npm run seed --workspace @beap/api",
+    "load:chinobod": "npm run load:july --workspace @beap/api && npm run load:august --workspace @beap/api && npm run fill:derived --workspace @beap/api",
     "verify:passport": "npm run verify:passport --workspace @beap/api",
     "verify:offline": "node scripts/scan-dist.mjs",
     "test": "npm run test --workspaces --if-present",
