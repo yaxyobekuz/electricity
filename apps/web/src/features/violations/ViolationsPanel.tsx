@@ -28,6 +28,63 @@ const TONE: Record<string, string> = {
   NO_FAULT: 'var(--viz-good)',
 };
 
+/**
+ * Toifa qatori.
+ *
+ * `compact` - ikki ustunli panjarada turadigan variant: jarima summasi
+ * o'zining qat'iy kengligidagi ustunidan chiqib, sonning ostiga tushadi.
+ * Aks holda yarim kenglikda to'rtta bo'lak bir-birini siqib qo'yardi.
+ */
+function CaseRow({
+  r, compact, onOpen,
+}: {
+  r: ViolationSummaryRow;
+  compact?: boolean;
+  onOpen: (r: ViolationSummaryRow) => void;
+}) {
+  const fine = r.fineMln > 0 ? money(r.fineMln).text : '-';
+
+  return (
+    <button
+      className="flex items-center gap-3 rounded-xl border border-separator px-3 py-2.5 text-left transition-colors hover:bg-surface-secondary"
+      type="button"
+      onClick={() => onOpen(r)}
+    >
+      <span
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+        style={{
+          background: `color-mix(in oklab, ${TONE[r.caseType]} 12%, transparent)`,
+          color: TONE[r.caseType],
+        }}
+      >
+        {ICON[r.caseType]}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[12px] font-medium leading-tight">
+          {r.labelUz}
+        </span>
+        <span className="block truncate text-[10px] leading-tight text-muted">
+          {r.kwhIdentified > 0 ? `${num(r.kwhIdentified)} kWh aniqlangan` : 'jarima solinmagan'}
+        </span>
+      </span>
+
+      <span className="shrink-0 text-right">
+        <span className="tabular block text-[15px] font-bold leading-none">{num(r.count)}</span>
+        <span className="block text-[9.5px] leading-tight text-muted">
+          {compact ? `ta · ${fine}` : 'ta'}
+        </span>
+      </span>
+
+      {!compact && (
+        <span className="tabular w-24 shrink-0 text-right text-[12.5px] font-semibold">
+          {fine}
+        </span>
+      )}
+    </button>
+  );
+}
+
 /** Oynadagi xulosa raqami - yorliq ustida, qiymat ostida. */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -57,42 +114,21 @@ export function ViolationsPanel({
         {periodLabel(from)} - {periodLabel(to)} · jami {num(total)} ta dalolatnoma
       </p>
 
-      {rows.map((r) => (
-        <button
-          key={r.caseType}
-          className="flex items-center gap-3 rounded-xl border border-separator px-3 py-2.5 text-left transition-colors hover:bg-surface-secondary"
-          type="button"
-          onClick={() => setOpen(r)}
-        >
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg"
-            style={{
-              background: `color-mix(in oklab, ${TONE[r.caseType]} 12%, transparent)`,
-              color: TONE[r.caseType],
-            }}
-          >
-            {ICON[r.caseType]}
-          </span>
+      {/*
+        Birinchi toifa (odatda ma'muriy - yagona to'ldirilgani) TO'LIQ
+        kenglikda: jarima summasi o'z ustunida qoladi. Qolganlari ikki
+        ustunli panjarada - ular deyarli har doim nol bo'lgani uchun
+        alohida-alohida qator egallashi kartani cho'zib yuborardi.
+      */}
+      {rows[0] && <CaseRow r={rows[0]} onOpen={setOpen} />}
 
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[12px] font-medium leading-tight">
-              {r.labelUz}
-            </span>
-            <span className="block text-[10px] leading-tight text-muted">
-              {r.kwhIdentified > 0 ? `${num(r.kwhIdentified)} kWh aniqlangan` : 'jarima solinmagan'}
-            </span>
-          </span>
-
-          <span className="shrink-0 text-right">
-            <span className="tabular block text-[15px] font-bold leading-none">{num(r.count)}</span>
-            <span className="block text-[9.5px] leading-tight text-muted">ta</span>
-          </span>
-
-          <span className="tabular w-24 shrink-0 text-right text-[12.5px] font-semibold">
-            {r.fineMln > 0 ? money(r.fineMln).text : '-'}
-          </span>
-        </button>
-      ))}
+      {rows.length > 1 && (
+        <div className="grid grid-cols-2 gap-2">
+          {rows.slice(1).map((r) => (
+            <CaseRow key={r.caseType} compact r={r} onOpen={setOpen} />
+          ))}
+        </div>
+      )}
 
       {/* ── "Nima asosida?" oynasi ─────────────────────────────────────── */}
       <Modal.Backdrop isOpen={open !== null} onOpenChange={(v) => !v && setOpen(null)}>
