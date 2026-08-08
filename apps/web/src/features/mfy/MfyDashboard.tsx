@@ -193,15 +193,27 @@ export default function MfyDashboard() {
         ? "O‘tgan hafta"
         : "O‘tgan oy";
 
-  const daysInMonth = 30;
+  /*
+   * Kunlar soni HISOBOTDAN olinadi, "oyda 30 kun" deb qat'iy yozilmaydi.
+   *
+   * Joriy oy qisman to'ldirilgan bo'ladi (bugun 8-avgust - 8 kun). Qat'iy 30
+   * ga bo'linsa 8 kunlik energiya oyga yoyilib, bir iste'molchining kunlik
+   * o'rtachasi ~4 barobar past chiqardi va "iste'mol keskin kamaydi" degan
+   * soxta manzara berardi.
+   */
+  const days = feeder.data?.days ?? 31;
   // Taxminiy tarif - "tejalgan energiya" ni so'mga o'girish uchun.
   const TARIFF_SUM_PER_KWH = 1000;
   const avgPerConsumer =
-    totals.consumersActive > 0
-      ? totals.kwhSold / totals.consumersActive / daysInMonth
+    totals.consumersActive > 0 && days > 0
+      ? totals.kwhSold / totals.consumersActive / days
       : 0;
-  // Taxminiy tarif - hisob-kitob markazidan aniq tarif kelguncha.
-  const avgBillSum = avgPerConsumer * daysInMonth * 450;
+  /*
+   * Tanlangan davr uchun to'plangan hisob (oylik EMAS - qisman oyda shu
+   * paytgacha yozilgan summa). Taxminiy tarif - hisob-kitob markazidan
+   * aniq tarif kelguncha.
+   */
+  const avgBillSum = avgPerConsumer * days * 450;
   const technological = lossStructure.data?.parts.find(
     (p) => p.key === "technological",
   );
@@ -227,7 +239,6 @@ export default function MfyDashboard() {
    * O'RTACHA yuklama. Cho'qqi yuklamani bilish uchun soatlik profil kerak,
    * u hisobotda yo'q.
    */
-  const days = feeder.data?.days ?? 31;
   const topTpKw = (tpMonthly.data ?? []).reduce(
     (mx, r) => Math.max(mx, r.kwhMonth / (days * 24)),
     0,

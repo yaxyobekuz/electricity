@@ -272,9 +272,16 @@ async function main(): Promise<void> {
     if (tpRows.rows.length === 0) throw new Error('ref.tp bo‘sh - avval load-chinobod-july.ts ishga tushiring');
     const tpIdByCode = new Map(tpRows.rows.map((t) => [t.code, t.id]));
 
-    const unknown = [...new Set([...real.values()].map((r) => r.code))].filter((x) => !tpIdByCode.has(x));
+    /*
+     * `Sheet0` butun Chinobod ETK ni sanaydi (355 ta TP), registrda esa faqat
+     * Xaqulobod fiderining 51 tasi bor. Boshqa fiderlarning qatorlari shu
+     * yerda tashlab yuboriladi - bu kutilgan hol, xato emas.
+     */
+    const unknown = [...new Set([...real.values()].map((r) => r.code))]
+      .filter((x) => !tpIdByCode.has(x));
     if (unknown.length > 0) {
-      console.log(`\n   ⚠ registrda yo‘q TP kodlari (o‘tkazib yuborildi): ${unknown.join(', ')}`);
+      console.log(`\n   ℹ ${unknown.length} ta TP boshqa fiderlarga tegishli - o‘tkazib yuborildi`
+        + ` (registrda ${tpIdByCode.size} ta Xaqulobod TP si bor)`);
     }
 
     // ── 2. Avgustni tozalash (iyulga TEGMAYDI) ───────────────────────────

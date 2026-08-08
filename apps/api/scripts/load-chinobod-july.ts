@@ -2,22 +2,25 @@
  * Chinobod ETK, XAQULOBOD FIDERI - IYUL 2026: registr va oylik hisobot.
  *
  * QAMROV: tizim BITTA 10 kV fider ustida ishlaydi - Chinobod nimstansiyasining
- * «Xaqulobod» fideri (`0013_feeder_level.sql` dagi qaror). Manba hisobotlarda
- * uchraydigan barcha ma'lumot - 11 ta fider qatori ham, 359 ta TP ham - SHU
- * FIDERGA tegishli deb yuritiladi. Shuning uchun registrda bitta `ref.mfy`
- * qatori bo'ladi va energiya jamlari yig'indi holida yoziladi.
+ * «Xaqulobod» fideri va uning 51 ta TP si (`0013_feeder_level.sql` dagi qaror).
  *
- * Uchta manba fayl:
- *   • `data/umumiy_hisobot.xlsx`  - NIM stansiya Chinobod 110/35/10 kV dan
- *     chiquvchi 10 kV yo'nalishlar: hisoblagich ko'rsatkichi (01.07 → 01.08),
- *     koeffitsient, kirgan energiya, elektr oqimi, texnologik va tijoriy
- *     yo'qotish. IYUL oyiga tegishli.
- *   • `data/toliq_hisobot.xlsx` (`0108` varaq) - TP KESIMI: 143 ta TP ning
- *     hisoblagichi, koeffitsienti, 01.07/01.08 ko'rsatkichlari, oylik
- *     iste'moli va iste'molchilari.
- *   • `8-1-2026.xlsx` (`Sheet0`) - 1-avgust kunlik hisoboti. BU YERDA faqat
- *     REGISTR uchun o'qiladi: unda 355 ta TP bor, ya'ni iyul tafsilotidagi
- *     143 tadan ancha ko'p. TP ro'yxati ikkalasining BIRLASHMASI bo'ladi.
+ * Manba hisobotlar butun ETK ni qamraydi, biz esa undan FAQAT shu fiderning
+ * qatorlarini olamiz. Jamlashtirish YO'Q: nimstansiyaning boshqa 10 ta 10 kV
+ * yo'nalishi (ЧПЗ, Бўзчи, Камолий, Ташлама va h.k.) boshqa fiderlarga tegishli
+ * va bu yerga qo'shilmaydi - aks holda fider iste'moli 1.05 mln o'rniga
+ * 4.32 mln kWh bo'lib, hisoblagich ko'rsatkichi bilan mos kelmay qolardi.
+ *
+ * Ikkita manba fayl:
+ *   • `data/umumiy_hisobot.xlsx` - «Хақулобод» qatori: hisoblagich
+ *     19 850 → 20 112, koeffitsient 4 000, ya'ni 1 048 000 kWh. Texnologik
+ *     yo'qotish 125 760 (kirganning 12% i) - hujjatning o'zida yozilgan.
+ *   • `data/toliq_hisobot.xlsx` (`0108` varaq) - TP KESIMI. 143 qatordan
+ *     4-ustuni «Xaqulobod» bo'lgan 51 tasi olinadi: hisoblagich,
+ *     koeffitsient, 01.07/01.08 ko'rsatkichlari, oylik iste'mol, iste'molchi.
+ *
+ * `8-1-2026.xlsx` bu yerda O'QILMAYDI - u kunlik hisobot, `load-chinobod-
+ * august.ts` ning ishi. (Uning `Sheet0` varag'i 355 ta TP ni sanaydi, lekin
+ * ular butun ETK niki; Xaqulobodniki - aynan shu 51 ta.)
  *
  *   node --experimental-strip-types apps/api/scripts/load-chinobod-july.ts
  *
@@ -57,8 +60,10 @@ export const FEEDER = {
   nameUz: 'Xaqulobod fideri',
   nameCyr: 'Хақулобод фидери',
   shortName: 'Xaqulobod',
-  /** «Умумий ҳисобот» dagi o'z qatorining nomi - hisoblagichi shundan olinadi. */
+  /** «Умумий ҳисобот» dagi yozilishi (kirill) - fider balansi shu qatordan. */
   summaryLabel: 'Хақулобод',
+  /** «Тўлиқ ҳисобот» dagi yozilishi (lotin) - TP lar shu ustun bo'yicha filtrlanadi. */
+  detailLabel: 'Xaqulobod',
 } as const;
 
 const ELEKTROSET_CODE = 'CHINOBOD';
@@ -118,22 +123,22 @@ interface SummaryRow {
   kwhIn: number; kwhFlow: number; techLossFile: number;
 }
 
-async function readSummary(): Promise<SummaryRow[]> {
+/** «Умумий ҳисобот» - FAQAT «Хақулобод» qatori. */
+async function readSummary(): Promise<SummaryRow> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(join(DATA_DIR, 'umumiy_hisobot.xlsx'));
   const ws = wb.worksheets[0]!;
 
-  const out: SummaryRow[] = [];
   let input = '';
   for (let r = 1; r <= ws.rowCount; r += 1) {
     const row = ws.getRow(r);
+    // 3-ustunda «ВВОД Т1/Т2 …» - undan keyingi fiderlar shu vvodga tegishli.
     const c3 = String(val(row.getCell(3).value)).trim();
     if (/ВВОД/i.test(c3)) { input = c3.replace(/\s+/g, ' '); continue; }
-    const name = String(val(row.getCell(4).value)).trim();
-    if (!name) continue;
+    if (String(val(row.getCell(4).value)).trim() !== FEEDER.summaryLabel) continue;
 
-    out.push({
-      name, input,
+    return {
+      name: FEEDER.summaryLabel, input,
       substation: String(val(row.getCell(2).value)).trim() || SUBSTATION_FALLBACK,
       meterPrev: numOf(row.getCell(5).value),
       meterCurr: numOf(row.getCell(6).value),
@@ -141,10 +146,9 @@ async function readSummary(): Promise<SummaryRow[]> {
       kwhIn: numOf(row.getCell(9).value),
       kwhFlow: numOf(row.getCell(10).value),
       techLossFile: numOf(row.getCell(11).value),
-    });
+    };
   }
-  if (out.length === 0) throw new Error('umumiy_hisobot.xlsx: hech qanday qator topilmadi');
-  return out;
+  throw new Error(`umumiy_hisobot.xlsx: «${FEEDER.summaryLabel}» fideri topilmadi`);
 }
 
 interface TpRow {
@@ -163,6 +167,8 @@ async function readTps(): Promise<TpRow[]> {
     const row = ws.getRow(r);
     const tpNo = String(val(row.getCell(3).value)).trim();
     if (!tpNo) continue;
+    // 4-ustun - TP qaysi 10 kV fiderga ulangani. Faqat o'zimizniki kerak.
+    if (String(val(row.getCell(4).value)).trim() !== FEEDER.detailLabel) continue;
 
     const coef = numOf(row.getCell(10).value) || 1;
     const curr = numOf(row.getCell(11).value);
@@ -187,30 +193,10 @@ async function readTps(): Promise<TpRow[]> {
       kwh: Number(kwh.toFixed(2)),
     });
   }
-  if (out.length === 0) throw new Error('toliq_hisobot.xlsx: TP qatorlari topilmadi');
-  return out;
-}
-
-/** 1-avgust kunlik hisobotidagi TP ro'yxati - registrni to'ldirish uchun. */
-async function readAugustTpCodes(): Promise<string[]> {
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.readFile(join(REPO_ROOT, '8-1-2026.xlsx'));
-  const ws = wb.getWorksheet('Sheet0');
-  if (!ws) return [];
-
-  const codes = new Set<string>();
-  for (let r = 5; r <= ws.rowCount; r += 1) {
-    const tpNo = String(val(ws.getRow(r).getCell(2).value)).trim();
-    /*
-     * Raqam bilan boshlanadigan HAR QANDAY belgi TP nomeri: «44», «116A»,
-     * «130-A», «167/1». «Total» va «TR-box» kabi xizmat qatorlari raqam bilan
-     * boshlanmagani uchun o'z-o'zidan tashqarida qoladi. O'qishi bo'sh TP lar
-     * ham registrga tushadi - ular mavjud, faqat hisoblagichi ma'lumot bermagan.
-     */
-    if (!/^\d/.test(tpNo) || !/^[-\w/А-Яа-я]+$/.test(tpNo)) continue;
-    codes.add(tpCodeOf(tpNo));
+  if (out.length === 0) {
+    throw new Error(`toliq_hisobot.xlsx: «${FEEDER.detailLabel}» TP lari topilmadi`);
   }
-  return [...codes];
+  return out;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -230,64 +216,54 @@ function split(total: number, weights: number[]): number[] {
 }
 
 async function main(): Promise<void> {
-  const [summary, tps, augCodes] = await Promise.all([readSummary(), readTps(), readAugustTpCodes()]);
+  const [summary, tps] = await Promise.all([readSummary(), readTps()]);
 
   /*
-   * BALANS. Har bir «Умумий ҳисобот» qatori uchun sotilgan energiya shu
-   * tartibda aniqlanadi, keyin hammasi BITTA fider hisobiga qo'shiladi:
+   * BALANS.
    *
-   *   1. Hujjatning o'zi «Elektr oqimi» (J ustun) ni yozgan bo'lsa - o'sha.
-   *      Bu elektrosetning rasmiy raqami.
-   *   2. Aks holda - tumanning o'z nisbati bo'yicha BAHOLANADI (T1 vvodidagi
-   *      qatorlarda J/K/L ustunlari umuman to'ldirilmagan).
-   *
-   * Texnologik yo'qotish - hujjatdagi 12% normasi; tijoriy esa QOLDIQ:
-   * kirgan − sotilgan − texnologik. Shunda `fm_balance` CHECK o'z-o'zidan
-   * bajariladi va hech qanday raqam ikki marta hisoblanmaydi.
+   *   kirgan     - fider hisoblagichidan: (20 112 − 19 850) × 4 000 = 1 048 000.
+   *                Hujjatdagi «Бир ойлик оқиб ўтган» ustuni bilan aynan bir xil.
+   *   sotilgan   - 51 ta TP hisoblagichi YIG'INDISI. Hujjatda «Elektr oqimi»
+   *                683 812.3 deb ham yozilgan, lekin TP yig'indisi (724 165)
+   *                afzal: u qator-ma-qator tekshiriladi.
+   *   texnologik - hujjatdagi 125 760, ya'ni kirganning 12% i.
+   *   tijoriy    - QOLDIQ: kirgan − sotilgan − texnologik. Shunda `fm_balance`
+   *                CHECK o'z-o'zidan bajariladi va raqam ikki marta
+   *                hisoblanmaydi.
    */
-  const withFlow = summary.filter((s) => s.kwhFlow > 0);
-  const flowRatio = withFlow.length > 0
-    ? withFlow.reduce((a, s) => a + s.kwhFlow, 0) / withFlow.reduce((a, s) => a + s.kwhIn, 0)
-    : 0.7;
-
-  const kwhIn = Number(summary.reduce((a, s) => a + s.kwhIn, 0).toFixed(2));
-  const kwhSold = Number(summary
-    .reduce((a, s) => a + (s.kwhFlow > 0 ? s.kwhFlow : s.kwhIn * flowRatio), 0).toFixed(2));
-  const techLoss = Number((kwhIn * TECH_LOSS_RATE).toFixed(2));
+  const kwhIn = summary.kwhIn;
+  const kwhSold = Number(tps.reduce((a, t) => a + t.kwh, 0).toFixed(2));
+  const techLoss = summary.techLossFile > 0
+    ? summary.techLossFile
+    : Number((kwhIn * TECH_LOSS_RATE).toFixed(2));
   const commLoss = Number((kwhIn - kwhSold - techLoss).toFixed(2));
-  if (commLoss < 0) throw new Error(`Tijoriy yo'qotish manfiy: ${commLoss}`);
-
-  /*
-   * Hisoblagich - fiderning O'Z qatoridan (01.07 ko'rsatkichi va koeffitsient
-   * haqiqiy). Oxirgi ko'rsatkich esa YIG'MA kirimga moslab hisoblanadi, aks
-   * holda panelda «19 850 → 20 112, koef 4 000» bilan «4 324 000 kWh» bir-biriga
-   * mos kelmay, o'qiyotgan odamni chalg'itardi.
-   */
-  const own = summary.find((s) => s.name === FEEDER.summaryLabel);
-  const substation = own?.substation ?? SUBSTATION_FALLBACK;
-  const inputName = own?.input ?? '';
-  const meterCoef = own?.coef ?? 1;
-  const meterPrev = own?.meterPrev ?? 0;
-  const meterCurr = Number((meterPrev + kwhIn / meterCoef).toFixed(2));
-
-  console.log(`\nIYUL ${PERIOD} - ${FEEDER.nameUz} (${substation})\n`);
-  for (const s of summary) {
-    const sold = s.kwhFlow > 0 ? s.kwhFlow : s.kwhIn * flowRatio;
-    console.log(`  ${s.name.padEnd(12)} kirgan ${num(s.kwhIn).padStart(11)}`
-      + ` | sotilgan ${num(sold).padStart(11)}`
-      + ` | ${s.kwhFlow > 0 ? 'hujjat (Elektr oqimi)' : `BAHOLANGAN (${(flowRatio * 100).toFixed(1)}%)`}`);
+  if (commLoss < 0) {
+    throw new Error(`Tijoriy yo‘qotish manfiy (${commLoss}) - manba fayllarni tekshiring`);
   }
-  console.log(`\n  JAMI  kirgan ${num(kwhIn)} kWh · sotilgan ${num(kwhSold)} kWh`
-    + ` · texnologik ${num(techLoss)} · tijoriy ${num(commLoss)}`
-    + ` · yo‘qotish ${(((kwhIn - kwhSold) / kwhIn) * 100).toFixed(1)}%`);
-  console.log(`  hisoblagich ${num(meterPrev)} → ${num(meterCurr)} (koef ${meterCoef})`);
 
-  // ── TP registri: iyul tafsiloti + avgust kunlik hisobotining birlashmasi ──
-  const detailCodes = new Set(tps.map((t) => t.code));
-  const allCodes = [...new Set([...detailCodes, ...augCodes])].sort();
-  console.log(`\n  TP registri: ${detailCodes.size} ta (iyul tafsiloti bilan)`
-    + ` + ${allCodes.length - detailCodes.size} ta (faqat kunlik hisobotda)`
-    + ` = ${allCodes.length} ta`);
+  const { substation, input: inputName, coef: meterCoef, meterPrev, meterCurr } = summary;
+  const fromMeter = Number(((meterCurr - meterPrev) * meterCoef).toFixed(2));
+
+  console.log(`\nIYUL ${PERIOD} - ${FEEDER.nameUz} · ${substation} · ${inputName}\n`);
+  console.log(`  hisoblagich  ${num(meterPrev)} → ${num(meterCurr)} × koef ${meterCoef}`
+    + ` = ${num(fromMeter)} kWh`);
+  if (Math.abs(fromMeter - kwhIn) > 1) {
+    console.log(`  ⚠ hujjatdagi «kirgan» ${num(kwhIn)} kWh - hisoblagichdan chiqqan`
+      + ` ${num(fromMeter)} kWh bilan mos emas`);
+  }
+  console.log(`  kirgan       ${num(kwhIn)} kWh`);
+  console.log(`  sotilgan     ${num(kwhSold)} kWh - ${tps.length} ta TP hisoblagichi yig‘indisi`);
+  if (summary.kwhFlow > 0 && Math.abs(kwhSold - summary.kwhFlow) > 1) {
+    console.log(`               (hujjatdagi «Elektr oqimi» ${num(summary.kwhFlow)} kWh,`
+      + ` farq ${num(kwhSold - summary.kwhFlow)})`);
+  }
+  console.log(`  texnologik   ${num(techLoss)} kWh (kirganning ${(techLoss / kwhIn * 100).toFixed(0)}% i)`);
+  console.log(`  tijoriy      ${num(commLoss)} kWh (qoldiq)`);
+  console.log(`  yo‘qotish    ${num(techLoss + commLoss)} kWh`
+    + ` - ${(((kwhIn - kwhSold) / kwhIn) * 100).toFixed(1)}%`);
+  console.log(`  iste’molchi  ${num(tps.reduce((a, t) => a + t.total, 0))} ta`);
+
+  const allCodes = tps.map((t) => t.code).sort();
 
   // ── Yozish ─────────────────────────────────────────────────────────────
   const pool = new pg.Pool({ ...config.db, max: 2 });

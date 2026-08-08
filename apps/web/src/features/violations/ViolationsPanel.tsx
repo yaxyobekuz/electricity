@@ -28,59 +28,88 @@ const TONE: Record<string, string> = {
   NO_FAULT: 'var(--viz-good)',
 };
 
+const BOX = 'rounded-xl border border-separator px-3 py-2.5 text-left transition-colors hover:bg-surface-secondary';
+
+/** Toifa belgisi - rangi toifadan keladi. */
+function CaseIcon({ caseType, size }: { caseType: string; size: string }) {
+  return (
+    <span
+      className={`flex ${size} shrink-0 items-center justify-center rounded-lg`}
+      style={{
+        background: `color-mix(in oklab, ${TONE[caseType]} 12%, transparent)`,
+        color: TONE[caseType],
+      }}
+    >
+      {ICON[caseType]}
+    </span>
+  );
+}
+
 /**
- * Toifa qatori.
+ * Asosiy toifa - to'liq kenglikdagi qator.
  *
- * `compact` - ikki ustunli panjarada turadigan variant: jarima summasi
- * o'zining qat'iy kengligidagi ustunidan chiqib, sonning ostiga tushadi.
- * Aks holda yarim kenglikda to'rtta bo'lak bir-birini siqib qo'yardi.
+ * Son va summa YONMA-YON, o'ng chekkada bitta guruh bo'lib turadi. Ilgari
+ * summa qat'iy `w-24` ustunda edi va keng panelda matn bilan raqam orasida
+ * katta bo'shliq ochilib qolardi.
  */
 function CaseRow({
-  r, compact, onOpen,
+  r, onOpen,
 }: {
   r: ViolationSummaryRow;
-  compact?: boolean;
   onOpen: (r: ViolationSummaryRow) => void;
 }) {
-  const fine = r.fineMln > 0 ? money(r.fineMln).text : '-';
-
   return (
-    <button
-      className="flex items-center gap-3 rounded-xl border border-separator px-3 py-2.5 text-left transition-colors hover:bg-surface-secondary"
-      type="button"
-      onClick={() => onOpen(r)}
-    >
-      <span
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg"
-        style={{
-          background: `color-mix(in oklab, ${TONE[r.caseType]} 12%, transparent)`,
-          color: TONE[r.caseType],
-        }}
-      >
-        {ICON[r.caseType]}
-      </span>
+    <button className={`flex items-center gap-3 ${BOX}`} type="button" onClick={() => onOpen(r)}>
+      <CaseIcon caseType={r.caseType} size="size-8" />
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[12px] font-medium leading-tight">
-          {r.labelUz}
-        </span>
+        <span className="block truncate text-[12px] font-medium leading-tight">{r.labelUz}</span>
         <span className="block truncate text-[10px] leading-tight text-muted">
           {r.kwhIdentified > 0 ? `${num(r.kwhIdentified)} kWh aniqlangan` : 'jarima solinmagan'}
         </span>
       </span>
 
-      <span className="shrink-0 text-right">
-        <span className="tabular block text-[15px] font-bold leading-none">{num(r.count)}</span>
-        <span className="block text-[9.5px] leading-tight text-muted">
-          {compact ? `ta · ${fine}` : 'ta'}
+      <span className="flex shrink-0 items-baseline gap-1">
+        <span className="tabular text-[15px] font-bold leading-none">{num(r.count)}</span>
+        <span className="text-[9.5px] leading-none text-muted">ta</span>
+      </span>
+
+      {r.fineMln > 0 && (
+        <span className="tabular shrink-0 text-[12.5px] font-semibold">{money(r.fineMln).text}</span>
+      )}
+    </button>
+  );
+}
+
+/**
+ * Ikkilamchi toifa - panjaradagi kartochka.
+ *
+ * Bo'laklar VERTIKAL joylashadi: yarim ustun kengligi (~160px) da ikonka,
+ * nom, son va summani bitta gorizontal qatorga tiqish matnni ham,
+ * raqamni ham kesib tashlardi ("Iste'molchi…", "jarima solinm…").
+ */
+function CaseTile({
+  r, onOpen,
+}: {
+  r: ViolationSummaryRow;
+  onOpen: (r: ViolationSummaryRow) => void;
+}) {
+  return (
+    <button className={`flex flex-col gap-2 ${BOX}`} type="button" onClick={() => onOpen(r)}>
+      <span className="flex items-center gap-2">
+        <CaseIcon caseType={r.caseType} size="size-7" />
+        <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium leading-tight">
+          {r.labelUz}
         </span>
       </span>
 
-      {!compact && (
-        <span className="tabular w-24 shrink-0 text-right text-[12.5px] font-semibold">
-          {fine}
+      <span className="flex items-baseline gap-1">
+        <span className="tabular text-[15px] font-bold leading-none">{num(r.count)}</span>
+        <span className="text-[9.5px] leading-none text-muted">ta</span>
+        <span className="tabular ml-auto truncate text-[11.5px] font-semibold">
+          {r.fineMln > 0 ? money(r.fineMln).text : '-'}
         </span>
-      )}
+      </span>
     </button>
   );
 }
@@ -108,24 +137,29 @@ export function ViolationsPanel({
 
   if (rows.length === 0) return <EmptyPanel message="Ma’lumot yo‘q" />;
 
+  /*
+   * `@container` - joylashuv EKRAN kengligiga emas, PANELNING o'ziga
+   * qaraydi. Panel maketda `xl:col-span-3`, ya'ni keng monitorda ham atigi
+   * ~340px: oddiy `sm:`/`lg:` nuqtalari bu yerda yolg'on gapiradi.
+   */
   return (
-    <div className="flex flex-col gap-2">
+    <div className="@container flex flex-col gap-2">
       <p className="text-[10.5px] text-muted">
         {periodLabel(from)} - {periodLabel(to)} · jami {num(total)} ta dalolatnoma
       </p>
 
       {/*
         Birinchi toifa (odatda ma'muriy - yagona to'ldirilgani) TO'LIQ
-        kenglikda: jarima summasi o'z ustunida qoladi. Qolganlari ikki
-        ustunli panjarada - ular deyarli har doim nol bo'lgani uchun
-        alohida-alohida qator egallashi kartani cho'zib yuborardi.
+        kenglikda. Qolganlari panjarada: joy tor bo'lsa ustma-ust, 320px dan
+        keng bo'lsa ikki ustun - ular deyarli har doim nol bo'lgani uchun
+        alohida-alohida qator egallashi kartani bekorga cho'zib yuborardi.
       */}
       {rows[0] && <CaseRow r={rows[0]} onOpen={setOpen} />}
 
       {rows.length > 1 && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 @xs:grid-cols-2">
           {rows.slice(1).map((r) => (
-            <CaseRow key={r.caseType} compact r={r} onOpen={setOpen} />
+            <CaseTile key={r.caseType} r={r} onOpen={setOpen} />
           ))}
         </div>
       )}
