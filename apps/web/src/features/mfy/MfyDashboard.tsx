@@ -404,15 +404,15 @@ export default function MfyDashboard() {
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
                     <User className="size-4.5" />
                   </span>
+                  {/*
+                    Lavozim ATAYLAB ko'rsatilmaydi - kartada ismdan keyin
+                    darhol telefon raqami turadi. Maydonning o'zi sxemada
+                    qoladi va sozlamalar sahifasida tahrirlanadi.
+                  */}
                   <div className="min-w-0">
                     <p className="truncate text-[13px] font-bold leading-tight">
                       {responsible.data.fullName}
                     </p>
-                    {responsible.data.position && (
-                      <p className="truncate text-[11px] leading-tight text-muted">
-                        {responsible.data.position}
-                      </p>
-                    )}
                   </div>
                 </div>
                 {responsible.data.phone && (

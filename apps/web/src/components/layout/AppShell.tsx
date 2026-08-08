@@ -18,6 +18,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 
+import logoUrl from '../../assets/logo.png';
 import robotUrl from '../../assets/robot.png';
 import { AiAssistant } from '../ai/AiAssistant.tsx';
 import { LANGUAGES, setLanguage, type LanguageCode } from '../../i18n/index.ts';
@@ -104,15 +105,18 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         {/* Brend bloki */}
         <div className={cn('flex items-center gap-3 px-4 py-5', !sidebarOpen && 'justify-center px-0')}>
-          <span
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl text-white"
-            style={{
-              background: 'linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent) 70%, #7c3aed))',
-              boxShadow: '0 6px 16px color-mix(in oklab, var(--accent) 38%, transparent)',
-            }}
-          >
-            <Zap className="size-6" fill="currentColor" strokeWidth={1.5} />
-          </span>
+          {/*
+            Logotip - tashqi manba emas, `assets/` dan bundlega kiradi
+            (offline talabi). Rasmning o'zida ochiq fon bor, shuning uchun
+            oldingi gradient qoplama olib tashlandi: faqat burchak radiusi
+            va yengil soya qoladi.
+          */}
+          <img
+            alt="BEAP - Baliqchi elektr energiya nazorat tizimi"
+            className="size-11 shrink-0 rounded-xl object-contain"
+            src={logoUrl}
+            style={{ boxShadow: '0 6px 16px color-mix(in oklab, var(--accent) 24%, transparent)' }}
+          />
           {sidebarOpen && (
             <div className="min-w-0">
               <p className="text-[19px] font-extrabold leading-none tracking-tight text-accent">
