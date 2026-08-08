@@ -155,7 +155,10 @@ export default function MfyDashboard() {
   const responsible = useMfyResponsible(mfyId);
   const tpLoss = useMfyTpLoss(mfyId, { period: period ?? undefined });
   const tpLossAnomalies = useMfyTpLossAnomalies(mfyId);
-  const tpLossSeries = useMfyTpLossSeries(mfyId, { bucket: tpLossBucket, last: 30 });
+  const tpLossSeries = useMfyTpLossSeries(mfyId, {
+    bucket: tpLossBucket,
+    last: 30,
+  });
 
   if (boot.isLoading || (mfyId === 0 && !boot.isError))
     return <LoadingState rows={6} />;
@@ -413,17 +416,17 @@ export default function MfyDashboard() {
                     <p className="truncate text-[13px] font-bold leading-tight">
                       {responsible.data.fullName}
                     </p>
+                    {responsible.data.phone && (
+                      <a
+                        className="flex items-center gap-1.5 text-[12px] font-semibold text-accent hover:underline"
+                        href={`tel:${responsible.data.phone}`}
+                      >
+                        <Phone className="size-3.5" />
+                        {responsible.data.phone}
+                      </a>
+                    )}
                   </div>
                 </div>
-                {responsible.data.phone && (
-                  <a
-                    className="flex items-center gap-1.5 text-[12px] font-semibold text-accent hover:underline"
-                    href={`tel:${responsible.data.phone}`}
-                  >
-                    <Phone className="size-3.5" />
-                    {responsible.data.phone}
-                  </a>
-                )}
               </div>
             ) : (
               <EmptyPanel message="Ma'sul shaxs belgilanmagan" />
@@ -814,7 +817,10 @@ export default function MfyDashboard() {
               />
             </div>
           )}
-          <TpLossPanel anomalies={tpLossAnomalies.data?.anomalies ?? []} rows={tpLoss.data ?? []} />
+          <TpLossPanel
+            anomalies={tpLossAnomalies.data?.anomalies ?? []}
+            rows={tpLoss.data ?? []}
+          />
         </Panel>
       </div>
 
