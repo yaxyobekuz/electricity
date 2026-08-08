@@ -5,26 +5,55 @@
  * ko'rinishidagi faol menyu bandi. Pastda samaradorlik indeksi kartasi.
  * Kontent maydoni yumshoq ko'k fonda, kartalar soya bilan "suzadi".
  */
-import { dateLabel, dateTimeLabel, pct } from '@beap/shared';
-import { Badge, Button, Calendar, Chip, Dropdown, Popover, Tooltip, cn } from '@heroui/react';
-import { parseDate } from '@internationalized/date';
+import { dateLabel, dateTimeLabel, pct } from "@beap/shared";
 import {
-  Activity, ArrowDown, ArrowUp, BarChart3, Bell, Building2, CalendarDays,
-  CircleDollarSign, ClipboardCheck, ClipboardList, FileSpreadsheet, Home, Languages,
-  LogOut, Menu, Moon, Ruler, ScrollText, Settings, Sun, TriangleAlert, Upload, Zap,
-} from 'lucide-react';
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { useTranslation } from 'react-i18next';
-import { NavLink, useLocation, useNavigate } from 'react-router';
+  Badge,
+  Button,
+  Calendar,
+  Chip,
+  Dropdown,
+  Popover,
+  Tooltip,
+  cn,
+} from "@heroui/react";
+import { parseDate } from "@internationalized/date";
+import {
+  Activity,
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  Bell,
+  Building2,
+  CalendarDays,
+  CircleDollarSign,
+  ClipboardCheck,
+  ClipboardList,
+  FileSpreadsheet,
+  Home,
+  Languages,
+  LogOut,
+  Menu,
+  Moon,
+  Ruler,
+  ScrollText,
+  Settings,
+  Sun,
+  TriangleAlert,
+  Upload,
+  Zap,
+} from "lucide-react";
+import { createContext, useContext, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
+import { NavLink, useLocation, useNavigate } from "react-router";
 
-import logoUrl from '../../assets/logo.png';
-import robotUrl from '../../assets/robot.png';
-import { AiAssistant } from '../ai/AiAssistant.tsx';
-import { LANGUAGES, setLanguage, type LanguageCode } from '../../i18n/index.ts';
-import { apiUrl } from '../../lib/api.ts';
-import { useAlerts, useBootstrap, useEfficiency } from '../../lib/queries.ts';
-import { useUi } from '../../lib/ui-store.ts';
+import logoUrl from "../../assets/logo.png";
+import robotUrl from "../../assets/robot.png";
+import { AiAssistant } from "../ai/AiAssistant.tsx";
+import { LANGUAGES, setLanguage, type LanguageCode } from "../../i18n/index.ts";
+import { apiUrl } from "../../lib/api.ts";
+import { useAlerts, useBootstrap, useEfficiency } from "../../lib/queries.ts";
+import { useUi } from "../../lib/ui-store.ts";
 
 interface NavItem {
   to: string;
@@ -59,32 +88,69 @@ const FooterSlot = createContext<HTMLElement | null>(null);
  * doirasida esa solishtiradigan narsa yo'q.
  */
 const NAV: NavItem[] = [
-  { to: '/dashboard', labelKey: 'nav.dashboard', icon: <Home className="size-4.5" /> },
-  { to: '/transformers', labelKey: 'nav.transformers', icon: <Zap className="size-4.5" /> },
-  { to: '/energy-balance', labelKey: 'nav.energyBalance', icon: <Activity className="size-4.5" /> },
-  { to: '/works', labelKey: 'nav.plannedWorks', icon: <ClipboardList className="size-4.5" /> },
-  { to: '/reports', labelKey: 'nav.reports', icon: <FileSpreadsheet className="size-4.5" /> },
   {
-    to: '/entry', labelKey: 'nav.entry', icon: <ClipboardCheck className="size-4.5" />,
-    roles: ['mfy_operator', 'elektroset_manager', 'admin'],
+    to: "/dashboard",
+    labelKey: "nav.dashboard",
+    icon: <Home className="size-4.5" />,
   },
   {
-    to: '/tp-loss', labelKey: 'nav.tpLoss', icon: <Upload className="size-4.5" />,
-    roles: ['mfy_operator', 'elektroset_manager', 'admin'],
+    to: "/transformers",
+    labelKey: "nav.transformers",
+    icon: <Zap className="size-4.5" />,
   },
   {
-    to: '/review', labelKey: 'nav.review', icon: <Bell className="size-4.5" />,
-    roles: ['elektroset_manager', 'admin'],
+    to: "/energy-balance",
+    labelKey: "nav.energyBalance",
+    icon: <Activity className="size-4.5" />,
   },
   {
-    to: '/settings/responsible', labelKey: 'nav.admin', icon: <Settings className="size-4.5" />,
-    roles: ['mfy_operator', 'elektroset_manager', 'admin'],
+    to: "/works",
+    labelKey: "nav.plannedWorks",
+    icon: <ClipboardList className="size-4.5" />,
+  },
+  {
+    to: "/reports",
+    labelKey: "nav.reports",
+    icon: <FileSpreadsheet className="size-4.5" />,
+  },
+  {
+    to: "/entry",
+    labelKey: "nav.entry",
+    icon: <ClipboardCheck className="size-4.5" />,
+    roles: ["mfy_operator", "elektroset_manager", "admin"],
+  },
+  {
+    to: "/tp-loss",
+    labelKey: "nav.tpLoss",
+    icon: <Upload className="size-4.5" />,
+    roles: ["mfy_operator", "elektroset_manager", "admin"],
+  },
+  {
+    to: "/review",
+    labelKey: "nav.review",
+    icon: <Bell className="size-4.5" />,
+    roles: ["elektroset_manager", "admin"],
+  },
+  {
+    to: "/settings/responsible",
+    labelKey: "nav.admin",
+    icon: <Settings className="size-4.5" />,
+    roles: ["mfy_operator", "elektroset_manager", "admin"],
   },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation();
-  const { theme, toggleTheme, sidebarOpen, toggleSidebar, user, setUser, period, setAiOpen } = useUi();
+  const {
+    theme,
+    toggleTheme,
+    sidebarOpen,
+    toggleSidebar,
+    user,
+    setUser,
+    period,
+    setAiOpen,
+  } = useUi();
   const { data: boot } = useBootstrap();
   const efficiency = useEfficiency(period ?? undefined);
   const location = useLocation();
@@ -92,19 +158,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | null>(null);
   const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
 
-  const visibleNav = NAV.filter((n) => !n.roles || (user && n.roles.includes(user.role)));
+  const visibleNav = NAV.filter(
+    (n) => !n.roles || (user && n.roles.includes(user.role)),
+  );
 
   return (
     <div className="flex min-h-dvh bg-background text-foreground">
       {/* ═══════════════ YON PANEL ═══════════════ */}
       <aside
         className={cn(
-          'sticky top-0 z-30 flex h-dvh shrink-0 flex-col bg-surface transition-[width] duration-200',
-          sidebarOpen ? 'w-60' : 'w-17',
+          "sticky top-0 z-30 flex h-dvh shrink-0 flex-col bg-surface transition-[width] duration-200",
+          sidebarOpen ? "w-60" : "w-17",
         )}
       >
         {/* Brend bloki */}
-        <div className={cn('flex items-center gap-3 px-4 py-5', !sidebarOpen && 'justify-center px-0')}>
+        <div
+          className={cn(
+            "flex items-center gap-3 px-4 py-5",
+            !sidebarOpen && "justify-center px-0",
+          )}
+        >
           {/*
             Logotip - tashqi manba emas, `assets/` dan bundlega kiradi
             (offline talabi). Rasmning o'zida ochiq fon bor, shuning uchun
@@ -115,17 +188,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             alt="BEAP - Baliqchi elektr energiya nazorat tizimi"
             className="size-11 shrink-0 rounded-xl object-contain"
             src={logoUrl}
-            style={{ boxShadow: '0 6px 16px color-mix(in oklab, var(--accent) 24%, transparent)' }}
           />
           {sidebarOpen && (
             <div className="min-w-0">
               <p className="text-[19px] font-extrabold leading-none tracking-tight text-accent">
-                BALIQCHI
+                Baliqchi
               </p>
               <p className="mt-1 text-[9.5px] font-semibold uppercase leading-[1.35] tracking-wide text-muted">
-                Elektr energiya
-                <br />
-                nazorat tizimi
+                Elektr energiya tizimi
               </p>
             </div>
           )}
@@ -136,14 +206,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           <ul className="flex flex-col gap-1">
             {visibleNav.map((item) => {
               const active =
-                location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
+                location.pathname === item.to ||
+                location.pathname.startsWith(`${item.to}/`);
               const link = (
                 <NavLink
-                  className={cn('nav-item', active && 'nav-item--active', !sidebarOpen && 'justify-center px-0')}
+                  className={cn(
+                    "nav-item",
+                    active && "nav-item--active",
+                    !sidebarOpen && "justify-center px-0",
+                  )}
                   to={item.to}
                 >
                   {item.icon}
-                  {sidebarOpen && <span className="truncate">{t(item.labelKey)}</span>}
+                  {sidebarOpen && (
+                    <span className="truncate">{t(item.labelKey)}</span>
+                  )}
                 </NavLink>
               );
 
@@ -183,7 +260,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {sidebarOpen && boot?.lastRefreshAt && (
           <div className="px-5 pb-4">
             <p className="text-[10px] leading-tight text-muted">
-              {t('common.updatedAt')}:{' '}
+              {t("common.updatedAt")}:{" "}
               <span className="font-semibold text-foreground">
                 {dateTimeLabel(boot.lastRefreshAt)}
               </span>
@@ -207,12 +284,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Button>
 
           {/* Sahifa sarlavhasi va amallari shu yerga portal orqali tushadi */}
-          <div ref={setHeaderSlot} className="flex min-w-0 flex-1 items-center" />
+          <div
+            ref={setHeaderSlot}
+            className="flex min-w-0 flex-1 items-center"
+          />
 
           <div className="flex shrink-0 items-center gap-1.5">
             {/* Hisobot sanasi - bosiladi, kalendar ochiladi */}
             {boot?.dataRange.maxDate && boot.dataRange.minDate && (
-              <AsOfDatePicker maxDate={boot.dataRange.maxDate} minDate={boot.dataRange.minDate} />
+              <AsOfDatePicker
+                maxDate={boot.dataRange.maxDate}
+                minDate={boot.dataRange.minDate}
+              />
             )}
 
             {/* Ogohlantirishlar qo'ng'irog'i - kesh hali tayyor bo'lmasa o'zi yashiradi */}
@@ -220,10 +303,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             {/* Til */}
             <Dropdown>
-              <Button aria-label={t('common.language')} className="rounded-lg" size="sm" variant="ghost">
+              <Button
+                aria-label={t("common.language")}
+                className="rounded-lg"
+                size="sm"
+                variant="ghost"
+              >
                 <Languages className="size-4" />
                 <span className="ml-1 hidden text-[11px] font-semibold sm:inline">
-                  {LANGUAGES.find((l) => l.code === i18n.language)?.short ?? 'LOT'}
+                  {LANGUAGES.find((l) => l.code === i18n.language)?.short ??
+                    "LOT"}
                 </span>
               </Button>
               <Dropdown.Popover>
@@ -245,22 +334,30 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Tema */}
             <Button
               isIconOnly
-              aria-label={t('common.theme')}
+              aria-label={t("common.theme")}
               className="rounded-lg"
               size="sm"
               variant="ghost"
               onPress={toggleTheme}
             >
-              {theme === 'gov-dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              {theme === "gov-dark" ? (
+                <Sun className="size-4" />
+              ) : (
+                <Moon className="size-4" />
+              )}
             </Button>
 
             {/* Foydalanuvchi */}
             {user ? (
               <Dropdown>
-                <Button className="rounded-lg bg-surface px-2 shadow-surface" size="sm" variant="ghost">
+                <Button
+                  className="rounded-lg bg-surface px-2 shadow-surface"
+                  size="sm"
+                  variant="ghost"
+                >
                   <span
                     className="mr-1.5 flex size-6.5 items-center justify-center rounded-md text-[11px] font-bold text-white"
-                    style={{ background: 'var(--accent)' }}
+                    style={{ background: "var(--accent)" }}
                   >
                     {user.fullName.slice(0, 1).toUpperCase()}
                   </span>
@@ -276,19 +373,23 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Dropdown.Popover>
                   <Dropdown.Menu
                     onAction={(key) => {
-                      if (key === 'logout') {
-                        void fetch(apiUrl('/auth/logout'), {
-                          method: 'POST',
-                          credentials: 'include',
+                      if (key === "logout") {
+                        void fetch(apiUrl("/auth/logout"), {
+                          method: "POST",
+                          credentials: "include",
                         });
                         setUser(null);
-                        window.location.href = '/login';
+                        window.location.href = "/login";
                       }
                     }}
                   >
-                    <Dropdown.Item id="logout" textValue={t('common.logout')} variant="danger">
+                    <Dropdown.Item
+                      id="logout"
+                      textValue={t("common.logout")}
+                      variant="danger"
+                    >
                       <LogOut className="size-4" />
-                      {t('common.logout')}
+                      {t("common.logout")}
                     </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown.Popover>
@@ -299,10 +400,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 size="sm"
                 variant="primary"
                 onPress={() => {
-                  window.location.href = '/login';
+                  window.location.href = "/login";
                 }}
               >
-                {t('common.login')}
+                {t("common.login")}
               </Button>
             )}
           </div>
@@ -315,14 +416,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         </HeaderSlot.Provider>
 
         <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-4 pb-3 text-[10.5px] text-muted">
-          <span>© {new Date().getFullYear()} {t('app.footer')}</span>
+          <span>
+            © {new Date().getFullYear()} {t("app.footer")}
+          </span>
           {/* `contents` - o'ram quti hosil qilmaydi, izoh footer qatorining bandi bo'ladi. */}
           <div ref={setFooterSlot} className="contents" />
           <span className="flex items-center gap-3">
             <Chip size="sm" variant="soft">
               <Chip.Label>Offline rejim</Chip.Label>
             </Chip>
-            <span>{t('app.version')} 1.0.0</span>
+            <span>{t("app.version")} 1.0.0</span>
           </span>
         </footer>
       </div>
@@ -346,7 +449,13 @@ export function AppShell({ children }: { children: ReactNode }) {
  * Sana tanlanganda `setAsOfDate` davrni ham o'sha oyga ko'chiradi, ya'ni
  * oylik kartalar ham, kunlik grafiklar ham bir vaqtga tegishli bo'ladi.
  */
-function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string }) {
+function AsOfDatePicker({
+  minDate,
+  maxDate,
+}: {
+  minDate: string;
+  maxDate: string;
+}) {
   const asOfDate = useUi((s) => s.asOfDate);
   const setAsOfDate = useUi((s) => s.setAsOfDate);
   const [open, setOpen] = useState(false);
@@ -368,7 +477,11 @@ function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string
       >
         <CalendarDays className="size-3.5 text-muted" />
         {dateLabel(current)}
-        {asOfDate && <span className="text-[10px] font-semibold text-accent">holatiga</span>}
+        {asOfDate && (
+          <span className="text-[10px] font-semibold text-accent">
+            holatiga
+          </span>
+        )}
       </Button>
 
       <Popover.Content className="w-auto">
@@ -393,7 +506,9 @@ function AsOfDatePicker({ minDate, maxDate }: { minDate: string; maxDate: string
               <Calendar.GridHeader>
                 {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
               </Calendar.GridHeader>
-              <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+              <Calendar.GridBody>
+                {(date) => <Calendar.Cell date={date} />}
+              </Calendar.GridBody>
             </Calendar.Grid>
           </Calendar>
 
@@ -443,7 +558,7 @@ function AlertsBell() {
       */}
       <Button
         isIconOnly
-        aria-label={`Ogohlantirishlar${items.length > 0 ? ` (${items.length} ta)` : ''}`}
+        aria-label={`Ogohlantirishlar${items.length > 0 ? ` (${items.length} ta)` : ""}`}
         className="relative rounded-lg"
         size="sm"
         variant="ghost"
@@ -451,7 +566,7 @@ function AlertsBell() {
         <Bell className="size-4" />
         {items.length > 0 && (
           <Badge color="danger" size="sm">
-            {items.length > 9 ? '9+' : items.length}
+            {items.length > 9 ? "9+" : items.length}
           </Badge>
         )}
       </Button>
@@ -463,7 +578,9 @@ function AlertsBell() {
           </Popover.Heading>
 
           {items.length === 0 ? (
-            <p className="px-3.5 pb-3.5 text-[11.5px] leading-snug text-muted">{summaryText}</p>
+            <p className="px-3.5 pb-3.5 text-[11.5px] leading-snug text-muted">
+              {summaryText}
+            </p>
           ) : (
             <ul className="scroll-y flex max-h-80 flex-col gap-1 px-2 pb-2.5">
               {items.map((it, i) => (
@@ -474,10 +591,10 @@ function AlertsBell() {
                   <span
                     aria-hidden="true"
                     className={cn(
-                      'mt-1 size-1.5 shrink-0 rounded-full',
-                      it.severity === 'high' && 'bg-danger',
-                      it.severity === 'medium' && 'bg-warning',
-                      it.severity === 'low' && 'bg-muted',
+                      "mt-1 size-1.5 shrink-0 rounded-full",
+                      it.severity === "high" && "bg-danger",
+                      it.severity === "medium" && "bg-warning",
+                      it.severity === "low" && "bg-muted",
                     )}
                   />
                   <span className="min-w-0 flex-1">{it.messageUz}</span>
@@ -498,24 +615,40 @@ function AlertsBell() {
  * doira 0–100 shkalani bir qarashda ko'rsatadi va markazda katta raqamga
  * joy qoldiradi - yon panel tor bo'lgani uchun bu muhim.
  */
-function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: number | null }) {
+function EfficiencyMiniCard({
+  score,
+  prevScore,
+}: {
+  score: number;
+  prevScore: number | null;
+}) {
   const label =
-    score >= 85 ? 'Yaxshi' : score >= 70 ? 'Qoniqarli' : score >= 50 ? 'Past' : 'Tanqidiy';
-  const face = score >= 85 ? '🙂' : score >= 70 ? '😐' : '☹️';
+    score >= 85
+      ? "Yaxshi"
+      : score >= 70
+        ? "Qoniqarli"
+        : score >= 50
+          ? "Past"
+          : "Tanqidiy";
+  const face = score >= 85 ? "🙂" : score >= 70 ? "😐" : "☹️";
 
   // Yoy uzunligi: r = 46, yarim doira ⇒ π·r ≈ 144.5
   const ARC = Math.PI * 46;
   const filled = (Math.max(0, Math.min(100, score)) / 100) * ARC;
 
   const deltaPct =
-    prevScore === null || prevScore === 0 ? null : ((score - prevScore) / prevScore) * 100;
+    prevScore === null || prevScore === 0
+      ? null
+      : ((score - prevScore) / prevScore) * 100;
 
   return (
     <div
       className="rounded-xl px-4 pb-3.5 pt-3 text-white"
       style={{
-        background: 'linear-gradient(150deg, var(--accent), color-mix(in oklab, var(--accent) 62%, #7c3aed))',
-        boxShadow: '0 8px 22px color-mix(in oklab, var(--accent) 32%, transparent)',
+        background:
+          "linear-gradient(150deg, var(--accent), color-mix(in oklab, var(--accent) 62%, #7c3aed))",
+        boxShadow:
+          "0 8px 22px color-mix(in oklab, var(--accent) 32%, transparent)",
       }}
     >
       <p className="text-[10.5px] font-semibold leading-tight opacity-85">
@@ -538,7 +671,7 @@ function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: nu
             strokeDasharray={`${filled} ${ARC}`}
             strokeLinecap="round"
             strokeWidth="9"
-            style={{ transition: 'stroke-dasharray 0.7s ease' }}
+            style={{ transition: "stroke-dasharray 0.7s ease" }}
           />
         </svg>
 
@@ -557,11 +690,18 @@ function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: nu
       {/* O'tgan davr bilan solishtirish - baho yolg'iz o'zi trendni aytmaydi */}
       <div className="mt-2.5 flex items-center justify-between gap-2 text-[10.5px]">
         <span className="opacity-85">
-          O‘tgan oy: <span className="tabular font-semibold">{prevScore?.toFixed(0) ?? '-'}</span>
+          O‘tgan oy:{" "}
+          <span className="tabular font-semibold">
+            {prevScore?.toFixed(0) ?? "-"}
+          </span>
         </span>
         {deltaPct !== null && (
           <span className="tabular flex items-center gap-0.5 font-semibold">
-            {deltaPct >= 0 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+            {deltaPct >= 0 ? (
+              <ArrowUp className="size-3" />
+            ) : (
+              <ArrowDown className="size-3" />
+            )}
             {Math.abs(deltaPct).toFixed(1)}%
           </span>
         )}
@@ -581,7 +721,8 @@ function EfficiencyMiniCard({ score, prevScore }: { score: number; prevScore: nu
  * har doim izohlab berish mumkin.
  */
 function AdviceCard({
-  advice, onOpen,
+  advice,
+  onOpen,
 }: {
   advice: { count: number; targetLossPct: number; currentLossPct: number };
   onOpen: () => void;
@@ -590,11 +731,15 @@ function AdviceCard({
     <div
       className="rounded-xl px-4 py-3.5 text-white"
       style={{
-        background: 'linear-gradient(150deg, color-mix(in oklab, var(--accent) 88%, #0ea5e9), var(--accent))',
-        boxShadow: '0 8px 22px color-mix(in oklab, var(--accent) 28%, transparent)',
+        background:
+          "linear-gradient(150deg, color-mix(in oklab, var(--accent) 88%, #0ea5e9), var(--accent))",
+        boxShadow:
+          "0 8px 22px color-mix(in oklab, var(--accent) 28%, transparent)",
       }}
     >
-      <p className="text-[11px] font-semibold leading-tight opacity-90">AI tavsiya (bugun)</p>
+      <p className="text-[11px] font-semibold leading-tight opacity-90">
+        AI tavsiya (bugun)
+      </p>
 
       <div className="mt-1.5 flex items-end gap-2">
         {/*
@@ -611,15 +756,16 @@ function AdviceCard({
         <p className="min-w-0 flex-1 text-[11px] font-medium leading-snug">
           {advice.count > 0 ? (
             <>
-              Yo‘qotish normadan yuqori:{' '}
-              <span className="font-bold">{pct(advice.currentLossPct, 1)}</span>. Normativ daraja -{' '}
+              Yo‘qotish normadan yuqori:{" "}
+              <span className="font-bold">{pct(advice.currentLossPct, 1)}</span>
+              . Normativ daraja -{" "}
               <span className="font-bold">{pct(advice.targetLossPct, 1)}</span>.
             </>
           ) : (
             <>
-              Yo‘qotish normativ darajada
-              (<span className="font-bold">{pct(advice.targetLossPct, 1)}</span>) - qo‘shimcha
-              tavsiya yo‘q.
+              Yo‘qotish normativ darajada (
+              <span className="font-bold">{pct(advice.targetLossPct, 1)}</span>)
+              - qo‘shimcha tavsiya yo‘q.
             </>
           )}
         </p>
@@ -658,7 +804,10 @@ export function FooterNote({ children }: { children: ReactNode }) {
  * kontent maydoni to'liq diagramma va jadvallarga qoladi.
  */
 export function PageHeader({
-  title, subtitle, breadcrumbs, actions,
+  title,
+  subtitle,
+  breadcrumbs,
+  actions,
 }: {
   title: string;
   subtitle?: string;
@@ -681,10 +830,20 @@ export function PageHeader({
           >
             <Building2 className="size-3.5 shrink-0 text-accent" />
             {breadcrumbs.map((b, i) => (
-              <span key={b.label} className="flex shrink-0 items-center gap-1.5">
-                {i > 0 && <span aria-hidden="true" className="text-muted/60">›</span>}
+              <span
+                key={b.label}
+                className="flex shrink-0 items-center gap-1.5"
+              >
+                {i > 0 && (
+                  <span aria-hidden="true" className="text-muted/60">
+                    ›
+                  </span>
+                )}
                 {b.to ? (
-                  <NavLink className="font-medium hover:text-accent hover:underline" to={b.to}>
+                  <NavLink
+                    className="font-medium hover:text-accent hover:underline"
+                    to={b.to}
+                  >
                     {b.label}
                   </NavLink>
                 ) : (
@@ -696,29 +855,50 @@ export function PageHeader({
         )}
 
         {subtitle && !breadcrumbs && (
-          <p className="hidden truncate text-[11.5px] text-muted lg:block">{subtitle}</p>
+          <p className="hidden truncate text-[11.5px] text-muted lg:block">
+            {subtitle}
+          </p>
         )}
       </div>
 
-      {actions && <div className="flex shrink-0 flex-wrap items-center gap-1.5">{actions}</div>}
+      {actions && (
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          {actions}
+        </div>
+      )}
     </div>
   );
 
   // Qobiq tashqarisida (chop etish sahifasi) - oddiy blok sifatida chiqadi.
-  return slot ? createPortal(content, slot) : <div className="mb-3 flex">{content}</div>;
+  return slot ? (
+    createPortal(content, slot)
+  ) : (
+    <div className="mb-3 flex">{content}</div>
+  );
 }
 
 /** Xato holati. */
-export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <div className="panel items-center gap-3 px-6 py-12 text-center">
       <TriangleAlert className="size-9 text-danger" />
-      <p className="text-sm font-semibold">{t('common.error')}</p>
+      <p className="text-sm font-semibold">{t("common.error")}</p>
       <p className="max-w-md text-xs text-muted">{message}</p>
       {onRetry && (
-        <Button className="rounded-xl" size="sm" variant="secondary" onPress={onRetry}>
-          {t('common.retry')}
+        <Button
+          className="rounded-xl"
+          size="sm"
+          variant="secondary"
+          onPress={onRetry}
+        >
+          {t("common.retry")}
         </Button>
       )}
     </div>
