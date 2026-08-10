@@ -1,30 +1,87 @@
-# heroui-agents-md
-.heroui-docs/
-
-# deps
+# ═══════════════════════════════════════════════════════════════════════════
+# Bog'liqliklar va build natijasi
+# ═══════════════════════════════════════════════════════════════════════════
 node_modules/
 
-# build output
 dist/
+dist-ssr/
 *.tsbuildinfo
 
-# env
+# ═══════════════════════════════════════════════════════════════════════════
+# Muhit sozlamalari va maxfiy kalitlar
+#
+# `.env.*` HAMMASINI to'sadi (.env.production, .env.local, .env.test …),
+# `.env.example` esa ataylab qaytariladi - u namuna fayl, tracked bo'lishi
+# SHART: `config.ts` uni zaxira sifatida o'qiydi.
+# ═══════════════════════════════════════════════════════════════════════════
 .env
-.env.local
+.env.*
+!.env.example
 
-# maxfiy kalitlar (masalan Google xizmat hisobi JSON fayli)
+# Google xizmat hisobi (GOOGLE_APPLICATION_CREDENTIALS) va shunga o'xshash
+# kalit fayllari - nomi har xil bo'lishi mumkin, shuning uchun naqsh bilan.
 apps/api/secrets/
+*credentials*.json
+*service-account*.json
 instant-basis-449708-f9-fb70f2f8ae8b.json
 
-# generated artifacts
-artifacts/
-# yuklangan fayllar (dalolatnoma rasmlari)
+# ═══════════════════════════════════════════════════════════════════════════
+# Ish vaqtida hosil bo'ladigan fayllar
+# ═══════════════════════════════════════════════════════════════════════════
+# Yuklangan fayllar (dalolatnoma rasmlari) - `config.paths.uploads`
 var/
+# Hisobot PNG/PDF chiqishi - `config.paths.artifacts`
+artifacts/
 backups/
+
+# Loglar. DIQQAT: `.api.log`, `.web.log` va `dev.log` ilgari tasodifan
+# commit qilingan va keyin o'chirilgan - shuning uchun bu blok kerak.
+*.log
+logs/
+npm-debug.log*
+yarn-error.log*
+
+# Vaqtinchalik fayllar
+tmp/
+*.tmp
+.tmp-*
+*.pid
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Kesh va test natijalari
+# ═══════════════════════════════════════════════════════════════════════════
+.vite/
+.turbo/
+.eslintcache
+.stylelintcache
 coverage/
 playwright-report/
 test-results/
 
-# editors / os
+# HeroUI hujjatlari - `heroui agents-md` buyrug'i qayta yuklab oladi
+.heroui-docs/
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Muharrir va OS
+#
+# `.claude/commands` va `.claude/skills` TRACKED bo'ladi (jamoa uchun umumiy),
+# faqat mashinaga xos lokal sozlama chiqarib tashlanadi.
+# ═══════════════════════════════════════════════════════════════════════════
+.claude/settings.local.json
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
 .DS_Store
 Thumbs.db
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Mijozning xom Excel fayllari
+#
+# `load-chinobod-july.ts` va `load-feeder-data.ts` `REPO_ROOT/data` dan
+# o'qiydi. Bu haqiqiy abonent/qarzdorlik ma'lumoti - repozitoriyga tushmasin.
+# Agar jamoa bu fayllarni versiyalashni xohlasa, shu qatorni o'chiring.
+# ═══════════════════════════════════════════════════════════════════════════
+data/
