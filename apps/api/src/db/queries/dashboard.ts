@@ -89,15 +89,13 @@ function scopeFilter(mfyId: number | null, elektrosetId: number | null): { claus
 
 interface PeriodTotals {
   kwh_in: number; kwh_sold: number; kwh_loss_total: number;
-  kwh_loss_natural: number; kwh_loss_technical: number; kwh_loss_illegal: number;
   loss_pct: number | null;
-  natural_pct: number | null; technical_pct: number | null; illegal_pct: number | null;
   consumers_total: number; consumers_active: number; consumers_disconnected: number;
   consumers_new: number; consumers_population: number; consumers_legal: number;
   debt_total_mln: number; debt_population_mln: number; debt_legal_mln: number; debt_budget_mln: number;
   tp_total: number; tp_overloaded: number; meters_offline_cnt: number;
   capacity_kva: number; used_kva: number;
-  natural_norm_pct: number | null; technical_std_pct: number | null;
+  total_loss_target_pct: number | null;
   /** Shu davrda kunlik ma'lumot kiritilgan kunlar soni - oy hali tugamagan bo'lishi mumkin. */
   days_filled: number;
 }
@@ -106,13 +104,7 @@ const TOTALS_SELECT = `
   coalesce(sum(a.kwh_in), 0)              AS kwh_in,
   coalesce(sum(a.kwh_sold), 0)            AS kwh_sold,
   coalesce(sum(a.kwh_loss_total), 0)      AS kwh_loss_total,
-  coalesce(sum(a.kwh_loss_natural), 0)    AS kwh_loss_natural,
-  coalesce(sum(a.kwh_loss_technical), 0)  AS kwh_loss_technical,
-  coalesce(sum(a.kwh_loss_illegal), 0)    AS kwh_loss_illegal,
-  CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_total)     / sum(a.kwh_in), 2) END AS loss_pct,
-  CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_natural)   / sum(a.kwh_in), 2) END AS natural_pct,
-  CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_technical) / sum(a.kwh_in), 2) END AS technical_pct,
-  CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_illegal)   / sum(a.kwh_in), 2) END AS illegal_pct,
+  CASE WHEN sum(a.kwh_in) > 0 THEN round(100 * sum(a.kwh_loss_total) / sum(a.kwh_in), 2) END AS loss_pct,
   coalesce(sum(a.consumers_total), 0)        AS consumers_total,
   coalesce(sum(a.consumers_active), 0)       AS consumers_active,
   coalesce(sum(a.consumers_disconnected), 0) AS consumers_disconnected,
@@ -128,8 +120,7 @@ const TOTALS_SELECT = `
   coalesce(sum(a.meters_offline_cnt), 0)     AS meters_offline_cnt,
   coalesce(sum(a.capacity_kva), 0)           AS capacity_kva,
   coalesce(sum(a.used_kva), 0)               AS used_kva,
-  max(a.natural_norm_pct)                    AS natural_norm_pct,
-  max(a.technical_std_pct)                   AS technical_std_pct,
+  max(a.total_loss_target_pct)               AS total_loss_target_pct,
   max(a.days_filled)::int                    AS days_filled
 `;
 
@@ -173,7 +164,7 @@ async function periodTotals(
 
 /** Oxirgi 30 kunlik qiymatlar - sparkline uchun. */
 interface Sparks {
-  kwhIn: number[]; kwhSold: number[]; kwhLoss: number[]; kwhLossTechnical: number[];
+  kwhIn: number[]; kwhSold: number[]; kwhLoss: number[];
   consumersTotal: number[]; consumersActive: number[];
   consumersDisconnected: number[]; tpCount: number[];
 }
@@ -195,13 +186,12 @@ async function sparklines(
 
   const [daily, monthly] = await Promise.all([
     query<{
-      kwh_in: number; kwh_sold: number; kwh_loss_total: number; kwh_loss_technical: number;
+      kwh_in: number; kwh_sold: number; kwh_loss_total: number;
     }>(
       `SELECT a.biz_date,
-              sum(a.kwh_in)             AS kwh_in,
-              sum(a.kwh_sold)           AS kwh_sold,
-              sum(a.kwh_loss_total)     AS kwh_loss_total,
-              sum(a.kwh_loss_technical) AS kwh_loss_technical
+              sum(a.kwh_in)         AS kwh_in,
+              sum(a.kwh_sold)       AS kwh_sold,
+              sum(a.kwh_loss_total) AS kwh_loss_total
        FROM agg.mfy_daily a
        WHERE a.biz_date <= (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '1 day')::date
          AND a.biz_date >  (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '31 days')::date
