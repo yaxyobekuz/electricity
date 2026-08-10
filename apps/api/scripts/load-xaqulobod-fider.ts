@@ -48,16 +48,19 @@ const FEEDER_CODE = 'FIDER-XAQULOBOD';
  * `officialIn` / `officialSold` - oy uchun BIRIKTIRILGAN rasmiy qiymatlar.
  * Ular Excel fayllarida YO'Q, shuning uchun shu yerda aniq ko'rsatiladi:
  *
- *   • `officialIn` iyul uchun «Умумий ҳисобот» hujjatidan (19 850 → 20 112,
- *     koeffitsient 4 000 = 1 048 000 kWh);
- *   • `officialSold` iyul uchun 722 507,7 kWh - TP BALANS hisoblagichlari
- *     yig'indisi, ya'ni fiderdan TP larga HAQIQATAN yetib borgan energiya.
- *     Iste'molchi hisoblagichlari yig'indisi (922 792,4) undan katta,
- *     chunki 19 ta TP da hisoblagich yoki tok transformatori nosoz -
- *     shuning uchun u foydali oqim sifatida olinmaydi, lekin kartada
- *     ikkinchi darajada ko'rinib turadi.
+ * Ikkala oyda ham naqsh BIR XIL:
  *
- * Avgust uchun ikkala rasmiy qiymat ham hali kelmagan.
+ *   • `officialIn`   - fider boshiga biriktirilgan oylik son
+ *                      (iyul 1 048 000 - «Умумий ҳисобот» dagi 19 850 →
+ *                      20 112 × 4 000; avgust 252 000);
+ *   • `officialSold` - TP BALANS hisoblagichlari yig'indisi, ya'ni fiderdan
+ *                      TP larga HAQIQATAN yetib borgan energiya
+ *                      (iyul 722 507,7; avgust 201 426,3).
+ *
+ * Iste'molchi hisoblagichlari yig'indisi foydali oqim sifatida OLINMAYDI:
+ * iyulda u 922 792,4 - balans hisoblagichlaridan 200 ming kWh ortiq, chunki
+ * 19 ta TP da hisoblagich yoki tok transformatori nosoz. U raqam yo'qolmaydi,
+ * kartada ikkinchi darajada ko'rinib turadi.
  *
  * `null` = qiymat kelmagan; bunday holda TP hisoblagichlaridan yig'ilgan
  * o'lchov ishlatiladi va u kartada baribir ikkinchi darajada ko'rinadi.
@@ -71,7 +74,7 @@ const PERIODS = [
   },
   {
     sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10',
-    days: 10, officialIn: null, officialSold: null,
+    days: 10, officialIn: 252_000, officialSold: 201_426.3,
     activeCol: 8, disconnectedCol: 9,
   },
 ] as const;
