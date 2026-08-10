@@ -93,6 +93,17 @@ import { useUi } from "../../lib/ui-store.ts";
 import { WorkTimeline } from "./WorkTimeline.tsx";
 import { AskAiButton } from "../../components/ai/AskAiButton.tsx";
 
+/**
+ * Holat og'irligi - kichik son oldinroq turadi. Barqaror saralash uchun
+ * (`Array.sort` barqaror) teng og'irlikdagi TP lar server bergan
+ * iste'mol tartibida qoladi.
+ */
+const faultRank = (r: { condition: string | null }): number =>
+  r.condition === "OVERLOAD" ? 0
+    : r.condition === "FAULT" ? 1
+      : r.condition === "ATTENTION" ? 2
+        : 3;
+
 const TILE_ICONS: Record<string, React.ReactNode> = {
   kwhIn: <Zap className="size-4" />,
   kwhSold: <CircleDollarSign className="size-4" />,
@@ -514,10 +525,20 @@ export default function MfyDashboard() {
           }}
           title="Transformatorlar holati"
         >
-          {/* Eng ko'p iste'mol qilgan 5 ta TP - server shu tartibda qaytaradi. */}
+          {/*
+            NOSOZ TP lar BIRINCHI, keyin iste'mol bo'yicha.
+
+            Server javobi iste'mol bo'yicha saralangan (TP reytingi va AI
+            surati shunga tayanadi, uni o'zgartirmaymiz). Lekin bu karta
+            «Transformatorlar HOLATI» deb ataladi: nosoz transformator
+            iste'moli past bo'lgani uchun ro'yxatning pastiga tushib,
+            birinchi 5 talikka kirmasa, karta aynan muammoni yashirardi.
+          */}
           <TpMonitorPanel
             days={feeder.data?.days ?? 31}
-            rows={(tpMonthly.data ?? []).slice(0, 5)}
+            rows={[...(tpMonthly.data ?? [])]
+              .sort((a, b) => faultRank(a) - faultRank(b))
+              .slice(0, 5)}
             totalKwh={tpMonthly.data?.reduce((a, r) => a + r.kwhMonth, 0) ?? 0}
           />
         </Panel>

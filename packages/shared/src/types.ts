@@ -253,6 +253,13 @@ export interface TpMonthlyRow {
   readingPrev: number;
   readingCurr: number;
   kwhMonth: number;
+  /**
+   * Oylik holat hisobotidagi texnik holat. `null` = holat kiritilmagan
+   * (0 yoki «Yaxshi» EMAS - ma'lumot yo'qligi «hammasi joyida» degani emas).
+   */
+  condition: TpCondition | null;
+  /** Nosozlik sababi - `condition = 'FAULT'` bo'lganda to'ldiriladi. */
+  repairReason: string | null;
 }
 
 /** TP darajasidagi kunlik chiziqli yo'qotish - balans hisoblagichi vs bириктирилган iste'molchilar. */

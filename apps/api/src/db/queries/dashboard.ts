@@ -719,12 +719,29 @@ export async function tpMonthly(
     tp_id: number; code: string; consumers_total: number; consumers_active: number;
     consumers_disconnected: number; meter_no: string | null; meter_coef: number;
     reading_prev: number; reading_curr: number; kwh_month: number;
+    condition: string | null; repair_reason: string | null;
   }>(
+    /*
+      TEXNIK HOLAT oylik holat hisobotidan qo'shiladi.
+      LATERAL kerak: `ts_uq` (submission_id, tp_id, period_month) bo'yicha
+      yagona, lekin bir davrga bir nechta konvert bo'lishi mumkin - faqat
+      TASDIQLANGANI olinadi va eng so'nggisi qoladi. Oddiy JOIN bo'lganda
+      qatorlar ko'payib, iste'mol ikki marta sanalardi.
+    */
     `SELECT t.id AS tp_id, t.code, m.consumers_total, m.consumers_active,
             m.consumers_disconnected, m.meter_no, m.meter_coef,
-            m.reading_prev, m.reading_curr, m.kwh_month
+            m.reading_prev, m.reading_curr, m.kwh_month,
+            st.condition, st.repair_reason
        FROM fact.tp_monthly m
        JOIN ref.tp t ON t.id = m.tp_id
+       LEFT JOIN LATERAL (
+         SELECT s.condition, s.repair_reason
+           FROM fact.tp_status_monthly s
+           JOIN fact.submission sub ON sub.id = s.submission_id AND sub.status = 'approved'
+          WHERE s.tp_id = m.tp_id AND s.period_month = m.period_month
+          ORDER BY s.updated_at DESC
+          LIMIT 1
+       ) st ON true
       WHERE m.period_month = ($1 || '-01')::date
         AND ($2::int IS NULL OR t.mfy_id = $2)
       ORDER BY m.kwh_month DESC, t.code`,
@@ -741,6 +758,8 @@ export async function tpMonthly(
     readingPrev: Number(r.reading_prev),
     readingCurr: Number(r.reading_curr),
     kwhMonth: Number(r.kwh_month),
+    condition: (r.condition as TpMonthlyRow['condition']) ?? null,
+    repairReason: r.repair_reason,
   }));
 }
 
