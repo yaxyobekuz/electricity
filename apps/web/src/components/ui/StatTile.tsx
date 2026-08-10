@@ -10,7 +10,7 @@
  */
 import type { KpiTile } from '@beap/shared';
 import {
-  energyParts, isKnownMetric, moneyParts, num, pct, periodLabel, provenanceText, type MetricKey,
+  energyParts, isKnownMetric, moneyParts, num, pct, provenanceText, type MetricKey,
 } from '@beap/shared';
 import { Button, Chip, Popover, cn } from '@heroui/react';
 import { ArrowDown, ArrowUp, Info, Minus } from 'lucide-react';
@@ -87,8 +87,6 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
   const DeltaIcon = delta === null || delta === 0 ? Minus : delta > 0 ? ArrowUp : ArrowDown;
   const provenance = isKnownMetric(tile.metric) ? provenanceText(tile.metric as MetricKey) : null;
   const change = changeText(tile);
-  const prev = fmtByUnit(tile.prevValue, tile.unit);
-  const prevText = tile.prevValue === null ? '-' : `${prev.value} ${prev.unit}`;
   const caption = sparkCaption(tile);
 
   return (
@@ -148,18 +146,13 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
           <DeltaIcon aria-hidden="true" className="size-3.5" />
           {change && change.abs ? change.abs : delta === null ? '-' : `${Math.abs(delta).toFixed(1)}%`}
         </span>
+
         <span className="text-[10.5px] leading-tight text-muted">
           {change ? change.word : 'o‘tgan oyga nisbatan'}
           {change && change.abs && delta !== null && ` (${Math.abs(delta).toFixed(1)}%)`}
         </span>
+        
       </div>
-
-      {/* O'tgan oyning ANIQ qiymati - raqam o'z-o'zini izohlaydi */}
-      <p className="truncate text-[10px] leading-tight text-muted">
-        {periodLabel(tile.prevPeriod)}
-        {tile.daysCompared ? ` (dastlabki ${tile.daysCompared} kun)` : ''}:{' '}
-        <span className="font-medium">{prevText}</span>
-      </p>
 
       {/*
         Sparkline SHARTSIZ chiziladi va `mt-auto` bilan pastga bosiladi.
