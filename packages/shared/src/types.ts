@@ -149,7 +149,7 @@ export interface KpiTile {
 }
 
 export interface EnergyBalanceNode {
-  key: 'in' | 'sold' | 'natural' | 'technical' | 'illegal';
+  key: 'in' | 'sold' | 'loss';
   labelUz: string;
   kwh: number;
   /** Tarmoqqa kirgan energiyaga nisbatan ulushi, %. */
@@ -182,7 +182,8 @@ export interface MfyRankRow {
   trend: 'up' | 'down' | 'flat';
 }
 
-export interface TechnicalLossRow {
+/** Amaldagi yo'qotish % va maqsadli daraja - MFY kesimida. */
+export interface LossGapRow {
   mfyId: number;
   nameUz: string;
   actualPct: number;
@@ -233,8 +234,8 @@ export interface FeederMonthly {
   meterCoef: number;
   kwhIn: number;
   kwhTpSum: number;
-  kwhTechLoss: number;
-  kwhCommercialLoss: number;
+  /** Yo'qotish - kirgan energiya va TP hisoblagichlari yig'indisi ayirmasi. */
+  kwhLoss: number;
   /** Hisoblangan: TP hisoblagichlarida qayd etilgan energiya ulushi, %. */
   meteredPct: number;
   /** Hisoblangan: o'rtacha kunlik iste'mol, kWh. */
@@ -425,14 +426,14 @@ export interface ConsumerBreakdown {
 }
 
 /**
- * Yo'qotish tuzilmasi IKKI toifada - sohaning standart bo'linishi:
- *   texnologik - tarmoqda fizik yo'qoladigan qism (tabiiy + texnik),
- *   tijoriy    - hisobga olinmagan iste'mol (noqonuniy ulanish, hisoblagich).
- * Bazada uch xil ustun saqlanadi, ular shu ikki toifaga yig'iladi.
+ * Energiya taqsimoti - tarmoqqa kirgan energiya qayerga ketgani.
+ *
+ * Yo'qotish YAGONA toifa: texnologik/tijoriy yoki tabiiy/texnik/noqonuniy
+ * kesimi yo'q. U kirgan va sotilgan energiya ayirmasi, ya'ni bitta raqam.
  */
-export interface LossStructure {
-  totalKwh: number;
-  parts: { key: 'technological' | 'commercial'; labelUz: string; kwh: number; pct: number }[];
+export interface EnergySplit {
+  kwhIn: number;
+  parts: { key: 'sold' | 'loss'; labelUz: string; kwh: number; pct: number }[];
 }
 
 /** Bitta dalolatnoma - "nima asosida?" oynasidagi ro'yxat qatori. */

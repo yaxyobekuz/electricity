@@ -94,8 +94,6 @@ export const DOMAIN_PERIOD: Record<Domain, 'DAY' | 'MONTH'> = {
 // ─── Normalar (standartlar) ──────────────────────────────────────────────────
 
 export const NORM_METRICS = [
-  'NATURAL_LOSS_PCT',
-  'TECHNICAL_LOSS_PCT',
   'TOTAL_LOSS_TARGET_PCT',
   'TP_MAX_DISTANCE_M',
   'TP_OPTIMAL_LOAD_PCT_MIN',
@@ -108,9 +106,7 @@ export const NORM_METRICS = [
 export type NormMetric = (typeof NORM_METRICS)[number];
 
 export const NORM_LABEL_UZ: Record<NormMetric, string> = {
-  NATURAL_LOSS_PCT: 'Tabiiy yo‘qotish normasi',
-  TECHNICAL_LOSS_PCT: 'Texnik yo‘qotish standarti',
-  TOTAL_LOSS_TARGET_PCT: 'Jami yo‘qotish maqsadi',
+  TOTAL_LOSS_TARGET_PCT: 'Yo‘qotish maqsadi',
   TP_MAX_DISTANCE_M: 'TP → iste’molchi maksimal masofa',
   TP_OPTIMAL_LOAD_PCT_MIN: 'TP optimal yuklama (min)',
   TP_OPTIMAL_LOAD_PCT_MAX: 'TP optimal yuklama (maks)',
@@ -271,16 +267,6 @@ export const EFFICIENCY_COMPONENTS = [
   { key: 'distance', weight: 0.15, labelUz: 'TP → iste’molchi masofasi' },
 ] as const;
 export type EfficiencyComponentKey = (typeof EFFICIENCY_COMPONENTS)[number]['key'];
-
-// ─── Balans validatsiyasi ────────────────────────────────────────────────────
-
-/**
- * Yo'qotish tarkibi jamiga mos kelishi uchun ruxsat etilgan farq.
- * DB `eb_components` CHECK cheklovi bilan AYNAN bir xil bo'lishi shart.
- */
-export function balanceTolerance(kwhIn: number): number {
-  return Math.max(1, 0.005 * kwhIn);
-}
 
 // ─── Davr yordamchilari ──────────────────────────────────────────────────────
 

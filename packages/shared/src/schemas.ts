@@ -17,7 +17,6 @@ import {
   VIOLATION_STATUSES,
   WORK_STATUSES,
   WORK_TYPES,
-  balanceTolerance,
 } from './constants.ts';
 
 // ─── Asosiy tiplar ───────────────────────────────────────────────────────────
@@ -43,17 +42,17 @@ function isFuture(isoDate: string): boolean {
 // ─── 1. Kunlik energiya balansi ──────────────────────────────────────────────
 // DB: fact.energy_balance_daily
 //   eb_sold_le_in   → kwhSold <= kwhIn
-//   eb_components   → |(in - sold) - (natural + technical + illegal)| <= tolerance
 //   eb_no_future    → bizDate <= bugun
+//
+// Yo'qotish KIRITILMAYDI - u kwh_in − kwh_sold ayirmasi (generated ustun).
+// Shuning uchun tarkib tekshiruvi ham kerak emas: ayniyat buzilishi mumkin
+// bo'lgan joyning o'zi yo'q.
 
 export const energyBalanceDaySchema = z
   .object({
     bizDate: dateSchema,
     kwhIn: qty(5_000_000),
     kwhSold: qty(5_000_000),
-    kwhLossNatural: qty(5_000_000),
-    kwhLossTechnical: qty(5_000_000),
-    kwhLossIllegal: qty(5_000_000),
     note: z.string().max(500).nullish(),
   })
   .superRefine((v, ctx) => {
@@ -62,16 +61,6 @@ export const energyBalanceDaySchema = z
         code: 'custom',
         path: ['kwhSold'],
         message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
-      });
-    }
-
-    const total = v.kwhIn - v.kwhSold;
-    const parts = v.kwhLossNatural + v.kwhLossTechnical + v.kwhLossIllegal;
-    if (Math.abs(total - parts) > balanceTolerance(v.kwhIn)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['kwhLossTechnical'],
-        message: `Yo‘qotish tarkibi jamiga mos emas: ${parts.toFixed(1)} ≠ ${total.toFixed(1)} kWh`,
       });
     }
 

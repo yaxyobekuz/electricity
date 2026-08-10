@@ -54,38 +54,16 @@ export const METRIC_PROVENANCE = {
   // ── Energiya balansi ───────────────────────────────────────────────────────
   kwhIn: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_in', 'Tarmoqqa kirgan energiya', 'kWh'),
   kwhSold: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_sold', 'Foydali oqim', 'kWh'),
-  kwhLossNatural: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_loss_natural', 'Tabiiy yo‘qotish', 'kWh'),
-  kwhLossTechnical: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_loss_technical', 'Texnik yo‘qotish', 'kWh'),
-  kwhLossIllegal: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_loss_illegal', 'Noqonuniy foydalanish', 'kWh'),
-
   kwhLossTotal: derived(
     'kwh_in − kwh_sold',
     ['kwhIn', 'kwhSold'],
-    'Jami yo‘qotish',
+    'Yo‘qotish',
     'kWh',
   ),
   lossPct: derived(
     '100 × (kwh_in − kwh_sold) / kwh_in',
     ['kwhIn', 'kwhSold'],
     'Yo‘qotish darajasi',
-    '%',
-  ),
-  naturalLossPct: derived(
-    '100 × Σ kwh_loss_natural / Σ kwh_in',
-    ['kwhLossNatural', 'kwhIn'],
-    'Tabiiy yo‘qotish ulushi',
-    '%',
-  ),
-  technicalLossPct: derived(
-    '100 × Σ kwh_loss_technical / Σ kwh_in',
-    ['kwhLossTechnical', 'kwhIn'],
-    'Texnik yo‘qotish ulushi',
-    '%',
-  ),
-  illegalLossPct: derived(
-    '100 × Σ kwh_loss_illegal / Σ kwh_in',
-    ['kwhLossIllegal', 'kwhIn'],
-    'Noqonuniy foydalanish ulushi',
     '%',
   ),
 
@@ -194,8 +172,7 @@ export const METRIC_PROVENANCE = {
   violationCount: derived('COUNT(fact.violation_act)', ['violationKwhIdentified'], 'Dalolatnomalar soni', 'ta'),
 
   // ── Normalar ───────────────────────────────────────────────────────────────
-  naturalLossNorm: input('MONTHLY_RETURN', 'ref.norm', 'NATURAL_LOSS_PCT', 'Tabiiy yo‘qotish normasi', '%'),
-  technicalLossStandard: input('MONTHLY_RETURN', 'ref.norm', 'TECHNICAL_LOSS_PCT', 'Texnik yo‘qotish standarti', '%'),
+  lossTargetNorm: input('MONTHLY_RETURN', 'ref.norm', 'TOTAL_LOSS_TARGET_PCT', 'Yo‘qotish maqsadi', '%'),
   tpMaxDistanceNorm: input('MONTHLY_RETURN', 'ref.norm', 'TP_MAX_DISTANCE_M', 'Masofa normasi', 'm'),
 
   // ── Murakkab hosilalar ─────────────────────────────────────────────────────
@@ -205,10 +182,10 @@ export const METRIC_PROVENANCE = {
     'Energiya samaradorlik indeksi',
     'ball',
   ),
-  technicalLossGapPp: derived(
-    'amaldagi texnik yo‘qotish % − TECHNICAL_LOSS_PCT normasi',
-    ['technicalLossPct', 'technicalLossStandard'],
-    'Standartdan farq',
+  lossGapPp: derived(
+    'amaldagi yo‘qotish % − TOTAL_LOSS_TARGET_PCT maqsadi',
+    ['lossPct', 'lossTargetNorm'],
+    'Maqsaddan farq',
     'p.p.',
   ),
   debtMonths: derived(
