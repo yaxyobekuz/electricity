@@ -394,10 +394,10 @@ export default function MfyDashboard() {
                 <CountUp
                   className="tabular text-[19px] font-bold leading-none"
                   format={(v) => num(energy(v).value, 1)}
-                  value={feeder.data.kwhTpSum}
+                  value={feeder.data.kwhSold}
                 />
                 <span className="text-[11px] font-semibold">
-                  {energy(feeder.data.kwhTpSum).unit}
+                  {energy(feeder.data.kwhSold).unit}
                 </span>
               </div>
             </div>

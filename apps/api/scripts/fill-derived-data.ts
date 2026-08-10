@@ -134,12 +134,12 @@ async function main(): Promise<void> {
 
     const balances = new Map<string, { kwhIn: number; kwhSold: number; loss: number }>();
     for (const r of (await c.query<{
-      mfy_id: number; period_month: string; kwh_in: number; kwh_tp_sum: number; loss: number;
-    }>(`SELECT mfy_id, period_month::text, kwh_in::float8, kwh_tp_sum::float8,
+      mfy_id: number; period_month: string; kwh_in: number; kwh_sold: number; loss: number;
+    }>(`SELECT mfy_id, period_month::text, kwh_in::float8, kwh_sold::float8,
                kwh_loss::float8 AS loss
           FROM fact.feeder_monthly`)).rows) {
       balances.set(`${r.mfy_id}:${r.period_month}`, {
-        kwhIn: r.kwh_in, kwhSold: r.kwh_tp_sum, loss: r.loss,
+        kwhIn: r.kwh_in, kwhSold: r.kwh_sold, loss: r.loss,
       });
     }
 

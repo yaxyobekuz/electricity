@@ -288,7 +288,7 @@ async function main(): Promise<void> {
     await c.query(
       `INSERT INTO fact.feeder_monthly
          (mfy_id, period_month, substation, input_name, meter_prev, meter_curr, meter_coef,
-          kwh_in, kwh_tp_sum)
+          kwh_in, kwh_sold)
        VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9)`,
       [mfyId, pStart, balance.substation, balance.input, balance.meterPrev, balance.meterCurr,
         balance.coef, balance.kwhIn, balance.kwhTpSum],

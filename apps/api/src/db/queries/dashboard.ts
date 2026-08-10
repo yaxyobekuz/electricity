@@ -339,17 +339,18 @@ export async function districtOverview(
   });
 
   /*
-   * TP balans hisoblagichlari yig'indisi - «Jami iste'mol» kartasidagi
-   * IKKINCHI darajali qiymat.
+   * TP hisoblagichlaridan O'LCHANGAN yig'indilar - «Jami iste'mol» va
+   * «Foydali oqim» kartalaridagi IKKINCHI darajali qiymatlar.
    *
-   * Asosiy raqam (`cur.kwh_in`) allaqachon AMALDAGI kirim: rasmiy qiymat
-   * kelgan oyda yuklovchi uni kunlik qatorlarga yozgan, shuning uchun
-   * yo'qotish ham, foizlar ham, samaradorlik ham o'sha asosda chiqadi.
-   * Bu yerda faqat o'lchangan yig'indi qo'shimcha ravishda olinadi - u
-   * rasmiy qiymatdan farq qilishi mumkin va farqning o'zi ma'lumot beradi.
+   * Asosiy raqamlar (`cur.kwh_in`, `cur.kwh_sold`) allaqachon AMALDAGI
+   * qiymatlar: rasmiy son kelgan oyda yuklovchi uni kunlik qatorlarga
+   * yozgan, shuning uchun yo'qotish ham, foizlar ham, samaradorlik ham
+   * o'sha asosda chiqadi. Bu yerda faqat o'lchangan yig'indilar qo'shimcha
+   * olinadi - ular rasmiy sondan farq qilishi mumkin va farqning O'ZI
+   * ma'lumot beradi.
    */
-  const feederRow = await queryOne<{ kwh_in_tp: number | null }>(
-    `SELECT sum(f.kwh_in_tp) AS kwh_in_tp
+  const feederRow = await queryOne<{ kwh_in_tp: number | null; kwh_sold_tp: number | null }>(
+    `SELECT sum(f.kwh_in_tp) AS kwh_in_tp, sum(f.kwh_sold_tp) AS kwh_sold_tp
        FROM fact.feeder_monthly f
        JOIN ref.mfy m ON m.id = f.mfy_id
       WHERE f.period_month = ($1 || '-01')::date
@@ -357,10 +358,10 @@ export async function districtOverview(
         AND ($3::int IS NULL OR m.elektroset_id = $3)`,
     [period, mfyId, elektrosetId], ctx,
   );
-  const kwhInTp =
-    feederRow?.kwh_in_tp === null || feederRow?.kwh_in_tp === undefined
-      ? null
-      : Number(feederRow.kwh_in_tp);
+  const numOrNull = (v: number | null | undefined): number | null =>
+    v === null || v === undefined ? null : Number(v);
+  const kwhInTp = numOrNull(feederRow?.kwh_in_tp);
+  const kwhSoldTp = numOrNull(feederRow?.kwh_sold_tp);
 
   const tiles: KpiTile[] = [
     tile({
@@ -377,6 +378,7 @@ export async function districtOverview(
     }),
     tile({
       key: 'kwhSold', metric: 'kwhSold', labelUz: 'Foydali oqim', unit: 'kWh',
+      secondary: { labelUz: 'TP bo‘yicha', value: kwhSoldTp ?? cur.kwh_sold, unit: 'kWh' },
       value: cur.kwh_sold, prev: alignedPrev?.kwh_sold ?? p.kwh_sold,
       goodDirection: 'up', spark: spark.kwhSold, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
@@ -660,12 +662,12 @@ export async function feederMonthly(
   const row = await queryOne<{
     period_month: string; substation: string | null; input_name: string | null;
     meter_prev: number; meter_curr: number; meter_coef: number;
-    kwh_in: number; kwh_tp_sum: number; kwh_loss: number;
+    kwh_in: number; kwh_sold: number; kwh_loss: number;
     days: number;
   }>(
     `SELECT to_char(f.period_month, 'YYYY-MM') AS period_month, f.substation, f.input_name,
             f.meter_prev, f.meter_curr, f.meter_coef,
-            f.kwh_in, f.kwh_tp_sum, f.kwh_loss,
+            f.kwh_in, f.kwh_sold, f.kwh_loss,
             /*
              * O'rtacha yuklama qaysi songa BO'LINADI. Joriy oy hali tugamagan
              * bo'lsa (masalan 7 kunlik ma'lumot) taqvim kunlari bilan bo'lish
@@ -696,9 +698,9 @@ export async function feederMonthly(
     meterCurr: Number(row.meter_curr),
     meterCoef: Number(row.meter_coef),
     kwhIn,
-    kwhTpSum: Number(row.kwh_tp_sum),
+    kwhSold: Number(row.kwh_sold),
     kwhLoss: Number(row.kwh_loss),
-    meteredPct: kwhIn > 0 ? Number(((Number(row.kwh_tp_sum) / kwhIn) * 100).toFixed(1)) : 0,
+    meteredPct: kwhIn > 0 ? Number(((Number(row.kwh_sold) / kwhIn) * 100).toFixed(1)) : 0,
     avgDailyKwh: Number((kwhIn / days).toFixed(1)),
     avgLoadKw: Number((kwhIn / (days * 24)).toFixed(1)),
     days,

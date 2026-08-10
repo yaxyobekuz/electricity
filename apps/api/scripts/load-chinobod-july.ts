@@ -328,7 +328,7 @@ async function main(): Promise<void> {
     await c.query(
       `INSERT INTO fact.feeder_monthly
          (mfy_id, period_month, substation, input_name, meter_prev, meter_curr, meter_coef,
-          kwh_in, kwh_tp_sum, source)
+          kwh_in, kwh_sold, source)
        VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9, 'EXCEL')`,
       [mfyId, P_START, substation, inputName, meterPrev, meterCurr, meterCoef,
         kwhIn, kwhSold]);

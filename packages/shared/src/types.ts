@@ -228,7 +228,8 @@ export interface FeederMonthly {
   meterCurr: number;
   meterCoef: number;
   kwhIn: number;
-  kwhTpSum: number;
+  /** AMALDAGI foydali oqim - rasmiy qiymat bo'lsa o'sha, aks holda TP yig'indisi. */
+  kwhSold: number;
   /** Yo'qotish - kirgan energiya va TP hisoblagichlari yig'indisi ayirmasi. */
   kwhLoss: number;
   /** Hisoblangan: TP hisoblagichlarida qayd etilgan energiya ulushi, %. */

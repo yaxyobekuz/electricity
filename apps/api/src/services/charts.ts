@@ -503,7 +503,7 @@ export async function buildLossBreakdownChart(
   drawDonutChart(c, {
     title,
     slices: [
-      { label: 'Foydali oqim', value: fm.kwhTpSum, color: COLORS.green },
+      { label: 'Foydali oqim', value: fm.kwhSold, color: COLORS.green },
       { label: 'Yo‘qotish', value: fm.kwhLoss, color: COLORS.danger },
     ],
   });

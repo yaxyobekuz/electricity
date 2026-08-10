@@ -45,22 +45,33 @@ const FEEDER_CODE = 'FIDER-XAQULOBOD';
 /**
  * Varaq → davr. `days` fayl sarlavhasidagi oraliqdan olingan.
  *
- * `officialIn` - oy uchun BIRIKTIRILGAN rasmiy kirim, ya'ni fider boshidagi
- * kirish hisoblagichi. U `xaqulobod_fider.xlsx` da YO'Q: iyul qiymati
- * «Умумий ҳисобот» hujjatidan olingan (19 850 → 20 112, koeffitsient 4 000
- * = 1 048 000 kWh). Avgust uchun bunday o'lchov hali kelmagan - `null`,
- * demak karta TP yig'indisidan hisoblangan raqamni ko'rsatadi.
+ * `officialIn` / `officialSold` - oy uchun BIRIKTIRILGAN rasmiy qiymatlar.
+ * Ular Excel fayllarida YO'Q, shuning uchun shu yerda aniq ko'rsatiladi:
+ *
+ *   • `officialIn` iyul uchun «Умумий ҳисобот» hujjatidan (19 850 → 20 112,
+ *     koeffitsient 4 000 = 1 048 000 kWh);
+ *   • `officialSold` iyul uchun 722 507,7 kWh - TP BALANS hisoblagichlari
+ *     yig'indisi, ya'ni fiderdan TP larga HAQIQATAN yetib borgan energiya.
+ *     Iste'molchi hisoblagichlari yig'indisi (922 792,4) undan katta,
+ *     chunki 19 ta TP da hisoblagich yoki tok transformatori nosoz -
+ *     shuning uchun u foydali oqim sifatida olinmaydi, lekin kartada
+ *     ikkinchi darajada ko'rinib turadi.
+ *
+ * Avgust uchun ikkala rasmiy qiymat ham hali kelmagan.
+ *
+ * `null` = qiymat kelmagan; bunday holda TP hisoblagichlaridan yig'ilgan
+ * o'lchov ishlatiladi va u kartada baribir ikkinchi darajada ko'rinadi.
  */
 const PERIODS = [
   {
     sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31',
-    days: 31, officialIn: 1_048_000,
+    days: 31, officialIn: 1_048_000, officialSold: 722_507.7,
     // «xaqulobod_itemolchilar.xlsx» dagi ustunlar: aloqada / aloqadamas.
     activeCol: 6, disconnectedCol: 7,
   },
   {
     sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10',
-    days: 10, officialIn: null,
+    days: 10, officialIn: null, officialSold: null,
     activeCol: 8, disconnectedCol: 9,
   },
 ] as const;
@@ -330,14 +341,21 @@ async function main(): Promise<void> {
        * yig'iladi - alohida hisob-kitob mantig'i kerak emas.
        */
       const effectiveIn = p.officialIn ?? totalInTp;
+      const effectiveSold = p.officialSold ?? totalSold;
       const dailyIn = spread(effectiveIn, p.days);
+      /*
+       * Rasmiy foydali oqim kelgan bo'lsa u ham kunlarga teng taqsimlanadi;
+       * kelmagan bo'lsa TP iste'molchilaridan kun-ba-kun yig'ilgan qiymat
+       * ishlatiladi (u kunlik tebranishni saqlaydi).
+       */
+      const dailySold = p.officialSold === null ? feederSold : spread(p.officialSold, p.days);
 
       for (let d = 0; d < p.days; d += 1) {
         await c.query(
           `INSERT INTO fact.energy_balance_daily
              (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
            VALUES ($1, $2, $3::date, $4, $5)`,
-          [subId, mfyId, dates[d], dailyIn[d], feederSold[d]],
+          [subId, mfyId, dates[d], dailyIn[d], dailySold[d]],
         );
       }
 
@@ -348,9 +366,11 @@ async function main(): Promise<void> {
        */
       await c.query(
         `INSERT INTO fact.feeder_monthly
-           (mfy_id, period_month, kwh_in, kwh_tp_sum, kwh_in_official, kwh_in_tp, source)
-         VALUES ($1, $2::date, $3, $4, $5, $6, 'EXCEL')`,
-        [mfyId, p.start, effectiveIn, totalSold, p.officialIn, totalInTp],
+           (mfy_id, period_month, kwh_in, kwh_sold,
+            kwh_in_official, kwh_in_tp, kwh_sold_official, kwh_sold_tp, source)
+         VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, 'EXCEL')`,
+        [mfyId, p.start, effectiveIn, effectiveSold,
+          p.officialIn, totalInTp, p.officialSold, totalSold],
       );
 
       /*
@@ -386,14 +406,16 @@ async function main(): Promise<void> {
         [mrSub.rows[0]!.id, mfyId, p.start, cTotal, cActive, cDisc],
       );
 
-      const loss = r2(effectiveIn - totalSold);
+      const loss = r2(effectiveIn - effectiveSold);
       const pct = effectiveIn !== 0 ? (loss / effectiveIn) * 100 : 0;
       console.log(
         `\n${p.sheet} (${p.start} … ${p.end}, ${p.days} kun, ${readings.length} ta TP)`
         + `\n  rasmiy kirim           ${p.officialIn === null ? '- (kelmagan)' : `${num(p.officialIn)} kWh`}`
         + `\n  TP balans hisoblagichi ${num(totalInTp)} kWh`
         + `\n  AMALDAGI kirim         ${num(effectiveIn)} kWh`
-        + `\n  foydali oqim           ${num(totalSold)} kWh`
+        + `\n  rasmiy foydali oqim    ${p.officialSold === null ? '- (kelmagan)' : `${num(p.officialSold)} kWh`}`
+        + `\n  TP iste’molchilari     ${num(totalSold)} kWh`
+        + `\n  AMALDAGI foydali oqim  ${num(effectiveSold)} kWh`
         + `\n  yo‘qotish              ${num(loss)} kWh (${pct.toFixed(2)}%)`
         + `\n  abonentlar             ${num(cTotal)} ta`
         + ` (aloqada ${num(cActive)}, aloqadamas ${num(cDisc)})`,
