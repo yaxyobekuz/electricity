@@ -4,7 +4,7 @@ argument-hint: [commit message - optional]
 allowed-tools: Bash, Read
 ---
 
-# /push - push five repos
+# /push - push one repo
 
 ## Argument
 
@@ -15,7 +15,7 @@ allowed-tools: Bash, Read
 
 ## Steps to execute
 
-For each repo (`client/`, `server/`, `mcp/`, `bot/`, `app/`) **sequentially**:
+For each repo **sequentially**:
 
 1. `git -C <repo> status --short` - check whether there are changes.
 2. If there are **no** changes - skip this repo and report "client: no changes".
