@@ -13,10 +13,6 @@ import { isPgError } from '../db/pool.ts';
 
 /** Cheklov nomi → (maydon, o'zbekcha xabar). */
 const CONSTRAINT_MAP: Record<string, { field: string; message: string }> = {
-  eb_sold_le_in: {
-    field: 'kwhSold',
-    message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
-  },
   eb_no_future: { field: 'bizDate', message: 'Kelajakdagi sana kiritib bo‘lmaydi' },
   eb_plausible: { field: 'kwhIn', message: 'Qiymat haqiqiy bo‘lishi uchun juda katta' },
   mr_active_le_total: {

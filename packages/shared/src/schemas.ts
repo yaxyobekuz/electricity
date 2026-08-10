@@ -41,12 +41,16 @@ function isFuture(isoDate: string): boolean {
 
 // ─── 1. Kunlik energiya balansi ──────────────────────────────────────────────
 // DB: fact.energy_balance_daily
-//   eb_sold_le_in   → kwhSold <= kwhIn
 //   eb_no_future    → bizDate <= bugun
 //
 // Yo'qotish KIRITILMAYDI - u kwh_in − kwh_sold ayirmasi (generated ustun).
 // Shuning uchun tarkib tekshiruvi ham kerak emas: ayniyat buzilishi mumkin
 // bo'lgan joyning o'zi yo'q.
+//
+// «Sotilgan <= kirgan» ham TALAB QILINMAYDI (0018). Nosoz balans hisoblagichi
+// bo'lgan fiderda iste'molchilardan yig'ilgan energiya kirganidan ko'p chiqadi
+// va yo'qotish manfiy bo'ladi - bu o'lchov nosozligining belgisi, kiritish
+// xatosi emas. Uni rad etish muammoni yashirishga olib kelardi.
 
 export const energyBalanceDaySchema = z
   .object({
@@ -56,14 +60,6 @@ export const energyBalanceDaySchema = z
     note: z.string().max(500).nullish(),
   })
   .superRefine((v, ctx) => {
-    if (v.kwhSold > v.kwhIn) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['kwhSold'],
-        message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
-      });
-    }
-
     if (isFuture(v.bizDate)) {
       ctx.addIssue({ code: 'custom', path: ['bizDate'], message: 'Kelajakdagi sana kiritib bo‘lmaydi' });
     }

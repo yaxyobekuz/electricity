@@ -398,11 +398,19 @@ export async function validateSubmission(
     expected = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
     filled = rows.length;
 
+    /*
+     * Manfiy yo'qotish OGOHLANTIRISH, xato emas (0018).
+     *
+     * Nosoz balans hisoblagichi bo'lgan fiderda iste'molchilardan yig'ilgan
+     * energiya kirganidan ko'p chiqadi. Buni xato deb rad etish hisobotni
+     * yubortirmay qo'yardi - holbuki aynan shu qator e'tibor talab qiladi.
+     */
     for (const r of rows) {
       if (r.kwhSold > r.kwhIn) {
         issues.push({
-          path: 'kwhSold', rowKey: r.bizDate, severity: 'error',
-          message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p',
+          path: 'kwhSold', rowKey: r.bizDate, severity: 'warning',
+          message: 'Foydali oqim kirgan energiyadan ko‘p - yo‘qotish manfiy, '
+            + 'balans hisoblagichini tekshiring',
         });
       }
     }

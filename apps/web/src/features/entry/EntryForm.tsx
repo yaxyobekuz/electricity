@@ -388,7 +388,6 @@ function EnergyBalanceGrid({
                       onChange={(v) => update(date, { kwhIn: v })}
                     />
                     <NumCell
-                      invalid={row.kwhSold > row.kwhIn}
                       readOnly={readOnly}
                       value={row.kwhSold}
                       onChange={(v) => update(date, { kwhSold: v })}
