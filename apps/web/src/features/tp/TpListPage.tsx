@@ -2,7 +2,7 @@
  * Transformatorlar - fiderning asosiy tafsiloti.
  *
  * Fider darajasidagi tizimda eng qimmatli kesim shu yerda: har bir TP ning
- * hisoblagichi, oylik iste'moli va iste'molchilari. Jadval «Тўлиқ ҳисобот»
+ * hisoblagichi, oylik iste'moli va iste'molchilari. Jadval «To‘liq hisobot»
  * varag'ining aynan o'zi bo'lib, ustiga tizim hisoblagan ulush qo'shiladi.
  *
  * SARALASH - 51 qator bir ekranga sig'maydi va foydalanuvchining savoli
@@ -14,7 +14,6 @@ import { num, pct } from '@beap/shared';
 import { Button, Chip, SearchField, cn } from '@heroui/react';
 import { ArrowDown, ArrowUp, ChevronsUpDown, RotateCcw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 
 import { LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
@@ -103,7 +102,6 @@ function SortTh({
 }
 
 export default function TpListPage() {
-  const { t } = useTranslation();
   const period = useUi((s) => s.period);
   const monitoring = useTpMonitoring(period ?? undefined, 1000);
   const monthly = useTpMonthly(period ?? undefined);
@@ -218,13 +216,13 @@ export default function TpListPage() {
           `${monitoring.data?.length ?? 0} ta transformator · ${num(consumers)} ta iste’molchi`
           + ` · ${num(kwh)} kWh oylik iste’mol`
         }
-        title={t('nav.transformers')}
+        title="Transformatorlar"
       />
 
       {/* ═══ Boshqaruv qatori ═══ */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <SearchField
-          aria-label={t('common.search')}
+          aria-label="Qidirish"
           className="w-64"
           value={search}
           onChange={setSearch}
@@ -264,7 +262,7 @@ export default function TpListPage() {
       <Panel flush>
         {rows.length === 0 ? (
           <EmptyPanel
-            message={search ? 'Shunday transformator topilmadi' : t('common.noData')}
+            message={search ? 'Shunday transformator topilmadi' : 'Ma’lumot yo‘q'}
           />
         ) : (
           <div className="scroll-y max-h-[70vh] overflow-x-auto">

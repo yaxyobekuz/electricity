@@ -34,7 +34,7 @@ interface TrendLineProps {
   /**
    * `SERIES_META` standart yorliqlarini bekor qiladi - masalan TP balans
    * grafigida "Tarmoqqa kirgan/Foydali oqim" o'rniga "Balans hisoblagichi/
-   * Bириктирилган iste'molchilar" ko'rsatish uchun. Berilmasa hozirgi
+   * Biriktirilgan iste'molchilar" ko'rsatish uchun. Berilmasa hozirgi
    * standart yorliqlar ishlatiladi - mavjud chaqiruvlarga ta'sir qilmaydi.
    */
   labels?: Partial<Record<keyof typeof SERIES_META, string>>;

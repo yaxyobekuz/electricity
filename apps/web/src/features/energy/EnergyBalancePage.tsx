@@ -10,7 +10,6 @@ import { energy, pct } from '@beap/shared';
 import { ToggleButton, ToggleButtonGroup } from '@heroui/react';
 import { ArrowRight, ShoppingCart, TrendingDown, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { EnergyFlow } from '../../components/charts/EnergyFlow.tsx';
 import { TrendLine } from '../../components/charts/TrendLine.tsx';
@@ -31,7 +30,6 @@ const BUCKETS = [
 ] as const;
 
 export default function EnergyBalancePage() {
-  const { t } = useTranslation();
   const period = useUi((s) => s.period);
   const [bucket, setBucket] = useState<'day' | 'week' | 'month'>('day');
 
@@ -42,7 +40,7 @@ export default function EnergyBalancePage() {
   if (overview.isLoading) {
     return (
       <>
-        <PageHeader title={t('nav.energyBalance')} />
+        <PageHeader title="Energiya balansi" />
         <LoadingState rows={5} />
       </>
     );
@@ -64,7 +62,7 @@ export default function EnergyBalancePage() {
           </>
         }
         subtitle="tarmoqqa kirgan energiya taqsimoti"
-        title={t('nav.energyBalance')}
+        title="Energiya balansi"
       />
 
       {/* ── 4 ta xulosa ──────────────────────────────────────────────── */}
@@ -113,7 +111,7 @@ export default function EnergyBalancePage() {
           {nodes.length > 0 ? (
             <EnergyFlow height={306} nodes={nodes} />
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
 
@@ -143,7 +141,7 @@ export default function EnergyBalancePage() {
               </tbody>
             </table>
           ) : (
-            <EmptyPanel message={t('common.noData')} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
       </div>
@@ -175,7 +173,7 @@ export default function EnergyBalancePage() {
         {series.data && series.data.length > 0 ? (
           <TrendLine csvName="balans-dinamika" height={252} points={series.data} />
         ) : (
-          <EmptyPanel message={t('common.noData')} />
+          <EmptyPanel message="Ma’lumot yo‘q" />
         )}
       </Panel>
 

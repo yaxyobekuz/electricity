@@ -7,7 +7,6 @@
 import { Button, ToggleButton, ToggleButtonGroup } from '@heroui/react';
 import { CalendarDays, FileSpreadsheet, FileText } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '../../components/layout/AppShell.tsx';
 import { Panel } from '../../components/ui/Panel.tsx';
@@ -15,15 +14,14 @@ import { useUi } from '../../lib/ui-store.ts';
 import { PeriodPicker } from '../district/panels/PeriodPicker.tsx';
 
 const PERIOD_KINDS = [
-  { id: 'daily', labelKey: 'reports.daily' },
-  { id: 'weekly', labelKey: 'reports.weekly' },
-  { id: 'monthly', labelKey: 'reports.monthly' },
-  { id: 'quarterly', labelKey: 'reports.quarterly' },
-  { id: 'yearly', labelKey: 'reports.yearly' },
+  { id: 'daily', label: 'Kunlik' },
+  { id: 'weekly', label: 'Haftalik' },
+  { id: 'monthly', label: 'Oylik' },
+  { id: 'quarterly', label: 'Choraklik' },
+  { id: 'yearly', label: 'Yillik' },
 ] as const;
 
 export default function ReportsPage() {
-  const { t } = useTranslation();
   const period = useUi((s) => s.period);
   const [kind, setKind] = useState<string>('monthly');
 
@@ -37,7 +35,7 @@ export default function ReportsPage() {
       <PageHeader
         actions={<PeriodPicker />}
         subtitle="fider bo‘yicha davriy hisobotlar"
-        title={t('nav.reports')}
+        title="Hisobotlar"
       />
 
       <Panel
@@ -63,7 +61,7 @@ export default function ReportsPage() {
             >
               {PERIOD_KINDS.map((p) => (
                 <ToggleButton key={p.id} id={p.id}>
-                  {t(p.labelKey)}
+                  {p.label}
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
@@ -76,7 +74,7 @@ export default function ReportsPage() {
               onPress={() => go(`/api/report/period/${kind}.xlsx${qs}`)}
             >
               <FileSpreadsheet className="size-4 text-viz-3" />
-              {t('reports.excel')}
+              {'Excel eksport'}
             </Button>
             <Button
               size="sm"
@@ -84,7 +82,7 @@ export default function ReportsPage() {
               onPress={() => go(`/api/report/period/${kind}.pdf${qs}`)}
             >
               <FileText className="size-4 text-viz-2" />
-              {t('reports.pdf')}
+              {'PDF eksport'}
             </Button>
           </div>
 

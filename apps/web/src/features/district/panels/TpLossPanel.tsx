@@ -1,6 +1,6 @@
 /**
  * TP darajasidagi kunlik chiziqli yo'qotish - balans hisoblagichi vs
- * bириктирилган iste'molchilar, har bir TP uchun eng so'nggi o'qish.
+ * biriktirilgan iste'molchilar, har bir TP uchun eng so'nggi o'qish.
  *
  * Fider (oylik) balansidan FARQLI: bu yerdagi ma'lumot 51 TP dan faqat
  * balans hisoblagichi ishlaydiganlari uchun, elektroset yuboradigan kunlik

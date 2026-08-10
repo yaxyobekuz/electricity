@@ -1,6 +1,5 @@
 /** Ishlar sahifasi - reja va bajarilgan, natijasi bilan. */
 import { Tabs } from '@heroui/react';
-import { useTranslation } from 'react-i18next';
 
 import { LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
 import { Panel } from '../../components/ui/Panel.tsx';
@@ -8,7 +7,6 @@ import { WorksPanel } from '../district/panels/WorksPanel.tsx';
 import { useWorks } from '../../lib/queries.ts';
 
 export default function WorksPage() {
-  const { t } = useTranslation();
   const works = useWorks();
 
   if (works.isLoading) return <LoadingState rows={4} />;
@@ -56,7 +54,7 @@ export default function WorksPage() {
         </Tabs>
       </Panel>
 
-      <p className="mt-3 text-[11px] text-muted">{t('common.source')}: fact.work</p>
+      <p className="mt-3 text-[11px] text-muted">{'Manba'}: fact.work</p>
     </>
   );
 }

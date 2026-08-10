@@ -26,11 +26,9 @@
     "@nivo/treemap": "^0.99.0",
     "@tanstack/react-query": "^5.101.4",
     "echarts": "^6.1.0",
-    "i18next": "^26.3.6",
     "lucide-react": "^1.28.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-i18next": "^17.0.11",
     "react-router": "^8.3.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"

@@ -20,7 +20,7 @@ export interface DonutSlice {
   value: number;
   /** Ixtiyoriy - belgilanmasa palitradan olinadi. */
   color?: string;
-  /** Formatlanган ko'rinish (tooltip va jadval uchun). */
+  /** Formatlangan ko'rinish (tooltip va jadval uchun). */
   display?: string;
   /**
    * Bu bo'lak JAMINING qismi EMAS - legendada foizsiz ko'rsatiladi va
