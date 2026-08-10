@@ -3,7 +3,7 @@
  *
  * Muhim: mijoz hujjatlarida birlik chalkashligi bor (kWh vs ming kWh, mln vs mlrd so'm).
  * Shu sababli SAQLASH birligi qat'iy va formatlash faqat shu yerda bo'ladi:
- *   • energiya  → kWh          (baza), ko'rsatishda avtomatik ming/mln kWh
+ *   • energiya  → kWh          (baza), ko'rsatishda kWh yoki ming kWh
  *   • qarzdorlik → mln so'm    (baza), ko'rsatishda avtomatik mlrd so'm
  *   • uzunlik   → km
  *   • masofa    → m
@@ -66,16 +66,25 @@ export interface ScaledValue {
   text: string;
 }
 
+/**
+ * Energiya - eng katta birlik «ming kWh».
+ *
+ * «Mln kWh» ATAYLAB ISHLATILMAYDI: 1 048 000 kWh «1.0 mln kWh» ko'rinishida
+ * uch xonani yo'qotadi va 1 048 000 bilan 1 000 000 ni ajratib bo'lmay
+ * qoladi. Fider oylik hajmi million atrofida bo'lgani uchun bu aynan eng
+ * muhim joyda aniqlikni yeb qo'yardi - «1 048 ming kWh» esa manba raqamni
+ * to'liq ko'rsatadi.
+ *
+ * Kasr xonasi kattalikka qarab tanlanadi: mingdan oshgan qiymatda o'ndan
+ * bir ulush shovqin (1 048.0), kichigida esa ma'noli (722.5).
+ */
 export function energy(kwh: number | null | undefined): ScaledValue {
   if (kwh == null || !Number.isFinite(kwh)) return { value: 0, unit: 'kWh', text: '-' };
   const abs = Math.abs(kwh);
-  if (abs >= 1e6) {
-    const v = kwh / 1e6;
-    return { value: v, unit: 'mln kWh', text: `${num(v, 1)} mln kWh` };
-  }
   if (abs >= 1e4) {
     const v = kwh / 1e3;
-    return { value: v, unit: 'ming kWh', text: `${num(v, 1)} ming kWh` };
+    const digits = Math.abs(v) >= 1000 ? 0 : 1;
+    return { value: v, unit: 'ming kWh', text: `${num(v, digits)} ming kWh` };
   }
   return { value: kwh, unit: 'kWh', text: `${num(kwh, 0)} kWh` };
 }
@@ -83,7 +92,9 @@ export function energy(kwh: number | null | undefined): ScaledValue {
 /** Faqat qiymat (birliksiz) - KPI kartalari uchun, birlik alohida ko'rsatiladi. */
 export function energyParts(kwh: number | null | undefined): { value: string; unit: string } {
   const e = energy(kwh);
-  return { value: kwh == null ? '-' : num(e.value, e.unit === 'kWh' ? 0 : 1), unit: e.unit };
+  if (kwh == null) return { value: '-', unit: e.unit };
+  const digits = e.unit === 'kWh' || Math.abs(e.value) >= 1000 ? 0 : 1;
+  return { value: num(e.value, digits), unit: e.unit };
 }
 
 /** Pasport 8 va 10-qatorlari uchun: ming kWh. */

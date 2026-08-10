@@ -339,17 +339,17 @@ export async function districtOverview(
   });
 
   /*
-   * Oy uchun BIRIKTIRILGAN rasmiy kirim - fider boshidagi kirish
-   * hisoblagichi. Mavjud bo'lsa «Jami iste'mol» kartasining ASOSIY raqami
-   * shu bo'ladi, TP yig'indisidan hisoblangan qiymat esa ikkinchi darajaga
-   * tushadi. Kelmagan oyda (NULL) karta hisoblangan raqamni ko'rsatadi.
+   * TP balans hisoblagichlari yig'indisi - «Jami iste'mol» kartasidagi
+   * IKKINCHI darajali qiymat.
    *
-   * DIQQAT: bu FAQAT shu kartaning ko'rsatuvi. Energiya balansi, yo'qotish
-   * va samaradorlik hisob-kitobi o'zgarmaydi - ular kunlik qatorlardan
-   * (`agg.mfy_daily`) chiqadi, ya'ni TP yig'indisiga tayanadi.
+   * Asosiy raqam (`cur.kwh_in`) allaqachon AMALDAGI kirim: rasmiy qiymat
+   * kelgan oyda yuklovchi uni kunlik qatorlarga yozgan, shuning uchun
+   * yo'qotish ham, foizlar ham, samaradorlik ham o'sha asosda chiqadi.
+   * Bu yerda faqat o'lchangan yig'indi qo'shimcha ravishda olinadi - u
+   * rasmiy qiymatdan farq qilishi mumkin va farqning o'zi ma'lumot beradi.
    */
-  const officialRow = await queryOne<{ kwh_in_official: number | null }>(
-    `SELECT max(f.kwh_in_official) AS kwh_in_official
+  const feederRow = await queryOne<{ kwh_in_tp: number | null }>(
+    `SELECT sum(f.kwh_in_tp) AS kwh_in_tp
        FROM fact.feeder_monthly f
        JOIN ref.mfy m ON m.id = f.mfy_id
       WHERE f.period_month = ($1 || '-01')::date
@@ -357,16 +357,15 @@ export async function districtOverview(
         AND ($3::int IS NULL OR m.elektroset_id = $3)`,
     [period, mfyId, elektrosetId], ctx,
   );
-  const officialIn =
-    officialRow?.kwh_in_official === null || officialRow?.kwh_in_official === undefined
+  const kwhInTp =
+    feederRow?.kwh_in_tp === null || feederRow?.kwh_in_tp === undefined
       ? null
-      : Number(officialRow.kwh_in_official);
+      : Number(feederRow.kwh_in_tp);
 
   const tiles: KpiTile[] = [
     tile({
       key: 'kwhIn', metric: 'kwhIn', labelUz: 'Jami iste’mol', unit: 'kWh',
-      value: officialIn ?? cur.kwh_in,
-      prev: alignedPrev?.kwh_in ?? p.kwh_in,
+      value: cur.kwh_in, prev: alignedPrev?.kwh_in ?? p.kwh_in,
       goodDirection: 'down', spark: spark.kwhIn, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
       /*
@@ -374,7 +373,7 @@ export async function districtOverview(
        * bo'lmaganda ham. Rasmiy qiymat kelmagan oyda u asosiy raqamning
        * o'zi bo'ladi, lekin yorlig'i raqamning QAYERDAN kelganini aytadi.
        */
-      secondary: { labelUz: 'TP bo‘yicha', value: cur.kwh_in, unit: 'kWh' },
+      secondary: { labelUz: 'TP bo‘yicha', value: kwhInTp ?? cur.kwh_in, unit: 'kWh' },
     }),
     tile({
       key: 'kwhSold', metric: 'kwhSold', labelUz: 'Foydali oqim', unit: 'kWh',
@@ -385,7 +384,7 @@ export async function districtOverview(
     /*
      * Yo'qotish MIQDORDA beriladi, foizda emas.
      *
-     * "34.8%" degan plitka yonidagi "1.0 mln kWh" bilan bir o'lchovda emas -
+     * "34.8%" degan plitka yonidagi "1 048 ming kWh" bilan bir o'lchovda emas -
      * hokim ikkalasini solishtira olmaydi. Foiz plitkaning izohida qoladi,
      * asosiy raqam esa kWh: yo'qolgan energiyani foydali oqim bilan
      * bevosita taqqoslash mumkin bo'lsin.

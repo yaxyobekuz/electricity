@@ -38,6 +38,8 @@ import pg from 'pg';
 import { config, REPO_ROOT } from '../src/config.ts';
 
 const FILE = join(REPO_ROOT, 'xaqulobod_fider.xlsx');
+/** Abonentlar kesimi - TP bo'yicha jami / aloqada / aloqadamas. */
+const CONSUMERS_FILE = join(REPO_ROOT, 'xaqulobod_itemolchilar.xlsx');
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
 
 /**
@@ -50,8 +52,17 @@ const FEEDER_CODE = 'FIDER-XAQULOBOD';
  * demak karta TP yig'indisidan hisoblangan raqamni ko'rsatadi.
  */
 const PERIODS = [
-  { sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31', days: 31, officialIn: 1_048_000 },
-  { sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10', days: 10, officialIn: null },
+  {
+    sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31',
+    days: 31, officialIn: 1_048_000,
+    // «xaqulobod_itemolchilar.xlsx» dagi ustunlar: aloqada / aloqadamas.
+    activeCol: 6, disconnectedCol: 7,
+  },
+  {
+    sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10',
+    days: 10, officialIn: null,
+    activeCol: 8, disconnectedCol: 9,
+  },
 ] as const;
 
 // ─── Excel yordamchilari ─────────────────────────────────────────────────────
@@ -133,6 +144,45 @@ async function readSheet(wb: ExcelJS.Workbook, sheet: string): Promise<TpReading
   return out;
 }
 
+interface ConsumerRow {
+  total: number;
+  active: number;
+  disconnected: number;
+}
+
+/**
+ * Abonentlar varag'i - TP bo'yicha jami / aloqada / aloqadamas.
+ *
+ * Bo'sh katak 0 degani (hujjatda nol yozilmagan). Har qatorda
+ * «aloqada + aloqadamas = jami» ayniyati bajarilishi TEKSHIRILADI -
+ * buzilgan qator jimgina o'tib ketmasin.
+ */
+function readConsumers(
+  wb: ExcelJS.Workbook, activeCol: number, disconnectedCol: number,
+): Map<string, ConsumerRow> {
+  const ws = wb.worksheets[0];
+  if (!ws) throw new Error('Abonentlar varag‘i topilmadi');
+
+  const out = new Map<string, ConsumerRow>();
+  // 1-qator sarlavha, ma'lumot 2-qatordan.
+  for (let r = 2; r <= ws.rowCount; r += 1) {
+    const row = ws.getRow(r);
+    const tp = String(val(row.getCell(3)) ?? '').trim();
+    if (tp === '') continue;
+
+    const total = numOf(row.getCell(5));
+    const active = numOf(row.getCell(activeCol));
+    const disconnected = numOf(row.getCell(disconnectedCol));
+    if (active + disconnected !== total) {
+      throw new Error(
+        `Abonentlar izchil emas (TP «${tp}»): ${active} + ${disconnected} ≠ ${total}`,
+      );
+    }
+    out.set(tpKey(tp), { total, active, disconnected });
+  }
+  return out;
+}
+
 async function readProblems(wb: ExcelJS.Workbook): Promise<Map<string, string>> {
   const ws = wb.getWorksheet('Muammolar');
   const map = new Map<string, string>();
@@ -152,8 +202,12 @@ async function main(): Promise<void> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(FILE);
 
+  const cwb = new ExcelJS.Workbook();
+  await cwb.xlsx.readFile(CONSUMERS_FILE);
+
   const problems = await readProblems(wb);
   const sheets = await Promise.all(PERIODS.map((p) => readSheet(wb, p.sheet)));
+  const consumers = PERIODS.map((p) => readConsumers(cwb, p.activeCol, p.disconnectedCol));
 
   const pool = new pg.Pool({ ...config.db, max: 2 });
   const c = await pool.connect();
@@ -225,9 +279,10 @@ async function main(): Promise<void> {
       );
       const subId = subRes.rows[0]!.id;
 
-      // Fider kunlik jamlari TP kunlik qiymatlaridan YIG'ILADI.
-      const feederIn = Array.from({ length: p.days }, () => 0);
+      // Foydali oqim - TP kunlik iste'molchi qiymatlaridan YIG'ILADI.
       const feederSold = Array.from({ length: p.days }, () => 0);
+
+      const cons = consumers[i]!;
 
       for (const rd of readings) {
         const tpId = resolve(rd.tp);
@@ -235,8 +290,23 @@ async function main(): Promise<void> {
         const con = spread(rd.consumers, p.days);
         const note = problems.get(tpKey(rd.tp)) ?? null;
 
+        /*
+         * TP oylik kesimi: abonentlar «xaqulobod_itemolchilar.xlsx» dan,
+         * oylik iste'mol esa fider faylining «Foydali oqim» ustunidan.
+         * Hisoblagich raqami/koeffitsienti/ko'rsatkichlari IKKALA faylda
+         * ham yo'q - ular sukut qiymatida qoladi.
+         */
+        const cr = cons.get(tpKey(rd.tp));
+        if (!cr) throw new Error(`Abonentlar faylida TP topilmadi: «${rd.tp}»`);
+        await c.query(
+          `INSERT INTO fact.tp_monthly
+             (tp_id, period_month, consumers_total, consumers_active,
+              consumers_disconnected, kwh_month)
+           VALUES ($1, $2::date, $3, $4, $5, $6)`,
+          [tpId, p.start, cr.total, cr.active, cr.disconnected, rd.consumers],
+        );
+
         for (let d = 0; d < p.days; d += 1) {
-          feederIn[d] = r2(feederIn[d]! + bal[d]!);
           feederSold[d] = r2(feederSold[d]! + con[d]!);
           await c.query(
             `INSERT INTO fact.tp_loss_daily
@@ -249,12 +319,25 @@ async function main(): Promise<void> {
         }
       }
 
+      const totalInTp = r2(readings.reduce((a, r) => a + r.balance, 0));
+      const totalSold = r2(readings.reduce((a, r) => a + r.consumers, 0));
+
+      /*
+       * AMALDAGI kirim - rasmiy qiymat kelgan bo'lsa o'sha, aks holda TP
+       * balans hisoblagichlari yig'indisi. Kunlik qatorlarga AYNAN shu son
+       * yoziladi, chunki `agg.mfy_daily`/`mfy_monthly` va ular orqali barcha
+       * ko'rsatkichlar (yo'qotish, foizi, samaradorlik) shu qatorlardan
+       * yig'iladi - alohida hisob-kitob mantig'i kerak emas.
+       */
+      const effectiveIn = p.officialIn ?? totalInTp;
+      const dailyIn = spread(effectiveIn, p.days);
+
       for (let d = 0; d < p.days; d += 1) {
         await c.query(
           `INSERT INTO fact.energy_balance_daily
              (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
            VALUES ($1, $2, $3::date, $4, $5)`,
-          [subId, mfyId, dates[d], feederIn[d], feederSold[d]],
+          [subId, mfyId, dates[d], dailyIn[d], feederSold[d]],
         );
       }
 
@@ -263,23 +346,57 @@ async function main(): Promise<void> {
        * faylda YO'Q - ular sukut bo'yicha 0/0/1 bo'lib qoladi va interfeys
        * «Fider hisoblagichi» kartasida ma'lumot yo'qligini ko'rsatadi.
        */
-      const totalIn = r2(readings.reduce((a, r) => a + r.balance, 0));
-      const totalSold = r2(readings.reduce((a, r) => a + r.consumers, 0));
       await c.query(
         `INSERT INTO fact.feeder_monthly
-           (mfy_id, period_month, kwh_in, kwh_tp_sum, kwh_in_official, source)
-         VALUES ($1, $2::date, $3, $4, $5, 'EXCEL')`,
-        [mfyId, p.start, totalIn, totalSold, p.officialIn],
+           (mfy_id, period_month, kwh_in, kwh_tp_sum, kwh_in_official, kwh_in_tp, source)
+         VALUES ($1, $2::date, $3, $4, $5, $6, 'EXCEL')`,
+        [mfyId, p.start, effectiveIn, totalSold, p.officialIn, totalInTp],
       );
 
-      const loss = r2(totalIn - totalSold);
-      const pct = totalIn !== 0 ? (loss / totalIn) * 100 : 0;
+      /*
+       * Fider darajasidagi abonentlar hisoboti - TP kesimidan yig'iladi.
+       *
+       * AHOLI / YURIDIK ajratmasi hujjatda YO'Q, shuning uchun jami son
+       * ajratilmagan holda `consumers_population` ga yoziladi va
+       * `consumers_legal` 0 bo'lib qoladi (baza `consumers_total` ni shu
+       * ikkisidan hosil qiladi). Bu taxmin emas - shunchaki mavjud yagona
+       * raqamni buzmasdan saqlash usuli.
+       *
+       * Qarzdorlik, yangi ulanganlar va hisoblagich ko'rsatkichlari ikkala
+       * faylda ham yo'q - ular 0 bo'lib qoladi.
+       */
+      const cTotal = [...cons.values()].reduce((a, x) => a + x.total, 0);
+      const cActive = [...cons.values()].reduce((a, x) => a + x.active, 0);
+      const cDisc = [...cons.values()].reduce((a, x) => a + x.disconnected, 0);
+
+      const mrSub = await c.query<{ id: number }>(
+        `INSERT INTO fact.submission
+           (scope_type, scope_id, domain, period_type, period_start, period_end,
+            status, created_by, reviewed_by, reviewed_at, submitted_at)
+         VALUES ('MFY', $1, 'MONTHLY_RETURN', 'MONTH', $2::date, $3::date,
+                 'approved', $4, $4, now(), now())
+         RETURNING id`,
+        [mfyId, p.start, p.end, adminId],
+      );
+      await c.query(
+        `INSERT INTO fact.mfy_monthly_return
+           (submission_id, mfy_id, period_month, consumers_population, consumers_legal,
+            consumers_active, consumers_disconnected)
+         VALUES ($1, $2, $3::date, $4, 0, $5, $6)`,
+        [mrSub.rows[0]!.id, mfyId, p.start, cTotal, cActive, cDisc],
+      );
+
+      const loss = r2(effectiveIn - totalSold);
+      const pct = effectiveIn !== 0 ? (loss / effectiveIn) * 100 : 0;
       console.log(
         `\n${p.sheet} (${p.start} … ${p.end}, ${p.days} kun, ${readings.length} ta TP)`
         + `\n  rasmiy kirim           ${p.officialIn === null ? '- (kelmagan)' : `${num(p.officialIn)} kWh`}`
-        + `\n  balans hisoblagichlari ${num(totalIn)} kWh`
-        + `\n  iste’molchilar         ${num(totalSold)} kWh`
-        + `\n  yo‘qotish              ${num(loss)} kWh (${pct.toFixed(2)}%)`,
+        + `\n  TP balans hisoblagichi ${num(totalInTp)} kWh`
+        + `\n  AMALDAGI kirim         ${num(effectiveIn)} kWh`
+        + `\n  foydali oqim           ${num(totalSold)} kWh`
+        + `\n  yo‘qotish              ${num(loss)} kWh (${pct.toFixed(2)}%)`
+        + `\n  abonentlar             ${num(cTotal)} ta`
+        + ` (aloqada ${num(cActive)}, aloqadamas ${num(cDisc)})`,
       );
     }
 
