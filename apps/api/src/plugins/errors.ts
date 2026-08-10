@@ -17,10 +17,6 @@ const CONSTRAINT_MAP: Record<string, { field: string; message: string }> = {
     field: 'kwhSold',
     message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
   },
-  eb_components: {
-    field: 'kwhLossTechnical',
-    message: 'Yo‘qotish tarkibi (tabiiy + texnik + noqonuniy) jami yo‘qotishga mos kelmaydi',
-  },
   eb_no_future: { field: 'bizDate', message: 'Kelajakdagi sana kiritib bo‘lmaydi' },
   eb_plausible: { field: 'kwhIn', message: 'Qiymat haqiqiy bo‘lishi uchun juda katta' },
   mr_active_le_total: {

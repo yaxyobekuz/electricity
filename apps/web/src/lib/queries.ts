@@ -7,7 +7,7 @@
  */
 import type {
   Bootstrap, CapacityInfo, CompletenessCell, ConsumerBreakdown, DebtBreakdown,
-  DistrictOverview, EfficiencyBreakdown, EnergyBalanceNode, FeederMonthly, LossStructure,
+  DistrictOverview, EfficiencyBreakdown, EnergyBalanceNode, EnergySplit, FeederMonthly,
   MfyOverview, MfyResponsible, OperationalMetrics, ResultsSummary, Submission, TimeSeriesPoint,
   TpLossAnomalyReport, TpLossConfirmResponse, TpLossDailyRow, TpLossPreviewResponse,
   TpMonitorRow, TpMonthlyRow, ViolationSummary, WorkDetail, WorkRow,
@@ -225,10 +225,10 @@ export function useMfyTpMonthly(id: number, period?: string) {
   });
 }
 
-export function useMfyLossStructure(id: number, period?: string) {
+export function useMfyEnergySplit(id: number, period?: string) {
   return useQuery({
-    queryKey: keys.mfy(id, 'loss-structure', { period }),
-    queryFn: ({ signal }) => api.get<LossStructure>(`/dash/mfy/${id}/loss-structure${qs({ period })}`, signal),
+    queryKey: keys.mfy(id, 'energy-split', { period }),
+    queryFn: ({ signal }) => api.get<EnergySplit>(`/dash/mfy/${id}/energy-split${qs({ period })}`, signal),
     ...DASH_OPTIONS,
   });
 }

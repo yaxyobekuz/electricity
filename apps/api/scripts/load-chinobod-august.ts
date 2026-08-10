@@ -53,13 +53,6 @@ const FROM_DATE = `${PERIOD}-01`;
 const TO_DATE = `${PERIOD}-08`; // kelajak sana YO'Q (`tld_no_future`)
 const PREV_PERIOD = '2026-07-01';
 
-/**
- * Texnologik yo'qotish normasi - kirgan energiyaning 12% i.
- * `data/umumiy_hisobot.xlsx` ning har bir qatorida shu nisbat AYNAN
- * bajarilgan (Хақулобод 1 048 000 → 125 760), ya'ni hujjatning o'z normasi.
- */
-const TECH_LOSS_RATE = 0.12;
-
 // ═══════════════════════════════════════════════════════════════════════════
 // Excel yordamchilari (`tpLossImport.ts` bilan bir xil mantiq)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -414,24 +407,15 @@ async function main(): Promise<void> {
       const d = perDay.get(date)!;
       skipTp += d.skipTp; skipSold += d.skipSold;
       if (d.tp === 0) continue; // O'sha kuni bironta soz hisoblagich yo'q.
-      const loss = d.kwhIn - d.kwhSold;
-      /*
-       * Yo'qotish taqsimoti - hujjatning o'z normasi bo'yicha 12% gacha
-       * texnik, qolgani tijoriy. Yo'qotish 12% dan kichik bo'lsa hammasi
-       * texnik, tijoriy qism 0 - "noqonuniy foydalanish manfiy" chiqmasin.
-       */
-      const technical = Math.min(loss, d.kwhIn * TECH_LOSS_RATE);
-      const illegal = loss - technical;
       sumIn += d.kwhIn; sumSold += d.kwhSold;
 
+      // Yo'qotish saqlanmaydi - u kirgan va sotilgan ayirmasidan hosil bo'ladi.
       await c.query(
         `INSERT INTO fact.energy_balance_daily
-           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-            kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal)
-         VALUES ($1, $2, $3::date, $4, $5, 0, $6, $7)`,
+           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
+         VALUES ($1, $2, $3::date, $4, $5)`,
         [subIds.get('ENERGY_BALANCE'), mfyId, date,
-          d.kwhIn.toFixed(2), d.kwhSold.toFixed(2),
-          technical.toFixed(2), illegal.toFixed(2)],
+          d.kwhIn.toFixed(2), d.kwhSold.toFixed(2)],
       );
     }
 

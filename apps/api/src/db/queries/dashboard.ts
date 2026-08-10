@@ -6,8 +6,8 @@
  */
 import type {
   CapacityInfo, ConsumerBreakdown, DebtBreakdown, EfficiencyBreakdown,
-  EnergyBalanceNode, FeederMonthly, KpiTile, LossMapCell, LossStructure,
-  OperationalMetrics, RagStatus, ResultsSummary, TechnicalLossRow, TimeSeriesPoint,
+  EnergyBalanceNode, EnergySplit, FeederMonthly, KpiTile, LossGapRow, LossMapCell,
+  OperationalMetrics, RagStatus, ResultsSummary, TimeSeriesPoint,
   TpMonitorRow, TpMonthlyRow, ViolationActRow, ViolationSummary, Work, WorkDetail,
   WorkRow, WorkStatus,
 } from '@beap/shared';
@@ -221,7 +221,6 @@ async function sparklines(
     kwhIn: daily.map((r) => Number(r.kwh_in)),
     kwhSold: daily.map((r) => Number(r.kwh_sold)),
     kwhLoss: daily.map((r) => Number(r.kwh_loss_total ?? 0)),
-    kwhLossTechnical: daily.map((r) => Number(r.kwh_loss_technical ?? 0)),
     consumersTotal: monthly.map((r) => Number(r.consumers_total ?? 0)),
     consumersActive: monthly.map((r) => Number(r.consumers_active ?? 0)),
     consumersDisconnected: monthly.map((r) => Number(r.consumers_disconnected ?? 0)),
@@ -248,19 +247,18 @@ export function daysInMonth(period: string): number {
  */
 export async function dayAlignedEnergyTotals(
   ctx: AppContext, period: string, days: number, mfyId: number | null, elektrosetId: number | null,
-): Promise<{ kwh_in: number; kwh_sold: number; kwh_loss_total: number; kwh_loss_technical: number }> {
+): Promise<{ kwh_in: number; kwh_sold: number; kwh_loss_total: number }> {
   const scopeClause = mfyId !== null ? 'AND a.mfy_id = $3' : elektrosetId !== null ? 'AND a.elektroset_id = $3' : '';
   const params: unknown[] = [period, days];
   if (mfyId !== null) params.push(mfyId);
   else if (elektrosetId !== null) params.push(elektrosetId);
 
   const row = await queryOne<{
-    kwh_in: number; kwh_sold: number; kwh_loss_total: number; kwh_loss_technical: number;
+    kwh_in: number; kwh_sold: number; kwh_loss_total: number;
   }>(
-    `SELECT coalesce(sum(a.kwh_in), 0)             AS kwh_in,
-            coalesce(sum(a.kwh_sold), 0)           AS kwh_sold,
-            coalesce(sum(a.kwh_loss_total), 0)     AS kwh_loss_total,
-            coalesce(sum(a.kwh_loss_technical), 0) AS kwh_loss_technical
+    `SELECT coalesce(sum(a.kwh_in), 0)         AS kwh_in,
+            coalesce(sum(a.kwh_sold), 0)       AS kwh_sold,
+            coalesce(sum(a.kwh_loss_total), 0) AS kwh_loss_total
        FROM agg.mfy_daily a
       WHERE a.biz_date >= ($1 || '-01')::date
         AND a.biz_date <  ($1 || '-01')::date + make_interval(days => $2::int)
@@ -271,7 +269,6 @@ export async function dayAlignedEnergyTotals(
     kwh_in: Number(row?.kwh_in ?? 0),
     kwh_sold: Number(row?.kwh_sold ?? 0),
     kwh_loss_total: Number(row?.kwh_loss_total ?? 0),
-    kwh_loss_technical: Number(row?.kwh_loss_technical ?? 0),
   };
 }
 
@@ -361,15 +358,9 @@ export async function districtOverview(
      * bevosita taqqoslash mumkin bo'lsin.
      */
     tile({
-      key: 'kwhLossTotal', metric: 'kwhLossTotal', labelUz: 'Jami yo’qotish', unit: 'kWh',
+      key: 'kwhLossTotal', metric: 'kwhLossTotal', labelUz: 'Yo’qotish', unit: 'kWh',
       value: cur.kwh_loss_total, prev: alignedPrev?.kwh_loss_total ?? p.kwh_loss_total,
       goodDirection: 'down', spark: spark.kwhLoss, sparkBucket: 'day',
-      daysCompared: isPartial ? alignDays : null,
-    }),
-    tile({
-      key: 'kwhLossTechnical', metric: 'kwhLossTechnical', labelUz: 'Texnologik yo‘qotish', unit: 'kWh',
-      value: cur.kwh_loss_technical, prev: alignedPrev?.kwh_loss_technical ?? p.kwh_loss_technical,
-      goodDirection: 'down', spark: spark.kwhLossTechnical, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
     }),
     /*
@@ -424,16 +415,15 @@ export async function energyBalance(
   if (!t || t.kwh_in <= 0) return [];
   const pct = (v: number): number => Number(((v / t.kwh_in) * 100).toFixed(2));
 
-  const natural = t.kwh_loss_total * ((t.natural_pct ?? 0) / (t.loss_pct || 1));
-  const technical = t.kwh_loss_total * ((t.technical_pct ?? 0) / (t.loss_pct || 1));
-  const illegal = Math.max(0, t.kwh_loss_total - natural - technical);
-
+  /*
+   * Kirgan energiya IKKIGA bo'linadi: sotilgani va yo'qolgani. Yo'qotish
+   * tarkibga ajratilmaydi - u kirgan va sotilgan ayirmasining O'ZI, ya'ni
+   * "sotilgan + yo'qotish = kirgan" ayniyati har doim aniq bajariladi.
+   */
   return [
-    { key: 'in',        labelUz: 'Tarmoqqa kirgan energiya', kwh: t.kwh_in,   pct: 100 },
-    { key: 'sold',      labelUz: 'Foydali oqim',             kwh: t.kwh_sold, pct: pct(t.kwh_sold) },
-    { key: 'natural',   labelUz: 'Tabiiy yo‘qotish',         kwh: natural,    pct: pct(natural) },
-    { key: 'technical', labelUz: 'Texnik yo‘qotish',         kwh: technical,  pct: pct(technical) },
-    { key: 'illegal',   labelUz: 'Noqonuniy foydalanish',    kwh: illegal,    pct: pct(illegal) },
+    { key: 'in',   labelUz: 'Tarmoqqa kirgan energiya', kwh: t.kwh_in,         pct: 100 },
+    { key: 'sold', labelUz: 'Foydali oqim',             kwh: t.kwh_sold,       pct: pct(t.kwh_sold) },
+    { key: 'loss', labelUz: 'Yo‘qotish',                kwh: t.kwh_loss_total, pct: pct(t.kwh_loss_total) },
   ];
 }
 
@@ -539,15 +529,15 @@ function linearForecast(values: number[], fromPeriod: string, steps: number):
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Texnik yo'qotish: standart vs amaldagi
+// Yo'qotish: maqsad vs amaldagi
 // ═══════════════════════════════════════════════════════════════════════════
 
-export async function technicalLoss(ctx: AppContext, period: string): Promise<TechnicalLossRow[]> {
+export async function lossGap(ctx: AppContext, period: string): Promise<LossGapRow[]> {
   const rows = await query<{
     mfy_id: number; name_uz: string; actual_pct: number; standard_pct: number;
     gap_pp: number; status: string;
   }>(`SELECT mfy_id, name_uz, actual_pct, standard_pct, gap_pp, status
-      FROM agg.v_technical_loss_gap
+      FROM agg.v_loss_gap
       WHERE period_month = ($1 || '-01')::date
       ORDER BY gap_pp DESC`, [period], ctx);
 
@@ -638,12 +628,12 @@ export async function feederMonthly(
   const row = await queryOne<{
     period_month: string; substation: string | null; input_name: string | null;
     meter_prev: number; meter_curr: number; meter_coef: number;
-    kwh_in: number; kwh_tp_sum: number; kwh_tech_loss: number; kwh_commercial_loss: number;
+    kwh_in: number; kwh_tp_sum: number; kwh_loss: number;
     days: number;
   }>(
     `SELECT to_char(f.period_month, 'YYYY-MM') AS period_month, f.substation, f.input_name,
             f.meter_prev, f.meter_curr, f.meter_coef,
-            f.kwh_in, f.kwh_tp_sum, f.kwh_tech_loss, f.kwh_commercial_loss,
+            f.kwh_in, f.kwh_tp_sum, f.kwh_loss,
             /*
              * O'rtacha yuklama qaysi songa BO'LINADI. Joriy oy hali tugamagan
              * bo'lsa (masalan 7 kunlik ma'lumot) taqvim kunlari bilan bo'lish
@@ -675,8 +665,7 @@ export async function feederMonthly(
     meterCoef: Number(row.meter_coef),
     kwhIn,
     kwhTpSum: Number(row.kwh_tp_sum),
-    kwhTechLoss: Number(row.kwh_tech_loss),
-    kwhCommercialLoss: Number(row.kwh_commercial_loss),
+    kwhLoss: Number(row.kwh_loss),
     meteredPct: kwhIn > 0 ? Number(((Number(row.kwh_tp_sum) / kwhIn) * 100).toFixed(1)) : 0,
     avgDailyKwh: Number((kwhIn / days).toFixed(1)),
     avgLoadKw: Number((kwhIn / (days * 24)).toFixed(1)),
@@ -1188,37 +1177,34 @@ export async function consumers(ctx: AppContext, mfyId: number, period: string):
   };
 }
 
-export async function lossStructure(
+/**
+ * Energiya taqsimoti - kirgan energiya sotilgan va yo'qolgan qismga bo'linadi.
+ *
+ * Yo'qotish tarkibga ajratilmaydi: u bitta raqam, ya'ni kirgan va sotilgan
+ * energiya ayirmasi.
+ */
+export async function energySplit(
   ctx: AppContext, period: string, mfyId: number | null = null,
-): Promise<LossStructure> {
+): Promise<EnergySplit> {
   const { clause, params } = scopeFilter(mfyId, null);
-  const row = await queryOne<{ nat: number; tech: number; ill: number; total: number }>(
-    `SELECT coalesce(sum(a.kwh_loss_natural), 0)   AS nat,
-            coalesce(sum(a.kwh_loss_technical), 0) AS tech,
-            coalesce(sum(a.kwh_loss_illegal), 0)   AS ill,
-            coalesce(sum(a.kwh_loss_total), 0)     AS total
+  const row = await queryOne<{ kwh_in: number; sold: number; loss: number }>(
+    `SELECT coalesce(sum(a.kwh_in), 0)         AS kwh_in,
+            coalesce(sum(a.kwh_sold), 0)       AS sold,
+            coalesce(sum(a.kwh_loss_total), 0) AS loss
      FROM agg.mfy_monthly a
      WHERE a.period_month = ($1 || '-01')::date ${clause}`,
     [period, ...params], ctx);
 
-  const total = row?.total ?? 0;
-  const pct = (v: number): number => (total > 0 ? Number(((v / total) * 100).toFixed(1)) : 0);
-
-  /*
-   * Tabiiy va texnik - ikkalasi ham TARMOQDAGI fizik yo'qotish, ular
-   * bitta "texnologik" toifaga yig'iladi. Noqonuniy foydalanish esa
-   * hisobga olinmagan iste'mol, ya'ni TIJORIY yo'qotish.
-   *
-   * Bazadagi uchta ustun o'z holicha qoladi - bu faqat ko'rsatish toifasi.
-   */
-  const technological = (row?.nat ?? 0) + (row?.tech ?? 0);
-  const commercial = row?.ill ?? 0;
+  const kwhIn = Number(row?.kwh_in ?? 0);
+  const sold = Number(row?.sold ?? 0);
+  const loss = Number(row?.loss ?? 0);
+  const pct = (v: number): number => (kwhIn > 0 ? Number(((v / kwhIn) * 100).toFixed(1)) : 0);
 
   return {
-    totalKwh: total,
+    kwhIn,
     parts: [
-      { key: 'technological', labelUz: 'Texnologik yo‘qotish', kwh: technological, pct: pct(technological) },
-      { key: 'commercial',    labelUz: 'Tijoriy yo‘qotish',    kwh: commercial,    pct: pct(commercial) },
+      { key: 'sold', labelUz: 'Sotilgan energiya', kwh: sold, pct: pct(sold) },
+      { key: 'loss', labelUz: 'Yo‘qotish',         kwh: loss, pct: pct(loss) },
     ],
   };
 }

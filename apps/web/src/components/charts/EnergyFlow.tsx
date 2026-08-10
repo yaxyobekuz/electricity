@@ -3,10 +3,8 @@
  *
  * RANG QARORI: bu KATEGORIK emas, STATUS diagrammasi. Shu sababli
  * kategorik palitra o'rniga ma'noli ranglar ishlatiladi:
- *   Foydali oqim   → accent (asosiy, yaxshi)
- *   Tabiiy yo'qotish → muted  (normativ, oldini olib bo'lmaydi)
- *   Texnik          → warning (kamaytirish mumkin)
- *   Noqonuniy       → critical (bartaraf etish kerak)
+ *   Foydali oqim → accent   (asosiy, yaxshi)
+ *   Yo'qotish    → critical (kamaytirish kerak)
  *
  * Har bir tugun TO'G'RIDAN-TO'G'RI belgilanadi (nom + qiymat + %), shuning
  * uchun rang yolg'iz ma'no tashimaydi.
@@ -31,9 +29,7 @@ export function EnergyFlow({ nodes, height = 260 }: EnergyFlowProps) {
     () => ({
       in: t.series[0]!,
       sold: t.series[0]!,
-      natural: t.muted,
-      technical: t.status.warning,
-      illegal: t.status.critical,
+      loss: t.status.critical,
     }),
     [t],
   );
@@ -142,9 +138,7 @@ export function EnergyBalanceBars({ nodes }: { nodes: EnergyBalanceNode[] }) {
 
   const colorByKey: Record<string, string> = {
     sold: t.series[0]!,
-    natural: t.muted,
-    technical: t.status.warning,
-    illegal: t.status.critical,
+    loss: t.status.critical,
   };
 
   return (

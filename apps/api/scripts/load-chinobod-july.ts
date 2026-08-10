@@ -12,8 +12,7 @@
  *
  * Ikkita manba fayl:
  *   • `data/umumiy_hisobot.xlsx` - «Хақулобод» qatori: hisoblagich
- *     19 850 → 20 112, koeffitsient 4 000, ya'ni 1 048 000 kWh. Texnologik
- *     yo'qotish 125 760 (kirganning 12% i) - hujjatning o'zida yozilgan.
+ *     19 850 → 20 112, koeffitsient 4 000, ya'ni 1 048 000 kWh.
  *   • `data/toliq_hisobot.xlsx` (`0108` varaq) - TP KESIMI. 143 qatordan
  *     4-ustuni «Xaqulobod» bo'lgan 51 tasi olinadi: hisoblagich,
  *     koeffitsient, 01.07/01.08 ko'rsatkichlari, oylik iste'mol, iste'molchi.
@@ -41,14 +40,6 @@ import { num } from '@beap/shared';
 
 import { config, REPO_ROOT } from '../src/config.ts';
 import { tpCodeOf } from './chinobod-common.ts';
-
-/**
- * Texnologik yo'qotish normasi - kirgan energiyaning 12% i.
- * «Умумий ҳисобот» dagi T2 blokining har bir qatorida shu nisbat AYNAN
- * bajarilgan (Хақулобод 1 048 000 → 125 760), ya'ni bu hujjatning o'z
- * normasi, biz o'ylab topgan koeffitsient emas.
- */
-const TECH_LOSS_RATE = 0.12;
 
 const PERIOD = '2026-07';
 const P_START = `${PERIOD}-01`;
@@ -120,7 +111,7 @@ const numOf = (x: ExcelJS.CellValue): number => {
 interface SummaryRow {
   name: string; substation: string; input: string;
   meterPrev: number; meterCurr: number; coef: number;
-  kwhIn: number; kwhFlow: number; techLossFile: number;
+  kwhIn: number; kwhFlow: number;
 }
 
 /** «Умумий ҳисобот» - FAQAT «Хақулобод» qatori. */
@@ -145,7 +136,6 @@ async function readSummary(): Promise<SummaryRow> {
       coef: numOf(row.getCell(8).value) || 1,
       kwhIn: numOf(row.getCell(9).value),
       kwhFlow: numOf(row.getCell(10).value),
-      techLossFile: numOf(row.getCell(11).value),
     };
   }
   throw new Error(`umumiy_hisobot.xlsx: «${FEEDER.summaryLabel}» fideri topilmadi`);
@@ -226,19 +216,15 @@ async function main(): Promise<void> {
    *   sotilgan   - 51 ta TP hisoblagichi YIG'INDISI. Hujjatda «Elektr oqimi»
    *                683 812.3 deb ham yozilgan, lekin TP yig'indisi (724 165)
    *                afzal: u qator-ma-qator tekshiriladi.
-   *   texnologik - hujjatdagi 125 760, ya'ni kirganning 12% i.
-   *   tijoriy    - QOLDIQ: kirgan − sotilgan − texnologik. Shunda `fm_balance`
-   *                CHECK o'z-o'zidan bajariladi va raqam ikki marta
-   *                hisoblanmaydi.
+   *   yo'qotish  - QOLDIQ: kirgan − sotilgan. Alohida saqlanmaydi, chunki
+   *                `fact.feeder_monthly.kwh_loss` shu ayirmadan hosil
+   *                bo'ladigan generated ustun.
    */
   const kwhIn = summary.kwhIn;
   const kwhSold = Number(tps.reduce((a, t) => a + t.kwh, 0).toFixed(2));
-  const techLoss = summary.techLossFile > 0
-    ? summary.techLossFile
-    : Number((kwhIn * TECH_LOSS_RATE).toFixed(2));
-  const commLoss = Number((kwhIn - kwhSold - techLoss).toFixed(2));
-  if (commLoss < 0) {
-    throw new Error(`Tijoriy yo‘qotish manfiy (${commLoss}) - manba fayllarni tekshiring`);
+  const loss = Number((kwhIn - kwhSold).toFixed(2));
+  if (loss < 0) {
+    throw new Error(`Yo‘qotish manfiy (${loss}) - manba fayllarni tekshiring`);
   }
 
   const { substation, input: inputName, coef: meterCoef, meterPrev, meterCurr } = summary;
@@ -257,10 +243,8 @@ async function main(): Promise<void> {
     console.log(`               (hujjatdagi «Elektr oqimi» ${num(summary.kwhFlow)} kWh,`
       + ` farq ${num(kwhSold - summary.kwhFlow)})`);
   }
-  console.log(`  texnologik   ${num(techLoss)} kWh (kirganning ${(techLoss / kwhIn * 100).toFixed(0)}% i)`);
-  console.log(`  tijoriy      ${num(commLoss)} kWh (qoldiq)`);
-  console.log(`  yo‘qotish    ${num(techLoss + commLoss)} kWh`
-    + ` - ${(((kwhIn - kwhSold) / kwhIn) * 100).toFixed(1)}%`);
+  console.log(`  yo‘qotish    ${num(loss)} kWh`
+    + ` - ${((loss / kwhIn) * 100).toFixed(1)}%`);
   console.log(`  iste’molchi  ${num(tps.reduce((a, t) => a + t.total, 0))} ta`);
 
   const allCodes = tps.map((t) => t.code).sort();
@@ -344,10 +328,10 @@ async function main(): Promise<void> {
     await c.query(
       `INSERT INTO fact.feeder_monthly
          (mfy_id, period_month, substation, input_name, meter_prev, meter_curr, meter_coef,
-          kwh_in, kwh_tp_sum, kwh_tech_loss, kwh_commercial_loss, source)
-       VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'EXCEL')`,
+          kwh_in, kwh_tp_sum, source)
+       VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9, 'EXCEL')`,
       [mfyId, P_START, substation, inputName, meterPrev, meterCurr, meterCoef,
-        kwhIn, kwhSold, techLoss, commLoss]);
+        kwhIn, kwhSold]);
 
     /*
      * Kunlik balans: oylik jam 31 kunga taqsimlanadi va yig'indisi AYNAN
@@ -356,21 +340,16 @@ async function main(): Promise<void> {
      */
     const inDaily = split(kwhIn, DAY_WEIGHTS);
     const soldDaily = split(kwhSold, DAY_WEIGHTS);
-    const lossDaily = inDaily.map((v, d) => v - Math.min(soldDaily[d]!, v));
-    const techDaily = split(techLoss, lossDaily.map((v) => Math.max(v, 1)));
 
     for (let d = 0; d < DAYS; d += 1) {
       const date = `${PERIOD}-${String(d + 1).padStart(2, '0')}`;
       const dayIn = inDaily[d]!;
       const daySold = Math.min(soldDaily[d]!, dayIn);
-      const loss = dayIn - daySold;
-      const technical = Math.min(techDaily[d]!, loss);
       await c.query(
         `INSERT INTO fact.energy_balance_daily
-           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-            kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal)
-         VALUES ($1, $2, $3::date, $4, $5, 0, $6, $7)`,
-        [subIds.get('ENERGY_BALANCE'), mfyId, date, dayIn, daySold, technical, loss - technical]);
+           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
+         VALUES ($1, $2, $3::date, $4, $5)`,
+        [subIds.get('ENERGY_BALANCE'), mfyId, date, dayIn, daySold]);
     }
 
     /*

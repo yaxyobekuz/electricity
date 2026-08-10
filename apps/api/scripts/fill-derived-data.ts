@@ -132,14 +132,14 @@ async function main(): Promise<void> {
       worstPct: r.worst_pct, deadMeter: r.dead_meter,
     }));
 
-    const balances = new Map<string, { kwhIn: number; kwhSold: number; comm: number }>();
+    const balances = new Map<string, { kwhIn: number; kwhSold: number; loss: number }>();
     for (const r of (await c.query<{
-      mfy_id: number; period_month: string; kwh_in: number; kwh_tp_sum: number; comm: number;
+      mfy_id: number; period_month: string; kwh_in: number; kwh_tp_sum: number; loss: number;
     }>(`SELECT mfy_id, period_month::text, kwh_in::float8, kwh_tp_sum::float8,
-               kwh_commercial_loss::float8 AS comm
+               kwh_loss::float8 AS loss
           FROM fact.feeder_monthly`)).rows) {
       balances.set(`${r.mfy_id}:${r.period_month}`, {
-        kwhIn: r.kwh_in, kwhSold: r.kwh_tp_sum, comm: r.comm,
+        kwhIn: r.kwh_in, kwhSold: r.kwh_tp_sum, loss: r.loss,
       });
     }
 

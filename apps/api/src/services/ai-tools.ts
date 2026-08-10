@@ -18,13 +18,13 @@
  * HTTP so'rov yubora olmaydi. U faqat shu funksiyalarni, faqat shu
  * parametrlar bilan chaqira oladi - ya'ni qamrov kod bilan chegaralangan.
  */
-import type { AuthUser, Domain, MonthlyReturn, Work } from '@beap/shared';
+import type { Domain, MonthlyReturn, Work } from '@beap/shared';
 import {
   DOMAINS, monthlyReturnSchema, networkDefectPatchSchema, TP_CONDITIONS, tpStatusPatchSchema,
   WORK_STATUSES, WORK_TYPE_LABEL_UZ, WORK_TYPES, workSchema,
 } from '@beap/shared';
 
-import { type AppContext, queryOne } from '../db/pool.ts';
+import type { AppContext } from '../db/pool.ts';
 import * as q from '../db/queries/dashboard.ts';
 import * as entry from '../db/queries/entry.ts';
 import * as passport from '../db/queries/passport.ts';
@@ -35,13 +35,10 @@ import { renderCustomChart, renderTable } from './charts.ts';
 
 export interface ToolContext {
   ctx: AppContext;
-  user: AuthUser | null;
   /** Yagona fider - ko'p asboblar uchun standart qamrov. */
   feederId: number | null;
   /** Suhbat boshlangandagi davr - model boshqasini aytmasa shu ishlatiladi. */
   period: string;
-  /** Foydalanuvchi berilgan MFY ga yoza oladimi. */
-  canWriteMfy: (mfyId: number) => boolean;
 }
 
 /** Asbob natijasi: ma'lumot yoki brauzer bajaradigan amal. */
@@ -217,8 +214,8 @@ export const TOOL_SPECS: ToolSpec[] = [
         enum: ['energy_trend', 'tp_ranking', 'loss_breakdown', 'loss_forecast'],
         description: 'Diagramma turi. energy_trend - kirgan energiya/foydali oqim dinamikasi '
           + '(vaqt bo‘yicha); tp_ranking - list_tps asbobidagi bilan bir xil TP reytingi, '
-          + 'lekin rasm shaklida; loss_breakdown - foydali oqim/texnologik yo‘qotish/tijoriy '
-          + 'yo‘qotish taqsimoti; loss_forecast - yo‘qotish foizi prognozi.',
+          + 'lekin rasm shaklida; loss_breakdown - foydali oqim va yo‘qotish taqsimoti; '
+          + 'loss_forecast - yo‘qotish foizi prognozi.',
       },
       period: period('Oy, "YYYY-MM". Faqat energy_trend va loss_breakdown uchun ma’noli; '
         + 'berilmasa joriy davr'),
@@ -487,7 +484,7 @@ const LOSS_GAP_THRESHOLD_PP = 3;
  *     to'ldirmagan bo'lsa bo'sh.
  *   · `q.tpMonthly()` - uzilgan abonent ULUSHI, `TpMonitorPanel.tsx`da
  *     allaqachon "muammo" deb rangli ko'rsatiladigan, lekin ishga
- *     ulanmaydigan signal ("uzilgan hisoblagich - to'g'ridan-to'g'ri tijoriy
+ *     ulanmaydigan signal ("uzilgan hisoblagich - to'g'ridan-to'g'ri
  *     yo'qotish manbai", o'sha faylning izohi). Bu manba HAR DOIM to'ldirilgan
  *     (oylik hisobot bilan birga keladi) - shuning uchun yuqoridagi ikkitasi
  *     bo'sh bo'lsa ham odatda kamida shu yerdan tavsiya chiqadi.
@@ -502,13 +499,12 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
   period: string; count: number; totalFound: number; suggestions: WorkSuggestion[];
 }> {
   const [
-    tpRows, tpMonthlyRows, backlog, efficiencyInfo, lossParts, plannedWorks, inProgressWorks, tpLossReport,
+    tpRows, tpMonthlyRows, backlog, efficiencyInfo, plannedWorks, inProgressWorks, tpLossReport,
   ] = await Promise.all([
     q.tpMonitoring(tc.ctx, period, tc.feederId, 500),
     q.tpMonthly(tc.ctx, period, tc.feederId),
     q.networkDefectBacklog(tc.ctx, period, tc.feederId),
     q.efficiency(tc.ctx, period, tc.feederId),
-    q.lossStructure(tc.ctx, period, tc.feederId),
     q.works(tc.ctx, tc.feederId, 'PLANNED', 200),
     q.works(tc.ctx, tc.feederId, 'IN_PROGRESS', 200),
     analytics.detectTpLossAnomalies(tc.ctx, tc.feederId),
@@ -594,7 +590,7 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
       mfyId: info.mfyId, mfyName: info.mfyName, tpId: info.tpId, tpCode: m.code,
       suggestedTitle: `${m.code} dagi uzilgan/aloqasiz hisoblagichlarni tekshirish`,
       rationale: `${m.code} da ${m.consumersDisconnected}/${m.consumersTotal} abonent aloqada `
-        + `emas (${offSharePct.toFixed(1)}%) - to‘g‘ridan-to‘g‘ri tijoriy yo‘qotish manbai bo‘lishi mumkin.`,
+        + `emas (${offSharePct.toFixed(1)}%) - to‘g‘ridan-to‘g‘ri yo‘qotish manbai bo‘lishi mumkin.`,
       priority: offSharePct >= OFF_SHARE_CRITICAL_PCT ? 75 : 45,
     });
   }
@@ -610,9 +606,14 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
     const { targetLossPct, currentLossPct } = efficiencyInfo.advice;
     const gap = currentLossPct - targetLossPct;
     if (gap > LOSS_GAP_THRESHOLD_PP) {
-      const commercialPct = lossParts.parts.find((p) => p.key === 'commercial')?.pct ?? 0;
-      const technologicalPct = lossParts.parts.find((p) => p.key === 'technological')?.pct ?? 0;
-      const workType = commercialPct >= technologicalPct ? 'ILLEGAL_DISCONNECT' : 'TP_MODERNIZATION';
+      /*
+       * Yo'qotish endi toifalarga bo'linmaydi, shuning uchun ish turi
+       * TARKIBDAN emas, MAVJUD DALILDAN chiqariladi: TP balans hisoblagichi
+       * anomaliyalari bo'lsa - hisobga olinmagan iste'mol belgisi, ya'ni
+       * tekshiruv; aks holda muammo tarmoqning o'zida deb qaraladi.
+       */
+      const meteringSignals = tpLossReport.anomalies.length;
+      const workType = meteringSignals > 0 ? 'ILLEGAL_DISCONNECT' : 'TP_MODERNIZATION';
       const mfyId = tc.feederId ?? tpRows[0]?.mfyId ?? null;
       const mfyName = tpRows[0]?.mfyName ?? 'Fider';
 
@@ -622,9 +623,10 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
           mfyId, mfyName,
           suggestedTitle: `${mfyName}: yo‘qotishni maqsad darajaga tushirish bo‘yicha tekshiruv`,
           rationale: `Joriy yo‘qotish ${currentLossPct.toFixed(1)}% - maqsad `
-            + `${targetLossPct.toFixed(1)}% dan ${gap.toFixed(1)} f.p. yuqori `
-            + `(${commercialPct >= technologicalPct ? 'tijoriy' : 'texnologik'} yo‘qotish ustunlik `
-            + `qiladi: ${commercialPct.toFixed(1)}% / ${technologicalPct.toFixed(1)}%).`,
+            + `${targetLossPct.toFixed(1)}% dan ${gap.toFixed(1)} f.p. yuqori`
+            + (meteringSignals > 0
+              ? ` (${meteringSignals} ta TP da hisoblagich balansi anomaliyasi qayd etilgan).`
+              : ' (TP hisoblagichlarida anomaliya yo‘q - muammo tarmoq tomonida).'),
           priority: Math.min(95, 60 + gap),
         });
       }
@@ -653,32 +655,6 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
   suggestions.sort((a, b) => b.priority - a.priority);
   const top = suggestions.slice(0, MAX_RECOMMENDATIONS);
   return { period, count: top.length, totalFound: suggestions.length, suggestions: top };
-}
-
-/*
- * Login talab qilmasdan yozish - foydalanuvchi bilan ATAYLAB tasdiqlangan
- * qaror (standart xavfsizlik andozasidan chetga chiqish).
- *
- * `fact.submission.created_by` haqiqiy `sec.app_user` qatoriga NOT NULL chet
- * kalit bilan bog'langan - mehmon nomidan (`userId: null`) yozib bo'lmaydi,
- * Postgres buni rad etadi. Shuning uchun tizimga kirmagan foydalanuvchi
- * uchun yozish ADMINISTRATOR nomidan davom etadi: RLS/audit hali ham
- * ISHLAYDI (kim yozgani jurналda "admin" deb qoladi), faqat inson login
- * ekranini ko'rmaydi.
- */
-let cachedAdminId: number | null = null;
-
-async function anonymousWriteContext(): Promise<AppContext | null> {
-  if (cachedAdminId === null) {
-    // `queryOne` ga `ctx` berilmasa standart `SYSTEM_CONTEXT` ishlatiladi -
-    // `sec.app_user`ni o'qish uchun kerak, mehmon konteksti yetarli emas.
-    const row = await queryOne<{ id: number }>(
-      `SELECT id FROM sec.app_user WHERE role = 'admin' ORDER BY id LIMIT 1`,
-    );
-    if (!row) return null;
-    cachedAdminId = row.id;
-  }
-  return { userId: cachedAdminId, role: 'admin', mfyIds: [], requestId: 'ai:anonymous-write' };
 }
 
 /**
@@ -853,10 +829,6 @@ export async function runTool(
     }
 
     case 'list_review_queue': {
-      if (!tc.user) return denied('Tasdiqlash navbatini ko‘rish uchun tizimga kirish kerak');
-      if (tc.user.role !== 'admin' && tc.user.role !== 'elektroset_manager') {
-        return denied('Tasdiqlash navbati faqat elektroset menejeri va administrator uchun');
-      }
       const rows = await entry.reviewQueue(tc.ctx);
       return { kind: 'data', result: { count: rows.length, rows } };
     }
@@ -1075,10 +1047,8 @@ export async function runTool(
 
     // ── C. Yozish ───────────────────────────────────────────────────────────
     case 'create_submission': {
-      if (!tc.user) return denied('Hisobot ochish uchun tizimga kirish kerak');
       const mfyId = asNumber(args['mfy_id']) ?? tc.feederId;
       if (mfyId === null || mfyId === undefined) return denied('Fider aniqlanmadi');
-      if (!tc.canWriteMfy(mfyId)) return denied('Bu fiderga yozish huquqingiz yo‘q');
 
       const domain = asString(args['domain']);
       if (!domain || !(DOMAINS as readonly string[]).includes(domain)) {
@@ -1092,7 +1062,6 @@ export async function runTool(
     }
 
     case 'save_monthly_return': {
-      if (!tc.user) return denied('Ma’lumot kiritish uchun tizimga kirish kerak');
       const id = asNumber(args['submission_id']);
       if (id === undefined) return denied('Qoralama raqami kerak');
 
@@ -1101,8 +1070,6 @@ export async function runTool(
       if (sub.domain !== 'MONTHLY_RETURN') {
         return denied(`Bu qoralama "${sub.domain}" turida - bu asbob faqat MONTHLY_RETURN uchun`);
       }
-      if (!tc.canWriteMfy(sub.scopeId)) return denied('Bu hisobotga yozish huquqingiz yo‘q');
-
       /*
        * Mavjud qiymatlar ustiga yoziladi: model odatda faqat o'zgargan
        * maydonlarni beradi, `saveMonthlyReturn` esa TO'LIQ qatorni kutadi.
@@ -1140,7 +1107,6 @@ export async function runTool(
     case 'submit_submission':
     case 'approve_submission':
     case 'reject_submission': {
-      if (!tc.user) return denied('Bu amal uchun tizimga kirish kerak');
       const id = asNumber(args['id']);
       if (id === undefined) return denied('Hisobot raqami kerak');
 
@@ -1154,10 +1120,6 @@ export async function runTool(
         }
         const sub = await entry.changeStatus(tc.ctx, id, 'submitted', null);
         return { kind: 'data', result: { ok: true, submission: sub } };
-      }
-
-      if (tc.user.role !== 'admin' && tc.user.role !== 'elektroset_manager') {
-        return denied('Tasdiqlash va rad etish faqat elektroset menejeri va administrator uchun');
       }
 
       if (name === 'approve_submission') {
@@ -1176,16 +1138,6 @@ export async function runTool(
     case 'create_work': {
       const mfyId = asNumber(args['mfy_id']) ?? tc.feederId;
       if (mfyId === null || mfyId === undefined) return denied('Fider/MFY aniqlanmadi');
-
-      let writeCtx: AppContext;
-      if (tc.user) {
-        if (!tc.canWriteMfy(mfyId)) return denied('Bu fiderga yozish huquqingiz yo‘q');
-        writeCtx = tc.ctx;
-      } else {
-        const anon = await anonymousWriteContext();
-        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
-        writeCtx = anon;
-      }
 
       const workType = asString(args['work_type']);
       if (!workType || !(WORK_TYPES as readonly string[]).includes(workType)) {
@@ -1223,7 +1175,7 @@ export async function runTool(
         );
       }
 
-      const work = await q.createWork(writeCtx, parsed.data as Work);
+      const work = await q.createWork(tc.ctx, parsed.data as Work);
       return { kind: 'data', result: { ok: true, work } };
     }
 
@@ -1233,16 +1185,6 @@ export async function runTool(
 
       const current = await q.workDetail(tc.ctx, id);
       if (!current) return denied('Ish topilmadi');
-
-      let writeCtx: AppContext;
-      if (tc.user) {
-        if (!tc.canWriteMfy(current.mfyId)) return denied('Bu ishga yozish huquqingiz yo‘q');
-        writeCtx = tc.ctx;
-      } else {
-        const anon = await anonymousWriteContext();
-        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
-        writeCtx = anon;
-      }
 
       const status = asString(args['status']);
       if (!status || !(WORK_STATUSES as readonly string[]).includes(status)) {
@@ -1273,7 +1215,7 @@ export async function runTool(
         );
       }
 
-      const work = await q.updateWorkStatus(writeCtx, id, {
+      const work = await q.updateWorkStatus(tc.ctx, id, {
         status: merged.data.status,
         progressPct: merged.data.progressPct,
         actualEnd: merged.data.actualEnd ?? null,
@@ -1288,18 +1230,8 @@ export async function runTool(
       const tp = await resolveTpByCode(tc, code, period);
       if (!tp) return denied(`"${code}" nomli TP topilmadi`);
 
-      let writeCtx: AppContext;
-      if (tc.user) {
-        if (!tc.canWriteMfy(tp.mfyId)) return denied('Bu fiderga yozish huquqingiz yo‘q');
-        writeCtx = tc.ctx;
-      } else {
-        const anon = await anonymousWriteContext();
-        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
-        writeCtx = anon;
-      }
-
-      const sub = await entry.openDraft(writeCtx, tp.mfyId, 'TP_STATUS', period);
-      const existing = await entry.tpStatusRows(writeCtx, sub.id);
+      const sub = await entry.openDraft(tc.ctx, tp.mfyId, 'TP_STATUS', period);
+      const existing = await entry.tpStatusRows(tc.ctx, sub.id);
       const current = existing.find((r) => r.tpId === tp.tpId);
 
       /*
@@ -1327,7 +1259,7 @@ export async function runTool(
         );
       }
 
-      await entry.saveTpStatus(writeCtx, sub.id, parsed.data.rows);
+      await entry.saveTpStatus(tc.ctx, sub.id, parsed.data.rows);
       return {
         kind: 'data',
         result: { ok: true, submissionId: sub.id, tpCode: tp.code, saved: candidate },
@@ -1338,23 +1270,14 @@ export async function runTool(
       const mfyId = asNumber(args['mfy_id']) ?? tc.feederId;
       if (mfyId === null || mfyId === undefined) return denied('Fider/MFY aniqlanmadi');
 
-      let writeCtx: AppContext;
-      if (tc.user) {
-        if (!tc.canWriteMfy(mfyId)) return denied('Bu fiderga yozish huquqingiz yo‘q');
-        writeCtx = tc.ctx;
-      } else {
-        const anon = await anonymousWriteContext();
-        if (!anon) return denied('Yozish uchun administrator hisobi topilmadi');
-        writeCtx = anon;
-      }
 
       const voltageKv = asNumber(args['voltage_kv']);
       if (voltageKv === undefined) return denied('Kuchlanish klassi (voltage_kv) kerak');
       const repairNeededKm = asNumber(args['repair_needed_km']);
       if (repairNeededKm === undefined) return denied('repair_needed_km kerak');
 
-      const sub = await entry.openDraft(writeCtx, mfyId, 'NETWORK_DEFECT', period);
-      const existing = await entry.networkDefectRows(writeCtx, sub.id);
+      const sub = await entry.openDraft(tc.ctx, mfyId, 'NETWORK_DEFECT', period);
+      const existing = await entry.networkDefectRows(tc.ctx, sub.id);
       const current = existing.find((r) => r.voltageKv === voltageKv);
 
       const candidate = {
@@ -1370,7 +1293,7 @@ export async function runTool(
         );
       }
 
-      await entry.saveNetworkDefect(writeCtx, sub.id, parsed.data.rows);
+      await entry.saveNetworkDefect(tc.ctx, sub.id, parsed.data.rows);
       return { kind: 'data', result: { ok: true, submissionId: sub.id, saved: candidate } };
     }
 

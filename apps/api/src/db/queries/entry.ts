@@ -8,7 +8,7 @@ import type {
   CompletenessCell, Domain, EnergyBalanceDay, MonthlyReturn, NetworkDefect, Submission,
   SubmissionDiffRow, SubmissionStatus, TpStatus, ValidationIssue, ValidationReport,
 } from '@beap/shared';
-import { DOMAINS, balanceTolerance, canTransition } from '@beap/shared';
+import { DOMAINS, canTransition } from '@beap/shared';
 import type pg from 'pg';
 
 import { type AppContext, isPgError, query, queryOne, withTransaction } from '../pool.ts';
@@ -181,16 +181,12 @@ export async function changeStatus(
 
 export async function energyBalanceRows(ctx: AppContext, submissionId: number): Promise<EnergyBalanceDay[]> {
   const rows = await query<Record<string, unknown>>(
-    `SELECT biz_date::text, kwh_in, kwh_sold, kwh_loss_natural,
-            kwh_loss_technical, kwh_loss_illegal, note
+    `SELECT biz_date::text, kwh_in, kwh_sold, note
      FROM fact.energy_balance_daily
      WHERE submission_id = $1 ORDER BY biz_date`, [submissionId], ctx);
 
   return rows.map((r) => ({
     bizDate: String(r['biz_date']), kwhIn: Number(r['kwh_in']), kwhSold: Number(r['kwh_sold']),
-    kwhLossNatural: Number(r['kwh_loss_natural']),
-    kwhLossTechnical: Number(r['kwh_loss_technical']),
-    kwhLossIllegal: Number(r['kwh_loss_illegal']),
     note: (r['note'] as string | null) ?? null,
   }));
 }
@@ -272,15 +268,13 @@ export async function saveEnergyBalance(
 
     const params: unknown[] = [];
     const tuples = rows.map((r) => {
-      params.push(submissionId, mfyId, r.bizDate, r.kwhIn, r.kwhSold,
-        r.kwhLossNatural, r.kwhLossTechnical, r.kwhLossIllegal, r.note ?? null);
-      const base = params.length - 9;
-      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9})`;
+      params.push(submissionId, mfyId, r.bizDate, r.kwhIn, r.kwhSold, r.note ?? null);
+      const base = params.length - 6;
+      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6})`;
     });
     await client.query(
       `INSERT INTO fact.energy_balance_daily
-         (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-          kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal, note)
+         (submission_id, mfy_id, biz_date, kwh_in, kwh_sold, note)
        VALUES ${tuples.join(',')}`, params);
 
     await client.query('UPDATE fact.submission SET updated_at = now() WHERE id = $1', [submissionId]);
@@ -411,14 +405,6 @@ export async function validateSubmission(
           message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p',
         });
       }
-      const total = r.kwhIn - r.kwhSold;
-      const parts = r.kwhLossNatural + r.kwhLossTechnical + r.kwhLossIllegal;
-      if (Math.abs(total - parts) > balanceTolerance(r.kwhIn)) {
-        issues.push({
-          path: 'kwhLossTechnical', rowKey: r.bizDate, severity: 'error',
-          message: `Yo‘qotish tarkibi jamiga mos emas: ${parts.toFixed(1)} ≠ ${total.toFixed(1)} kWh`,
-        });
-      }
     }
 
     if (filled < expected) {
@@ -502,9 +488,7 @@ const FIELD_LABELS: Record<string, string> = {
   meters_replaced_cnt: 'Almashtirilgan',
   kwh_in: 'Tarmoqqa kirgan energiya',
   kwh_sold: 'Foydali oqim',
-  kwh_loss_natural: 'Tabiiy yo‘qotish',
-  kwh_loss_technical: 'Texnik yo‘qotish',
-  kwh_loss_illegal: 'Noqonuniy foydalanish',
+  kwh_loss_total: 'Yo‘qotish',
 };
 
 export async function submissionDiff(

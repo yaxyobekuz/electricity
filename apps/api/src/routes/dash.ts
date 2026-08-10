@@ -121,10 +121,10 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return last ? rows.slice(-last) : rows;
   });
 
-  app.get('/district/loss-structure', async (req) => {
+  app.get('/district/energy-split', async (req) => {
     const { period } = periodQ.parse(req.query);
     const p = await resolvePeriod(req.ctx, period);
-    return p ? q.lossStructure(req.ctx, p) : null;
+    return p ? q.energySplit(req.ctx, p) : null;
   });
 
   app.get('/district/violations', async (req) => {
@@ -151,7 +151,6 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
    */
   app.post(
     '/work',
-    { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },
     async (req, reply) => {
       const parsed = workSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -159,9 +158,6 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
           error: 'validation',
           message: parsed.error.issues.map((i) => i.message).join('; '),
         });
-      }
-      if (!app.assertMfyWrite(req, parsed.data.mfyId)) {
-        return reply.code(403).send({ error: 'forbidden', message: 'Bu fiderga yozish huquqingiz yo‘q' });
       }
 
       const row = await q.createWork(req.ctx, parsed.data as Work);
@@ -181,14 +177,10 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
    */
   app.patch(
     '/work/:id/status',
-    { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       const current = await q.workDetail(req.ctx, id);
       if (!current) return reply.code(404).send({ error: 'not_found', message: 'Ish topilmadi' });
-      if (!app.assertMfyWrite(req, current.mfyId)) {
-        return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
-      }
 
       const patch = z.object({
         status: z.enum(WORK_STATUSES),
@@ -297,11 +289,11 @@ const dashRoutes: FastifyPluginAsync = async (app) => {
     return p ? q.tpMonitoring(req.ctx, p, id, 500) : [];
   });
 
-  app.get('/mfy/:id/loss-structure', async (req) => {
+  app.get('/mfy/:id/energy-split', async (req) => {
     const { id } = idParam.parse(req.params);
     const { period } = periodQ.parse(req.query);
     const p = await resolvePeriod(req.ctx, period);
-    return p ? q.lossStructure(req.ctx, p, id) : null;
+    return p ? q.energySplit(req.ctx, p, id) : null;
   });
 
   app.get('/mfy/:id/debt', async (req) => {

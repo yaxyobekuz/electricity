@@ -145,13 +145,9 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
     lines.push('ENERGIYA BALANSI (fider boshidagi hisoblagich bo‘yicha):');
     lines.push(`  Kirgan energiya: ${n(feederMonthly.kwhIn)} kWh`);
     lines.push(`  Foydali oqim (TP hisoblagichlari yig‘indisi): ${n(feederMonthly.kwhTpSum)} kWh`);
-    lines.push(`  Texnologik yo‘qotish: ${n(feederMonthly.kwhTechLoss)} kWh`);
-    lines.push(`  Tijoriy yo‘qotish: ${n(feederMonthly.kwhCommercialLoss)} kWh`);
     lines.push(
-      `  Jami yo‘qotish: ${n(feederMonthly.kwhTechLoss + feederMonthly.kwhCommercialLoss)} kWh`
-      + ` (${p(feederMonthly.kwhIn > 0
-        ? ((feederMonthly.kwhTechLoss + feederMonthly.kwhCommercialLoss) / feederMonthly.kwhIn) * 100
-        : null)})`,
+      `  Yo‘qotish: ${n(feederMonthly.kwhLoss)} kWh`
+      + ` (${p(feederMonthly.kwhIn > 0 ? (feederMonthly.kwhLoss / feederMonthly.kwhIn) * 100 : null)})`,
     );
     lines.push(`  Hisoblagich: ${n(feederMonthly.meterPrev, 1)} → ${n(feederMonthly.meterCurr, 1)}, koeffitsient ${feederMonthly.meterCoef}`);
     lines.push(`  O‘rtacha kunlik iste'mol: ${n(feederMonthly.avgDailyKwh)} kWh · o‘rtacha yuklama: ${n(feederMonthly.avgLoadKw)} kW`);
@@ -163,8 +159,8 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
     lines.push('ISTE\'MOLCHILAR:');
     lines.push(`  Jami: ${n(t.consumers_total)} · faol: ${n(t.consumers_active)} · uzilgan: ${n(t.consumers_disconnected)}`);
     lines.push(`  Transformator punktlari (TP): ${n(t.tp_total)} ta`);
-    if (t.technical_std_pct !== null) {
-      lines.push(`  Texnologik yo‘qotish me'yori: ${p(t.technical_std_pct)}`);
+    if (t.total_loss_target_pct !== null) {
+      lines.push(`  Yo‘qotish maqsadi: ${p(t.total_loss_target_pct)}`);
     }
     lines.push('');
   }

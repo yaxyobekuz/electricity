@@ -404,8 +404,9 @@ export async function generateSeed(
     cfg.profiles[m.profile] ?? cfg.profiles['normal']!;
 
   // ── 2b. Foydalanuvchi hududlari (sec.user_scope) ─────────────────────────
-  // Busiz MFY operatori HECH NARSA yoza olmaydi: API `assertMfyWrite` ni ham,
-  // Postgres RLS siyosatini ham o'tolmaydi.
+  // Tizimda kirish yo'q, lekin `sec.app_user` qatorlari SAQLANADI: audit
+  // jurnali va `created_by` kabi NOT NULL chet kalitlar shu jadvalga tayanadi
+  // (`apps/api/src/plugins/context.ts` demo aktorni shundan oladi).
   log('Foydalanuvchi hududlari…');
   const idxByCode = new Map(cfg.mfys.map((m, i) => [m.code, i]));
   const operatorScopes: [string, string][] = [
@@ -804,20 +805,21 @@ export async function generateSeed(
 
         const in2 = r2(Math.max(kwhIn, 1));
 
+        /*
+         * Uchta komponent SAQLANMAYDI - ular faqat yo'qotish darajasini
+         * ishonarli shakllantiradi (tarmoq holati, mavsum, noqonuniy ulanish
+         * cho'qqisi). Bazaga yagona yo'qotish tushadi: kirgan − sotilgan.
+         */
         lossNoise[idx] = lossNoise[idx]! * 0.75 + gauss(0, 0.35);
         const natPct = clamp(dl.nat * (profLoss * 0.35 + 0.65), 0.5, 9);
         const techPct = clamp(dl.tech * profLoss, 0.5, 14);
         const illPct = clamp(dl.ill * profLoss * winterSpike, 0.05, 16);
         const totalPct = clamp(natPct + techPct + illPct + lossNoise[idx]!, 1.5, 34);
-        const scale = totalPct / (natPct + techPct + illPct);
 
         const lossTotal2 = r2((in2 * totalPct) / 100);
         const sold2 = r2(in2 - lossTotal2);
-        const nat2 = r2((in2 * natPct * scale) / 100);
-        const tech2 = r2((in2 * techPct * scale) / 100);
-        const ill2 = r2(lossTotal2 - nat2 - tech2);
 
-        ebRows.push([ebSub, mfyIds[idx], dstr, in2, sold2, nat2, tech2, Math.max(0, ill2)]);
+        ebRows.push([ebSub, mfyIds[idx], dstr, in2, sold2]);
         monthIn += in2;
         monthLoss += lossTotal2;
       }
@@ -900,8 +902,7 @@ export async function generateSeed(
 
   await bulkInsert(
     client, 'fact.energy_balance_daily',
-    ['submission_id', 'mfy_id', 'biz_date', 'kwh_in', 'kwh_sold',
-     'kwh_loss_natural', 'kwh_loss_technical', 'kwh_loss_illegal'],
+    ['submission_id', 'mfy_id', 'biz_date', 'kwh_in', 'kwh_sold'],
     ebRows,
   );
   rowCounts['fact.energy_balance_daily'] = ebRows.length;
@@ -1043,7 +1044,7 @@ export async function generateSeed(
   rowCounts['fact.work'] = workRows.length;
 
   // ── 9. Dalolatnomalar ────────────────────────────────────────────────────
-  // Pasport 10b: aniqlangan yo'qotish tijoriy yo'qotishning ~39% i (4,923 / 12,642).
+  // Pasport 10b: aniqlangan yo'qotish umumiy yo'qotishning ~39% i (4,923 / 12,642).
   const vaRows: unknown[][] = [];
   let actNo = 1;
   for (const [idx, m] of cfg.mfys.entries()) {
@@ -1099,15 +1100,11 @@ export async function generateSeed(
         const in2 = r2(districtDailyBase * share * seasonal(d) * weekly(d) * (1 + gauss(0, 0.04)));
         const lossTotal2 = r2(in2 * 0.061);
         const sold2 = r2(in2 - lossTotal2);
-        const nat2 = r2(lossTotal2 * 0.52);
-        const tech2 = r2(lossTotal2 * 0.33);
-        const ill2 = r2(lossTotal2 - nat2 - tech2);
-        rows.push([sub, mfyIds[reviewIdx], dstr, in2, sold2, nat2, tech2, Math.max(0, ill2)]);
+        rows.push([sub, mfyIds[reviewIdx], dstr, in2, sold2]);
       }
       await bulkInsert(
         client, 'fact.energy_balance_daily',
-        ['submission_id', 'mfy_id', 'biz_date', 'kwh_in', 'kwh_sold',
-         'kwh_loss_natural', 'kwh_loss_technical', 'kwh_loss_illegal'],
+        ['submission_id', 'mfy_id', 'biz_date', 'kwh_in', 'kwh_sold'],
         rows,
       );
       rowCounts['fact.energy_balance_daily'] = (rowCounts['fact.energy_balance_daily'] ?? 0) + rows.length;

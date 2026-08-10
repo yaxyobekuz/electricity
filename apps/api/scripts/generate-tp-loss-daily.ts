@@ -34,7 +34,7 @@ const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.m
 const FROM = '2026-07-01';
 /** Fider kodi — `load-feeder-data.ts` shu kod bilan yozadi (`mfy_id` qat'iy emas). */
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
-const TECH_NORM_PCT = 3.2; // ref.norm_value('TECHNICAL_LOSS_PCT', 25, ...) bilan tasdiqlangan
+const TECH_NORM_PCT = 3.2; // TP darajasidagi chiziqli yo'qotish uchun kutilgan daraja
 const MIN_BASELINE_KWH = 30; // kwh_month=0 bo'lgan TP uchun (masalan TP-039) pastki chegara
 
 interface Anchor { date: string; lossPct: number }

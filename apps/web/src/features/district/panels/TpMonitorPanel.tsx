@@ -56,7 +56,7 @@ export function TpMonitorPanel({
             /*
               Rang - ALOQADAN CHIQQAN abonentlar ulushiga qarab. Bu hisobotda
               bor yagona "muammo" signali: hisoblagichi aloqaga chiqmagan
-              abonent - tijoriy yo'qotishning bevosita manbai.
+              abonent - yo'qotishning bevosita manbai.
             */
             const offColor = offShare >= 10 ? t.status.critical
               : offShare >= 5 ? t.status.warning

@@ -473,12 +473,12 @@ export async function buildTpRankingChart(
   return canvas.toBuffer('image/png');
 }
 
-/** Yo'qotish tuzilmasi - foydali oqim / texnologik / tijoriy, donut ko'rinishida. */
+/** Energiya taqsimoti - foydali oqim va yo'qotish, donut ko'rinishida. */
 export async function buildLossBreakdownChart(
   ctx: AppContext, feederId: number | null, period: string,
 ): Promise<Buffer> {
   const { canvas, ctx: c } = newCanvas();
-  const title = 'Yo‘qotish tuzilmasi';
+  const title = 'Energiya taqsimoti';
 
   /*
    * `feederMonthly` FIDER darajasidagi kirish hisoblagichiga bog'liq -
@@ -504,8 +504,7 @@ export async function buildLossBreakdownChart(
     title,
     slices: [
       { label: 'Foydali oqim', value: fm.kwhTpSum, color: COLORS.green },
-      { label: 'Texnologik yo‘qotish', value: fm.kwhTechLoss, color: COLORS.amber },
-      { label: 'Tijoriy yo‘qotish', value: fm.kwhCommercialLoss, color: COLORS.danger },
+      { label: 'Yo‘qotish', value: fm.kwhLoss, color: COLORS.danger },
     ],
   });
   return canvas.toBuffer('image/png');

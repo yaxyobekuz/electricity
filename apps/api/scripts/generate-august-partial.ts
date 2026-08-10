@@ -22,7 +22,6 @@ import pg from 'pg';
 
 import { config } from '../src/config.ts';
 
-const TECH_LOSS_RATE = 0.12; // load-feeder-data.ts bilan bir xil norma
 const PREV_PERIOD = '2026-07-01';
 const PREV_DAYS = 31; // iyul
 const PERIOD = '2026-08';
@@ -114,10 +113,10 @@ async function main(): Promise<void> {
     const julyFeeder = await c.query<{
       substation: string | null; input_name: string | null;
       meter_prev: number; meter_curr: number; meter_coef: number;
-      kwh_in: number; kwh_tech_loss: number;
+      kwh_in: number;
     }>(
       `SELECT substation, input_name, meter_prev::float8 AS meter_prev, meter_curr::float8 AS meter_curr,
-              meter_coef::float8 AS meter_coef, kwh_in::float8 AS kwh_in, kwh_tech_loss::float8 AS kwh_tech_loss
+              meter_coef::float8 AS meter_coef, kwh_in::float8 AS kwh_in
          FROM fact.feeder_monthly WHERE mfy_id = $1 AND period_month = $2::date`,
       [mfyId, PREV_PERIOD],
     );
@@ -207,15 +206,13 @@ async function main(): Promise<void> {
 
     /*
      * Fider balansi - `kwhIn` iyuldan TO'G'RIDAN-TO'G'RI (5/31 ulush) hisoblanadi,
-     * TP yig'indisidan EMAS - aks holda tijoriy yo'qotish sun'iy deyarli
-     * nolga tushib qolardi (avvalgi urinishda shunday bo'lgan: 30.9% o'rniga
-     * 14% chiqqan). Shu tarzda iyulning yo'qotish profili (≈31%) avgustda ham
-     * taxminan saqlanadi - "muammo davom etyapti" degan izchil manzara.
+     * TP yig'indisidan EMAS - aks holda yo'qotish sun'iy deyarli nolga tushib
+     * qolardi (avvalgi urinishda shunday bo'lgan: 30.9% o'rniga 14% chiqqan).
+     * Shu tarzda iyulning yo'qotish profili (≈31%) avgustda ham taxminan
+     * saqlanadi - "muammo davom etyapti" degan izchil manzara.
      */
     const kwhTpSum = Number(augTps.reduce((a, t) => a + t.augKwh, 0).toFixed(2));
     const kwhIn = Number((july.kwh_in * SCALE * globalDrift).toFixed(2));
-    const techLoss = Number((kwhIn * TECH_LOSS_RATE).toFixed(2));
-    const commercialLoss = Math.max(0, Number((kwhIn - kwhTpSum - techLoss).toFixed(2)));
     const meterCoef = july.meter_coef;
     const meterPrev = july.meter_curr;
     const meterCurr = Number((meterPrev + kwhIn / (meterCoef || 1)).toFixed(2));
@@ -223,32 +220,26 @@ async function main(): Promise<void> {
     await c.query(
       `INSERT INTO fact.feeder_monthly
          (mfy_id, period_month, substation, input_name, meter_prev, meter_curr, meter_coef,
-          kwh_in, kwh_tp_sum, kwh_tech_loss, kwh_commercial_loss)
-       VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          kwh_in, kwh_tp_sum)
+       VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, $9)`,
       [mfyId, FROM_DATE, july.substation, july.input_name, meterPrev, meterCurr, meterCoef,
-        kwhIn, kwhTpSum, techLoss, commercialLoss],
+        kwhIn, kwhTpSum],
     );
 
     // ── 5. Kunlik taqsimot (5 kun) ────────────────────────────────────────
     const inDaily = split(kwhIn, DAY_WEIGHTS);
     const soldDaily = split(kwhTpSum, DAY_WEIGHTS);
-    const lossDaily = inDaily.map((v, d) => v - Math.min(soldDaily[d]!, v));
-    const techDaily = split(techLoss, lossDaily.map((v) => Math.max(v, 1)));
 
     for (let d = 0; d < DAYS; d += 1) {
       const date = `${PERIOD}-${String(d + 1).padStart(2, '0')}`;
       const dayIn = inDaily[d]!;
       const daySold = Math.min(soldDaily[d]!, dayIn);
-      const loss = dayIn - daySold;
-      const technical = Math.min(techDaily[d]!, loss);
-      const illegal = loss - technical;
 
       await c.query(
         `INSERT INTO fact.energy_balance_daily
-           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-            kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal)
-         VALUES ($1, $2, $3::date, $4, $5, 0, $6, $7)`,
-        [subIds.get('ENERGY_BALANCE'), mfyId, date, dayIn, daySold, technical, illegal],
+           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
+         VALUES ($1, $2, $3::date, $4, $5)`,
+        [subIds.get('ENERGY_BALANCE'), mfyId, date, dayIn, daySold],
       );
     }
 

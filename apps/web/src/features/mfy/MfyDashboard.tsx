@@ -4,9 +4,9 @@
  * JOYLASHUV - mijoz bergan maketning aynan o'zi:
  *
  *   yuqori chiziq │ sarlavha + yo'l ····· davr tanlagich · hisobot · global
- *   1-qator       │ 8 ta KPI kartasi (bir xil o'lchamda, rangli fon bilan)
+ *   1-qator       │ KPI kartalari (bir xil o'lchamda, rangli fon bilan)
  *   2-qator       │ Dinamika (4) │ Quvvat (3) │ Abonentlar (3) │ 4 ko'rsatkich (2)
- *   3-qator       │ Transformatorlar (4) │ Yo'qotish (3) │ Qarzdorlik (3) │ Tezkor (2)
+ *   3-qator       │ Transformatorlar (4) │ Taqsimot (3) │ Qarzdorlik (3) │ Tezkor (2)
  *   4-qator       │ Bajarilgan (3) │ Reja (3) │ Natijadorlik (3) │ Hisobotlar (3)
  *   5-qator       │ TP balans hisoblagichi - kunlik (12, to'liq kenglik)
  *
@@ -32,7 +32,6 @@ import {
   Building2,
   CircleDollarSign,
   Gauge as GaugeIcon,
-  Leaf,
   Phone,
   PowerOff,
   TrendingDown,
@@ -44,7 +43,6 @@ import {
   ZapOff,
 } from "lucide-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { Donut } from "../../components/charts/Donut.tsx";
@@ -79,7 +77,7 @@ import {
   useMfyConsumers,
   useMfyDebt,
   useMfyDynamics,
-  useMfyLossStructure,
+  useMfyEnergySplit,
   useMfyOverview,
   useMfyResponsible,
   useMfyResults,
@@ -98,8 +96,7 @@ import { AskAiButton } from "../../components/ai/AskAiButton.tsx";
 const TILE_ICONS: Record<string, React.ReactNode> = {
   kwhIn: <Zap className="size-4" />,
   kwhSold: <CircleDollarSign className="size-4" />,
-  lossPct: <Activity className="size-4" />,
-  naturalPct: <Leaf className="size-4" />,
+  kwhLossTotal: <Activity className="size-4" />,
   consumersTotal: <UsersRound className="size-4" />,
   consumersActive: <Users className="size-4" />,
   consumersDisconnected: <ZapOff className="size-4" />,
@@ -109,8 +106,7 @@ const TILE_ICONS: Record<string, React.ReactNode> = {
 const TILE_TONES: Record<string, Tone> = {
   kwhIn: "blue",
   kwhSold: "green",
-  lossPct: "orange",
-  naturalPct: "purple",
+  kwhLossTotal: "orange",
   consumersTotal: "pink",
   consumersActive: "sky",
   consumersDisconnected: "amber",
@@ -118,7 +114,6 @@ const TILE_TONES: Record<string, Tone> = {
 };
 
 export default function MfyDashboard() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const params = useParams();
   const boot = useBootstrap();
@@ -145,7 +140,7 @@ export default function MfyDashboard() {
     ...(asOfDate ? { to: asOfDate } : {}),
   });
   const consumers = useMfyConsumers(mfyId, period ?? undefined);
-  const lossStructure = useMfyLossStructure(mfyId, period ?? undefined);
+  const energySplit = useMfyEnergySplit(mfyId, period ?? undefined);
   const debt = useMfyDebt(mfyId, period ?? undefined);
   const works = useMfyWorks(mfyId);
   const results = useMfyResults(mfyId, period ?? undefined);
@@ -214,9 +209,7 @@ export default function MfyDashboard() {
    * aniq tarif kelguncha.
    */
   const avgBillSum = avgPerConsumer * days * 450;
-  const technological = lossStructure.data?.parts.find(
-    (p) => p.key === "technological",
-  );
+  const lossPart = energySplit.data?.parts.find((p) => p.key === "loss");
 
   const completed = (works.data ?? []).filter((w) => w.status === "COMPLETED");
   /*
@@ -260,15 +253,24 @@ export default function MfyDashboard() {
           </>
         }
         breadcrumbs={[
-          { label: "НИМ станция Чинобод", to: "/dashboard" },
+          { label: "NIM stansiya Chinobod", to: "/dashboard" },
           { label: mfy.elektrosetName },
           { label: mfy.nameUz },
         ]}
         title={mfy.nameUz}
       />
 
-      {/* ═══ 1-QATOR: 8 ta KPI kartasi ═══════════════════════════════════ */}
-      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+      {/*
+       * ═══ 1-QATOR: KPI kartalari ═════════════════════════════════════
+       *
+       * Ustunlar soni SERVER qaytargan plitkalar soniga tenglashtiriladi.
+       * Qat'iy son yozilsa (ilgari 8 edi) plitkalar ro'yxati o'zgarishi
+       * bilan qator yo bo'sh katak qoldiradi, yo kartalarni siqib qo'yadi.
+       */}
+      <div
+        className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-[repeat(var(--kpi-cols),minmax(0,1fr))]"
+        style={{ "--kpi-cols": overview.data.tiles.length } as React.CSSProperties}
+      >
         {overview.data.tiles.map((tile) => (
           <StatTile
             key={tile.key}
@@ -324,7 +326,7 @@ export default function MfyDashboard() {
               </div>
             </div>
           ) : (
-            <EmptyPanel message={t("common.noData")} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
 
@@ -389,7 +391,7 @@ export default function MfyDashboard() {
               </div>
             </div>
           ) : (
-            <EmptyPanel message={t("common.noData")} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
 
@@ -407,7 +409,7 @@ export default function MfyDashboard() {
                 to={violations.data.to}
               />
             ) : (
-              <EmptyPanel message={t("common.noData")} />
+              <EmptyPanel message="Ma’lumot yo‘q" />
             )}
           </Panel>
 
@@ -483,12 +485,12 @@ export default function MfyDashboard() {
           <MiniStat
             className="flex-1"
             compact
-            hint={`Ulushi: ${pct(technological?.pct ?? 0, 1)}`}
+            hint={`Ulushi: ${pct(lossPart?.pct ?? 0, 1)}`}
             icon={<Activity className="size-4" />}
-            label="Texnologik yo‘qotish"
+            label="Yo‘qotish"
             tone="warning"
-            unit={energy(technological?.kwh ?? 0).unit}
-            value={num(energy(technological?.kwh ?? 0).value, 1)}
+            unit={energy(lossPart?.kwh ?? 0).unit}
+            value={num(energy(lossPart?.kwh ?? 0).value, 1)}
           />
         </div>
       </div>
@@ -523,18 +525,18 @@ export default function MfyDashboard() {
         <Panel
           className="xl:col-span-3"
           footerAction={{ label: "Batafsil tahlil", to: "/losses" }}
-          title="Yo‘qotishlar tuzilmasi"
+          title="Energiya taqsimoti"
         >
-          {lossStructure.data ? (
+          {energySplit.data ? (
             <Donut
-              centerLabel="jami"
-              centerUnit={energy(lossStructure.data.totalKwh).unit}
-              centerValue={num(energy(lossStructure.data.totalKwh).value, 1)}
+              centerLabel="kirgan"
+              centerUnit={energy(energySplit.data.kwhIn).unit}
+              centerValue={num(energy(energySplit.data.kwhIn).value, 1)}
               csvName={`${mfy.code}-yoqotish`}
               formatValue={(v) => energy(v).text}
               height={172}
               legendSide
-              slices={lossStructure.data.parts.map((p) => ({
+              slices={energySplit.data.parts.map((p) => ({
                 id: p.key,
                 label: p.labelUz,
                 value: p.kwh,
@@ -542,7 +544,7 @@ export default function MfyDashboard() {
               }))}
             />
           ) : (
-            <EmptyPanel message={t("common.noData")} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
 
@@ -568,7 +570,7 @@ export default function MfyDashboard() {
               }))}
             />
           ) : (
-            <EmptyPanel message={t("common.noData")} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
 
@@ -613,7 +615,7 @@ export default function MfyDashboard() {
               />
             </div>
           ) : (
-            <EmptyPanel message={t("common.noData")} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
       </div>
@@ -773,7 +775,7 @@ export default function MfyDashboard() {
               </div>
             </div>
           ) : (
-            <EmptyPanel message={t("common.noData")} />
+            <EmptyPanel message="Ma’lumot yo‘q" />
           )}
         </Panel>
 
@@ -786,7 +788,7 @@ export default function MfyDashboard() {
         ═══ 5-QATOR: TP balans hisoblagichi (kunlik) ═══
 
         Mijoz maketida yo'q - YANGI, alohida qator: fider oylik balansidan
-        farqli, TP darajasidagi kunlik ma'lumot (elektroset "хатlov"
+        farqli, TP darajasidagi kunlik ma'lumot (elektroset "xatlov"
         hisobotidan). Faqat balans hisoblagichi ishlaydigan TP lar uchun
         mavjud - 51 tadan bir nechtasi, shu sababli EmptyPanel odatiy holat.
       */}
@@ -821,7 +823,7 @@ export default function MfyDashboard() {
                 height={180}
                 labels={{
                   kwhIn: "Balans hisoblagichi",
-                  kwhSold: "Bириктирилган iste’molchilar",
+                  kwhSold: "Biriktirilgan iste’molchilar",
                   kwhLoss: "Yo‘qotish",
                 }}
                 points={tpLossSeries.data}

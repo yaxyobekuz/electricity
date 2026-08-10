@@ -67,28 +67,13 @@ async function run(client: pg.PoolClient, ctx: Ctx, c: Case): Promise<void> {
 const CASES: Case[] = [
   {
     // Sotilgan > kirim bo'lganda yo'qotish MANFIY bo'lib qoladi, tarkib esa
-    // manfiy bo'la olmaydi - shu sababli qator ikkala cheklovni bir vaqtda
-    // buzadi. Muhimi: qator RAD ETILADI.
     name: 'Sotilgan energiya kirimdan ko‘p bo‘la olmaydi',
-    expect: ['eb_sold_le_in', 'eb_components'],
+    expect: 'eb_sold_le_in',
     run: (c, x) =>
       c.query(
         `INSERT INTO fact.energy_balance_daily
-           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-            kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal)
-         VALUES ($1, $2, CURRENT_DATE - 400, 1000, 1200, 0, 0, 0)`,
-        [x.submissionId, x.mfyId],
-      ),
-  },
-  {
-    name: 'Yo‘qotish tarkibi jamiga mos kelishi shart',
-    expect: 'eb_components',
-    run: (c, x) =>
-      c.query(
-        `INSERT INTO fact.energy_balance_daily
-           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-            kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal)
-         VALUES ($1, $2, CURRENT_DATE - 401, 1000, 900, 10, 10, 10)`,
+           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
+         VALUES ($1, $2, CURRENT_DATE - 400, 1000, 1200)`,
         [x.submissionId, x.mfyId],
       ),
   },
@@ -98,23 +83,21 @@ const CASES: Case[] = [
     run: (c, x) =>
       c.query(
         `INSERT INTO fact.energy_balance_daily
-           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-            kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal)
-         VALUES ($1, $2, CURRENT_DATE + 5, 1000, 900, 100, 0, 0)`,
+           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
+         VALUES ($1, $2, CURRENT_DATE + 5, 1000, 900)`,
         [x.submissionId, x.mfyId],
       ),
   },
   {
-    // Balans ayniyatini BUZMAYDIGAN manfiy qiymat: kirim = sotilgan = −50,
-    // demak yo'qotish 0 va tarkib 0 - faqat "manfiy bo'lmasin" cheklovi qoladi.
+    // Kirim = sotilgan = −50, demak yo'qotish 0 - faqat "manfiy bo'lmasin"
+    // cheklovi ishga tushadi.
     name: 'Manfiy energiya qiymati qabul qilinmaydi',
     expect: ['kwh_in', 'kwh_sold'],
     run: (c, x) =>
       c.query(
         `INSERT INTO fact.energy_balance_daily
-           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold,
-            kwh_loss_natural, kwh_loss_technical, kwh_loss_illegal)
-         VALUES ($1, $2, CURRENT_DATE - 402, -50, -50, 0, 0, 0)`,
+           (submission_id, mfy_id, biz_date, kwh_in, kwh_sold)
+         VALUES ($1, $2, CURRENT_DATE - 402, -50, -50)`,
         [x.submissionId, x.mfyId],
       ),
   },
@@ -234,7 +217,7 @@ const CASES: Case[] = [
       c.query(
         `INSERT INTO ref.norm
            (scope_type, scope_id, metric, value_num, unit, effective_from)
-         VALUES ('TUMAN', NULL, 'NATURAL_LOSS_PCT', 9.9, '%', '2025-01-01')`,
+         VALUES ('TUMAN', NULL, 'TOTAL_LOSS_TARGET_PCT', 9.9, '%', '2025-01-01')`,
       ),
   },
   {

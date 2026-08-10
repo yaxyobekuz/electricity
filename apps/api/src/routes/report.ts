@@ -117,11 +117,11 @@ const reportRoutes: FastifyPluginAsync = async (app) => {
     const per = period ?? (await q.latestPeriod(req.ctx));
     if (!per) return reply.code(404).send({ error: 'no_data', message: 'Ma’lumot topilmadi' });
 
-    const [overview, balance, cells, technical, debt] = await Promise.all([
+    const [overview, balance, cells, lossGaps, debt] = await Promise.all([
       q.districtOverview(req.ctx, per),
       q.energyBalance(req.ctx, per),
       q.lossMap(req.ctx, per),
-      q.technicalLoss(req.ctx, per),
+      q.lossGap(req.ctx, per),
       q.debtBreakdown(req.ctx, per),
     ]);
 
@@ -129,7 +129,7 @@ const reportRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(404).send({ error: 'no_data', message: 'Ma’lumot topilmadi' });
     }
 
-    const normByMfy = new Map(technical.map((r) => [r.mfyId, r]));
+    const normByMfy = new Map(lossGaps.map((r) => [r.mfyId, r]));
     const tot = overview.totals;
 
     const input: rep.PeriodReportInput = {

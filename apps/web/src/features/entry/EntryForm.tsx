@@ -12,7 +12,7 @@
  */
 import type { EnergyBalanceDay, MonthlyReturn, Submission, ValidationReport } from '@beap/shared';
 import {
-  DOMAIN_LABEL_UZ, balanceTolerance, dateDayMonth, num, periodDates, periodLabel, timeLabel,
+  DOMAIN_LABEL_UZ, dateDayMonth, num, periodDates, periodLabel, timeLabel,
 } from '@beap/shared';
 import {
   AlertDialog, Alert, Button, Chip, Description, Input, InputGroup, Label,
@@ -21,7 +21,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save, Send } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 
 import { ErrorState, LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
@@ -39,7 +38,6 @@ interface SubmissionResponse {
 }
 
 export default function EntryForm() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const params = useParams();
   const qc = useQueryClient();
@@ -98,11 +96,11 @@ export default function EntryForm() {
         actions={
           <Button size="sm" variant="ghost" onPress={() => void navigate('/entry')}>
             <ArrowLeft className="size-4" />
-            {t('common.back')}
+            {'Orqaga'}
           </Button>
         }
         breadcrumbs={[
-          { label: t('nav.entry'), to: '/entry' },
+          { label: 'Ma’lumot kiritish', to: '/entry' },
           { label: mfy?.nameUz ?? `MFY #${mfyId}` },
           { label: periodLabel(period) },
         ]}
@@ -181,10 +179,7 @@ function EnergyBalanceGrid({
   const [rows, setRows] = useState<Record<string, EnergyBalanceDay>>(() => {
     const map: Record<string, EnergyBalanceDay> = {};
     for (const d of dates) {
-      map[d] = {
-        bizDate: d, kwhIn: 0, kwhSold: 0,
-        kwhLossNatural: 0, kwhLossTechnical: 0, kwhLossIllegal: 0, note: null,
-      };
+      map[d] = { bizDate: d, kwhIn: 0, kwhSold: 0, note: null };
     }
     for (const r of initial) map[r.bizDate] = r;
     return map;
@@ -246,31 +241,13 @@ function EnergyBalanceGrid({
   };
 
   const totals = useMemo<BalanceTotals>(() => {
-    let kwhIn = 0, kwhSold = 0, lossParts = 0;
+    let kwhIn = 0, kwhSold = 0;
     for (const r of Object.values(rows)) {
       kwhIn += r.kwhIn;
       kwhSold += r.kwhSold;
-      lossParts += r.kwhLossNatural + r.kwhLossTechnical + r.kwhLossIllegal;
     }
-    return { kwhIn: r2(kwhIn), kwhSold: r2(kwhSold), lossTotal: r2(kwhIn - kwhSold), lossParts: r2(lossParts) };
+    return { kwhIn: r2(kwhIn), kwhSold: r2(kwhSold), lossTotal: r2(kwhIn - kwhSold) };
   }, [rows]);
-
-  /** Har bir kunning qoldig'ini texnik yo'qotishga taqsimlaydi. */
-  const fillRemainder = (): void => {
-    setRows((prev) => {
-      const next = { ...prev };
-      for (const [date, r] of Object.entries(prev)) {
-        if (r.kwhIn <= 0) continue;
-        const total = r2(r.kwhIn - r.kwhSold);
-        const parts = r2(r.kwhLossNatural + r.kwhLossIllegal);
-        const technical = Math.max(0, r2(total - parts));
-        next[date] = { ...r, kwhLossTechnical: technical };
-      }
-      scheduleSave(next);
-      return next;
-    });
-    toast.success('Qoldiq texnik yo‘qotishga taqsimlandi');
-  };
 
   const submitMutation = useMutation({
     mutationFn: () => api.post<Submission>(`/entry/submission/${submission.id}/submit`),
@@ -389,10 +366,7 @@ function EnergyBalanceGrid({
                 <th className="sticky left-0 z-20 w-24 bg-surface">Kun</th>
                 <th className="text-right">Tarmoqqa kirgan</th>
                 <th className="text-right">Foydali oqim</th>
-                <th className="text-right">Tabiiy</th>
-                <th className="text-right">Texnik</th>
-                <th className="text-right">Noqonuniy</th>
-                <th className="text-right">Jami yo‘qotish</th>
+                <th className="text-right">Yo‘qotish</th>
                 <th className="text-right">%</th>
               </tr>
             </thead>
@@ -400,13 +374,10 @@ function EnergyBalanceGrid({
               {dates.map((date) => {
                 const row = rows[date]!;
                 const lossTotal = r2(row.kwhIn - row.kwhSold);
-                const parts = r2(row.kwhLossNatural + row.kwhLossTechnical + row.kwhLossIllegal);
-                const mismatch =
-                  row.kwhIn > 0 && Math.abs(lossTotal - parts) > balanceTolerance(row.kwhIn);
                 const lossPct = row.kwhIn > 0 ? (lossTotal / row.kwhIn) * 100 : 0;
 
                 return (
-                  <tr key={date} className={mismatch ? 'bg-danger/5' : undefined}>
+                  <tr key={date}>
                     {/* Yil sarlavhada turibdi - har qatorda takrorlanmaydi. */}
                     <td className="sticky left-0 z-10 bg-surface font-medium">
                       {dateDayMonth(date)}
@@ -421,22 +392,6 @@ function EnergyBalanceGrid({
                       readOnly={readOnly}
                       value={row.kwhSold}
                       onChange={(v) => update(date, { kwhSold: v })}
-                    />
-                    <NumCell
-                      readOnly={readOnly}
-                      value={row.kwhLossNatural}
-                      onChange={(v) => update(date, { kwhLossNatural: v })}
-                    />
-                    <NumCell
-                      invalid={mismatch}
-                      readOnly={readOnly}
-                      value={row.kwhLossTechnical}
-                      onChange={(v) => update(date, { kwhLossTechnical: v })}
-                    />
-                    <NumCell
-                      readOnly={readOnly}
-                      value={row.kwhLossIllegal}
-                      onChange={(v) => update(date, { kwhLossIllegal: v })}
                     />
                     {/* HISOBLANADI - kiritilmaydi */}
                     <td className="num bg-surface-secondary font-semibold">
@@ -457,7 +412,6 @@ function EnergyBalanceGrid({
         savedAt={savedAt}
         saveState={saveState}
         totals={totals}
-        onFillRemainder={readOnly ? undefined : fillRemainder}
       />
 
       {Object.keys(fieldErrors).length > 0 && (

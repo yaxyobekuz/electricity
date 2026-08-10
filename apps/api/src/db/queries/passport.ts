@@ -81,8 +81,8 @@ export const PASSPORT_ROWS: RowSpec[] = [
     unit: 'km', column: 'tree_clearing_km', source: 'derived',
   },
   {
-    no: 10, labelUz: 'Tijoriy yo‘qotishlar', labelUzCyr: 'Тижорий йўқотишлар',
-    unit: 'ming kWh', column: 'commercial_loss_thsd_kwh', source: 'derived',
+    no: 10, labelUz: 'Yo‘qotishlar', labelUzCyr: 'Йўқотишлар',
+    unit: 'ming kWh', column: 'loss_thsd_kwh', source: 'derived',
     children: [
       { labelUz: 'shundan yo‘qotishlar aniqlandi', labelUzCyr: 'шундан йўқотишлар аниқланди', column: 'identified_loss_thsd_kwh' },
     ],

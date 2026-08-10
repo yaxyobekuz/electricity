@@ -116,13 +116,13 @@ export async function tpLossSeries(
   }));
 }
 
-/** Fider uchun texnologik yo'qotish normasi (%) - anomaliya chegarasi shundan hisoblanadi. */
+/** Fider uchun yo'qotish maqsadi (%) - anomaliya chegarasi shundan hisoblanadi. */
 export async function tpLossNorm(ctx: AppContext, mfyId: number, asOfDate: string): Promise<number> {
   const row = await queryOne<{ v: number | null }>(
-    `SELECT ref.norm_value('TECHNICAL_LOSS_PCT', $1, $2::date) AS v`,
+    `SELECT ref.norm_value('TOTAL_LOSS_TARGET_PCT', $1, $2::date) AS v`,
     [mfyId, asOfDate], ctx,
   );
-  return Number(row?.v ?? 3.2);
+  return Number(row?.v ?? 8.0);
 }
 
 export interface ResolvedTp {

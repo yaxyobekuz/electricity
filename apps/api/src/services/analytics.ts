@@ -160,7 +160,7 @@ async function computeDailyAnomalies(
 
 // ─── TP balans hisoblagichi anomaliyalari ───────────────────────────────────
 
-/** Yo'qotish % texnologik normadan necha marta oshsa 'medium' anomaliya. */
+/** Yo'qotish % maqsadli darajadan necha marta oshsa 'medium' anomaliya. */
 const LOSS_PCT_NORM_MULTIPLE = 3;
 
 /**
@@ -170,7 +170,7 @@ const LOSS_PCT_NORM_MULTIPLE = 3;
  *
  *   - Iste'molchilar yig'indisi balans hisoblagichidan KO'P (yo'qotish
  *     manfiy) - bu FIZIK JIHATDAN MUMKIN EMAS, shuning uchun har doim 'high'.
- *   - Yo'qotish % texnologik normadan 3 martadan ko'p oshgan (lekin manfiy
+ *   - Yo'qotish % maqsadli darajadan 3 martadan ko'p oshgan (lekin manfiy
  *     emas) - 'medium'.
  */
 export async function detectTpLossAnomalies(
@@ -206,7 +206,7 @@ export async function detectTpLossAnomalies(
         + `(${r.kwhBalanceMeter.toFixed(1)} kWh) KO'P - bu fizik jihatdan mumkin emas, `
         + `hisoblagich xatosi yoki noqonuniy ulanish ehtimolini tekshirish kerak.`
       : `${r.code} (${r.mfyName}): ${r.bizDate} kunida yo'qotish `
-        + `${(r.lossPct ?? 0).toFixed(1)}% - texnologik normadan `
+        + `${(r.lossPct ?? 0).toFixed(1)}% - maqsadli darajadan `
         + `(${normPct.toFixed(1)}%) sezilarli yuqori.`;
 
     anomalies.push({

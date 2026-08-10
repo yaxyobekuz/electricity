@@ -124,19 +124,22 @@ async function main(): Promise<void> {
       }
     }
 
-    // ── 3. Balans ayniyati har bir kunlik qatorda ─────────────────────────
+    /*
+     * ── 3. Balans ayniyati har bir kunlik qatorda ────────────────────────
+     *
+     * Yo'qotish tarkibga bo'linmaydi, shuning uchun tekshiriladigan yagona
+     * shart - sotilgan energiya kirganidan oshmasligi. Yo'qotishning o'zi
+     * generated ustun, ya'ni ayniyat ta'rifan bajariladi.
+     */
     const { rows: balRows } = await client.query<{ bad: string; total: string }>(`
       SELECT
-        count(*) FILTER (
-          WHERE abs((kwh_in - kwh_sold)
-                    - (kwh_loss_natural + kwh_loss_technical + kwh_loss_illegal))
-                > GREATEST(1.0, 0.005 * kwh_in)) AS bad,
+        count(*) FILTER (WHERE kwh_sold > kwh_in) AS bad,
         count(*) AS total
       FROM fact.energy_balance_daily
     `);
     const bad = Number(balRows[0]?.bad ?? 0);
     add(
-      'Balans ayniyati (kirim − sotilgan = tarkib)',
+      'Balans ayniyati (sotilgan <= kirim)',
       bad === 0,
       `${Number(balRows[0]?.total ?? 0)} qator tekshirildi, ${bad} ta buzilgan`,
     );
