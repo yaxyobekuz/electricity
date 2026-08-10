@@ -65,7 +65,21 @@ const FEEDER_CODE = 'FIDER-XAQULOBOD';
  * `null` = qiymat kelmagan; bunday holda TP hisoblagichlaridan yig'ilgan
  * o'lchov ishlatiladi va u kartada baribir ikkinchi darajada ko'rinadi.
  */
-const PERIODS = [
+interface PeriodSpec {
+  sheet: string;
+  period: string;
+  start: string;
+  end: string;
+  days: number;
+  /** Oy uchun biriktirilgan rasmiy qiymatlar; `null` = kelmagan. */
+  officialIn: number | null;
+  officialSold: number | null;
+  /** Abonentlar faylidagi ustun raqamlari. */
+  activeCol: number;
+  disconnectedCol: number;
+}
+
+const PERIODS: PeriodSpec[] = [
   {
     sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31',
     days: 31, officialIn: 1_048_000, officialSold: 722_507.7,
@@ -77,19 +91,20 @@ const PERIODS = [
     days: 10, officialIn: 252_000, officialSold: 201_426.3,
     activeCol: 8, disconnectedCol: 9,
   },
-] as const;
+];
 
 // ─── Excel yordamchilari ─────────────────────────────────────────────────────
 
-const val = (c: ExcelJS.Cell): string | number | null => {
+const val = (c: ExcelJS.Cell): unknown => {
   const v = c.value;
   if (v === null || v === undefined) return null;
+  if (v instanceof Date) return v;
   if (typeof v === 'object') {
     const o = v as { result?: unknown; text?: string };
-    if (o.result !== undefined) return o.result as string | number;
+    if (o.result !== undefined) return o.result;
     return o.text ?? null;
   }
-  return v as string | number;
+  return v;
 };
 
 const numOf = (c: ExcelJS.Cell): number => {
@@ -100,6 +115,27 @@ const numOf = (c: ExcelJS.Cell): number => {
 };
 
 const r2 = (x: number): number => Math.round(x * 100) / 100;
+
+/**
+ * Kunlik tejamkorlikni oyga keltirish koeffitsienti.
+ *
+ * 30 - kalendar oyning taxminiy uzunligi. Bu YAGONA taxmin: kunlik farqning
+ * o'zi o'lchangan, uni oyga yoyish esa "shu sur'at davom etadi" degan faraz.
+ * Shuning uchun karta raqamni "oyiga" deb ko'rsatadi.
+ */
+const DAYS_PER_MONTH = 30;
+
+/** Xatlov yozuvlarini keyin qayta topish uchun belgi. */
+const SOURCE_TAG = '[manba: xaqulobod_fider.xlsx · бир кунлик · xatlov]';
+
+/**
+ * `effect_loss_pct_*` ustunlarida `CHECK (... BETWEEN 0 AND 100)` turibdi,
+ * manba foizi esa nosoz hisoblagichli TP larda MANFIY. Bunday qatorda foiz
+ * NULL qoldiriladi: kWh dagi natija baribir yoziladi, foiz shakli esa bu
+ * holatga ma'nosiz. Yolg'on nol yozilmaydi.
+ */
+const pctOrNull = (x: number): number | null =>
+  x >= 0 && x <= 100 ? Number(x.toFixed(2)) : null;
 
 /**
  * TP kodini registr ko'rinishiga keltiradi.
@@ -197,6 +233,71 @@ function readConsumers(
   return out;
 }
 
+/** «Хатлов» - bitta TP ning tekshiruvdan oldingi va keyingi o'lchovi. */
+interface Inspection {
+  tp: string;
+  dateBefore: string;
+  dateAfter: string;
+  lossBefore: number;
+  lossAfter: number;
+  pctBefore: number;
+  pctAfter: number;
+  note: string | null;
+}
+
+/**
+ * Sana katagi uch xil kelishi mumkin: formula natijasi sifatida `Date`,
+ * ISO satr yoki «01/08/2026» ko'rinishidagi matn.
+ */
+const asDate = (v: unknown): string | null => {
+  if (v === null || v === undefined) return null;
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  const s = String(v).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+};
+
+/**
+ * «бир кунлик» varag'i - hisoblagichlar XATLOVI o'tkazilgan TP lar.
+ *
+ * Har qatorda ikkita o'lchov yonma-yon turadi: xatlovdan oldin (3–7-ustunlar)
+ * va keyin (9–12-ustunlar). Ikkisi orasidagi farq - ishning O'LCHANGAN
+ * natijasi, ya'ni bu yagona joy bo'lib, undan «Amalga oshirilgan ishlar»
+ * paneli haqiqiy raqam bilan to'ladi.
+ */
+function readInspections(wb: ExcelJS.Workbook): Inspection[] {
+  const ws = wb.getWorksheet('бир кунлик');
+  if (!ws) return [];
+
+  const out: Inspection[] = [];
+  for (let r = 5; r <= ws.rowCount; r += 1) {
+    const row = ws.getRow(r);
+    const tp = String(val(row.getCell(2)) ?? '').trim();
+    // Oxirgi qator - «Жами» yig'indisi, TP nomi yo'q.
+    if (tp === '' || !/\d/.test(tp)) continue;
+
+    const dateBefore = asDate(val(row.getCell(3)));
+    const dateAfter = asDate(val(row.getCell(9)));
+    if (!dateBefore || !dateAfter) continue;
+
+    const balAfter = numOf(row.getCell(10));
+    const lossAfter = numOf(row.getCell(12));
+    out.push({
+      tp,
+      dateBefore,
+      dateAfter,
+      lossBefore: numOf(row.getCell(6)),
+      lossAfter,
+      pctBefore: numOf(row.getCell(7)),
+      // «Keyin» foizi ustunda yo'q - o'sha qatordagi ikki sondan chiqadi.
+      pctAfter: balAfter !== 0 ? (lossAfter / balAfter) * 100 : 0,
+      note: String(val(row.getCell(8)) ?? '').trim() || null,
+    });
+  }
+  return out;
+}
+
 async function readProblems(wb: ExcelJS.Workbook): Promise<Map<string, string>> {
   const ws = wb.getWorksheet('Muammolar');
   const map = new Map<string, string>();
@@ -220,6 +321,7 @@ async function main(): Promise<void> {
   await cwb.xlsx.readFile(CONSUMERS_FILE);
 
   const problems = await readProblems(wb);
+  const inspections = readInspections(wb);
   const sheets = await Promise.all(PERIODS.map((p) => readSheet(wb, p.sheet)));
   const consumers = PERIODS.map((p) => readConsumers(cwb, p.activeCol, p.disconnectedCol));
 
@@ -422,6 +524,55 @@ async function main(): Promise<void> {
         + `\n  yo‘qotish              ${num(loss)} kWh (${pct.toFixed(2)}%)`
         + `\n  abonentlar             ${num(cTotal)} ta`
         + ` (aloqada ${num(cActive)}, aloqadamas ${num(cDisc)})`,
+      );
+    }
+
+    // ── 3. Xatlov ishlari ──────────────────────────────────────────────────
+    /*
+     * Yo'qotish KAMAYGAN TP lar uchungina ish yozuvi ochiladi.
+     *
+     * Qolganlarida yo'qotish ikkala o'lchovda ham MANFIY (balans hisoblagichi
+     * yoki tok transformatori nosoz): |yo'qotish| kichraygan bo'lsa-da,
+     * `lossBefore − lossAfter` manfiy chiqadi va uni "tejamkorlik" deb
+     * yozish `effect_saving_kwh_month >= 0` cheklovini ham, haqiqatni ham
+     * buzardi. Ular tekshiruv ro'yxatida qoladi, natija sifatida emas.
+     */
+    const improved = inspections.filter((x) => x.lossBefore - x.lossAfter > 0);
+    console.log(
+      `\nXatlov - ${inspections.length} ta TP o‘lchangan,`
+      + ` ${improved.length} tasida yo‘qotish kamaygan`
+      + (inspections.length - improved.length > 0
+        ? `, ${inspections.length - improved.length} tasi o‘tkazib yuborildi (manfiy yo‘qotish)` : ''),
+    );
+
+    for (const x of improved) {
+      const perDay = r2(x.lossBefore - x.lossAfter);
+      const savingMonth = r2(perDay * DAYS_PER_MONTH);
+      const code = tpKey(x.tp);
+      await c.query(
+        `INSERT INTO fact.work
+           (mfy_id, tp_id, work_type, title_uz, description, status,
+            planned_start, planned_end, actual_end, progress_pct,
+            effect_loss_pct_before, effect_loss_pct_after, effect_saving_kwh_month)
+         VALUES ($1, $2, 'OTHER', $3, $4, 'COMPLETED', $5::date, $6::date, $6::date, 100,
+                 $7, $8, $9)`,
+        [
+          mfyId, resolve(x.tp),
+          `${code} - hisoblagichlar xatlovi`,
+          `Balans hisoblagichi va biriktirilgan iste'molchilar o'lchovi`
+          + ` ${x.dateBefore} va ${x.dateAfter} kunlari solishtirildi:`
+          + ` kunlik yo'qotish ${Math.round(x.lossBefore)} → ${Math.round(x.lossAfter)} kWh.`
+          + (x.note ? ` Hisobotdagi "Хатловдан кейин" belgisi: ${x.note}.` : '')
+          + ` Oylik tejamkorlik kunlik farqni ${DAYS_PER_MONTH} kunga yoyish orqali olindi.`
+          + ` ${SOURCE_TAG}`,
+          x.dateBefore, x.dateAfter,
+          pctOrNull(x.pctBefore), pctOrNull(x.pctAfter), savingMonth,
+        ],
+      );
+      console.log(
+        `  ${code}  ${x.dateBefore} → ${x.dateAfter}`
+        + `  ${num(Math.round(x.lossBefore))} → ${num(Math.round(x.lossAfter))} kWh/kun`
+        + `  ·  tejaldi ${num(Math.round(savingMonth))} kWh/oy`,
       );
     }
 
