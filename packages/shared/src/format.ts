@@ -128,6 +128,20 @@ const MONTHS_UZ_CYRL = [
   'июл', 'август', 'сентабр', 'октабр', 'ноябр', 'декабр',
 ];
 
+/*
+ * Qisqartmalar QO'LDA yozilgan, to'liq nomdan kesib olinmaydi:
+ * `'iyun'.slice(0, 3)` va `'iyul'.slice(0, 3)` ikkalasi ham «iyu» beradi,
+ * ya'ni iyun bilan iyul diagramma o'qida farqlanmay qolardi.
+ */
+const MONTHS_UZ_LATN_SHORT = [
+  'yan', 'fev', 'mar', 'apr', 'may', 'iyn',
+  'iyl', 'avg', 'sen', 'okt', 'noy', 'dek',
+];
+const MONTHS_UZ_CYRL_SHORT = [
+  'янв', 'фев', 'мар', 'апр', 'май', 'июн',
+  'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
+];
+
 export type Script = 'latn' | 'cyrl';
 
 /**
@@ -187,6 +201,20 @@ export const monthLabel = periodLabel;
 export function dateDayMonth(iso: string, script: Script = 'latn'): string {
   const [, m, d] = String(iso).slice(0, 10).split('-');
   const names = script === 'cyrl' ? MONTHS_UZ_CYRL : MONTHS_UZ_LATN;
+  const name = names[Number(m) - 1];
+  return name ? `${Number(d)}-${name}` : iso;
+}
+
+/**
+ * `2026-08-02` → `2-avg` - TOR diagramma o'qi uchun.
+ *
+ * `dateDayMonth` bir haftalik oynada («2-avgust» × 7) yorliqlarni
+ * bir-biriga yopishtirib qo'yadi: panel kengligi ~340px, har bir yorliq
+ * esa ~60px joy so'raydi. Qisqartma bilan ikki barobar ko'p sig'adi.
+ */
+export function dateDayMonthShort(iso: string, script: Script = 'latn'): string {
+  const [, m, d] = String(iso).slice(0, 10).split('-');
+  const names = script === 'cyrl' ? MONTHS_UZ_CYRL_SHORT : MONTHS_UZ_LATN_SHORT;
   const name = names[Number(m) - 1];
   return name ? `${Number(d)}-${name}` : iso;
 }

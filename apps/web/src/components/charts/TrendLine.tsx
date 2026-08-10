@@ -10,7 +10,7 @@
  *   • o'q yorliqlari qisqartirilgan: `1.5M`, `900k`, `17-may`
  */
 import type { TimeSeriesPoint } from '@beap/shared';
-import { compact, dateDayMonth, dateLabel, energy, monthLabel, num, pct } from '@beap/shared';
+import { compact, dateDayMonthShort, dateLabel, energy, monthLabel, num, pct } from '@beap/shared';
 import { ResponsiveLine } from '@nivo/line';
 import { useMemo } from 'react';
 
@@ -96,15 +96,22 @@ export function TrendLine({
     return <div className="flex h-40 items-center justify-center text-sm text-muted">Ma’lumot yo‘q</div>;
   }
 
-  // O'q belgilarini siyraklashtirish - 90 kunda taxminan har 10-kun.
-  const tickStep = Math.max(1, Math.ceil(points.length / 9));
+  /*
+   * O'q belgilarini siyraklashtirish.
+   *
+   * Chegara 9 emas, 6: panel maketda `xl:col-span-4` va diagrammaga ~280px
+   * qoladi. To'qqizta «2-avg» yorliq bir-birini bosib ketardi (oxirgisi esa
+   * kesilib, «8-avgus» bo'lib turardi). Oltitasi bemalol sig'adi va CHIZIQ
+   * baribir HAMMA nuqtadan o'tadi - siyraklashuv faqat yozuvlarga tegishli.
+   */
+  const tickStep = Math.max(1, Math.ceil(points.length / 6));
   const tickValues = points.filter((_, i) => i % tickStep === 0).map((p) => p.date);
 
   /** Nuqtalar faqat qator qisqa bo'lganda - aks holda chiziq shovqinga aylanadi. */
   const showPoints = points.length <= 14;
 
   const axisFormat = (v: string): string =>
-    bucket === 'month' ? monthLabel(v.slice(0, 7)) : dateDayMonth(v);
+    bucket === 'month' ? monthLabel(v.slice(0, 7)) : dateDayMonthShort(v);
 
   return (
     <ChartFrame

@@ -880,7 +880,7 @@ function SummaryBox({
       <p className="truncate text-[10.5px] leading-tight text-muted">{label}</p>
       <p className="mt-1 flex items-baseline gap-1">
         <span
-          className="truncate text-[15px] font-bold leading-none"
+          className="text-[15px] font-bold leading-none"
           style={{
             fontVariantNumeric: "tabular-nums",
             color: muted ? undefined : tone,
@@ -889,15 +889,20 @@ function SummaryBox({
           {value}
         </span>
         <span className="shrink-0 text-[10px] font-medium text-muted">kWh</span>
-        {extra && (
-          <span
-            className="shrink-0 text-[10.5px] font-semibold"
-            style={{ color: muted ? "var(--viz-muted)" : tone }}
-          >
-            ({extra})
-          </span>
-        )}
       </p>
+      {/*
+        Foiz ALOHIDA qatorda. Ustun kengligi `lg:w-36` (144px) - raqam,
+        birlik va foiz bitta qatorga sig'masdan, raqamning o'zi kesilib
+        "10,7…" bo'lib qolardi.
+      */}
+      {extra && (
+        <p
+          className="mt-0.5 text-[10.5px] font-semibold leading-none"
+          style={{ color: muted ? "var(--viz-muted)" : tone }}
+        >
+          {extra}
+        </p>
+      )}
     </div>
   );
 }
