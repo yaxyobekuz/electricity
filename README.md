@@ -41,16 +41,13 @@ Brauzerda: **http://localhost:5173**
 > Windows'da Vite IPv6 (`::1`) ga bog'lanadi - `127.0.0.1:5173` emas,
 > **`localhost:5173`** manzilidan foydalaning.
 
-### Demo hisoblar
+### Kirish
 
-Parol barchasi uchun: `Beap2026!`
-
-| Login | Rol | Nimani ko'radi |
-|---|---|---|
-| `hokim` | Hokimiyat kuzatuvchisi | Barcha dashboardlar, faqat o'qish |
-| `manager.baliqchi` | Elektroset menejeri | 12 ta MFY + tasdiqlash navbati |
-| `operator1` | MFY operatori | Faqat Sarnaul MFY ga kiritish |
-| `admin` | Administrator | Hammasi + pasportni muzlatish |
+Tizimda **login yo'q** - platforma to'liq demo rejimida ishlaydi va har bir
+amal (ko'rish, kiritish, tasdiqlash, pasportni muzlatish) hech qanday kirish
+ekransiz mumkin. Server tomonida har bir so'rov administrator konteksti bilan
+bajariladi (`apps/api/src/plugins/context.ts`), shuning uchun audit jurnali va
+Postgres RLS avvalgidek ishlaydi - aktor doim bazadagi birinchi `admin` hisobi.
 
 ---
 
@@ -153,7 +150,7 @@ electricity/
    ├─ styles/theme-gov.css ikki tema + tekshirilgan diagramma palitrasi
    ├─ lib/chart-theme.ts   CSS o'zgaruvchilari → Nivo va ECharts temasi
    ├─ components/charts/   ChartFrame (jadval-egizak bilan) + diagrammalar
-   └─ features/            district · mfy · passport · entry · review · auth
+   └─ features/            district · mfy · passport · entry · review
 ```
 
 Ierarxiya: **Tuman → Elektroset → MFY → TP → Abonent**
@@ -165,7 +162,7 @@ Ierarxiya: **Tuman → Elektroset → MFY → TP → Abonent**
 | `ref` | Spravochniklar: elektroset, MFY, TP, tarmoq, **normalar** (vaqt bo'yicha versiyalanadi) |
 | `fact` | Qo'lda kiritiladigan faktlar. Har biri `fact.submission` konvertiga tegishli |
 | `agg` | Materialized view'lar va pasport. **Bu yerda hech narsa kiritilmaydi** |
-| `sec` | Foydalanuvchi, rol, hudud, sessiya, audit jurnali |
+| `sec` | Foydalanuvchi (audit aktori uchun), hudud, audit jurnali |
 
 ### Tasdiqlash oqimi
 
@@ -225,7 +222,7 @@ Seed tuman jamlarini **haqiqiy pasport raqamlariga** moslaydi
 
 Frontend: React **19.2.8** · Tailwind CSS **4.3.3** · HeroUI **3.2.2** ·
 Vite **8.2.0** · Nivo **0.99.0** · ECharts **6.1.0** (faqat gauge) ·
-TanStack Query **5.101.4** · react-router **8.3.0** · i18next **26.3.6** ·
+TanStack Query **5.101.4** · react-router **8.3.0** ·
 Inter **5.3.0** (`@fontsource-variable/inter`)
 
 ### Shrift
@@ -236,13 +233,9 @@ nusxalaydi, ya'ni air-gap muhitda ham ishlaydi.
 
 `unicode-range` tufayli brauzer faqat kerakli subsetni yuklaydi:
 
-| Sahifa | Yuklanadi |
-|---|---|
-| Lotin | `latin` - 47 KB |
-| Kirill | `latin` + `cyrillic` + `cyrillic-ext` - ~91 KB |
-
-Qamrov tekshirildi: `oʻ gʻ` (U+02BB–02BC, `latin` subsetida) va
-`ў қ ғ ҳ` (U+045E / U+049B / U+0493 / U+04B3 - `cyrillic` va `cyrillic-ext`).
+Interfeys faqat lotin yozuvida, shuning uchun brauzer `latin` subsetini
+(~47 KB) yuklaydi. Qamrov tekshirildi: `oʻ gʻ` (U+02BB–02BC) `latin`
+subsetining ichida.
 
 Ikki nozik joy:
 
@@ -271,13 +264,12 @@ har qanday xarita, CDN, telemetriya va LLM kutubxonasi.
 
 ## Til
 
-O'zbek **lotin** (asosiy) va **kirill**. Kirill uchun alohida tarjima fayli
-saqlanmaydi - transliteratsiya deterministik bo'lgani uchun i18next
-post-processori orqali ish vaqtida hosil qilinadi. Shuning uchun yangi kalit
-qo'shilganda ikki fayl orasida drift bo'lmaydi.
+O'zbek **lotin** - YAGONA ko'rinish. Tarjima qatlami (i18next), kirill
+transliteratsiyasi va til almashtirgich olib tashlangan: interfeys matnlari
+to'g'ridan-to'g'ri komponentlar ichida yozilgan.
 
-MFY nomlari kabi atoqli otlar bundan mustasno - ular uchun bazada
-`name_uz_cyr` ustuni bor va u transliteratsiyadan ustun turadi.
+`<I18nProvider locale="uz-Latn-UZ">` qoladi, lekin u tarjima uchun emas -
+React Aria sana/raqam formatlash uchun ishlatadi.
 
 ---
 
@@ -309,7 +301,7 @@ tasdiqlanishi kerak:
 ## Keyingi bosqichlar
 
 Tayyor: DB + API + dashboardlar + pasport + kiritish paneli (energiya balansi
-va oylik hisobot) + tasdiqlash oqimi + auth/RBAC + AI yordamchi va Telegram
+va oylik hisobot) + tasdiqlash oqimi + AI yordamchi va Telegram
 bot (ikkalasi ham ixtiyoriy, faqat serverda).
 
 Qolgan:
