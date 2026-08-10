@@ -15,7 +15,7 @@ import { isPgError } from '../db/pool.ts';
 const CONSTRAINT_MAP: Record<string, { field: string; message: string }> = {
   eb_sold_le_in: {
     field: 'kwhSold',
-    message: 'Sotilgan energiya tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
+    message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
   },
   eb_components: {
     field: 'kwhLossTechnical',

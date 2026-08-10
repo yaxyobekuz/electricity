@@ -97,14 +97,14 @@ export const TOOL_SPECS: ToolSpec[] = [
     }, ['sort_by']),
 
   fn('get_period_totals', 'Berilgan OY bo‘yicha umumiy ko‘rsatkichlar: kirgan energiya, '
-    + 'sotilgan, yo‘qotish, abonentlar, TP soni.',
+    + 'foydali oqim, yo‘qotish, abonentlar, TP soni.',
     { period: period('Oy, "YYYY-MM" ko‘rinishida') }, ['period']),
 
   fn('compare_periods', 'Ikki oyni solishtiradi va farqni foizda beradi.',
     { period_a: period('Birinchi oy'), period_b: period('Ikkinchi oy') },
     ['period_a', 'period_b']),
 
-  fn('get_series', 'Kunlik/haftalik/oylik dinamika: kirgan, sotilgan, yo‘qotish.',
+  fn('get_series', 'Kunlik/haftalik/oylik dinamika: kirgan, foydali oqim, yo‘qotish.',
     {
       bucket: { type: 'string', enum: ['day', 'week', 'month'], description: 'Qadam' },
       last: int('Oxirgi nechta nuqta (2–365). Standart 30.'),
@@ -215,9 +215,9 @@ export const TOOL_SPECS: ToolSpec[] = [
       kind: {
         type: 'string',
         enum: ['energy_trend', 'tp_ranking', 'loss_breakdown', 'loss_forecast'],
-        description: 'Diagramma turi. energy_trend - kirgan/sotilgan energiya dinamikasi '
+        description: 'Diagramma turi. energy_trend - kirgan energiya/foydali oqim dinamikasi '
           + '(vaqt bo‘yicha); tp_ranking - list_tps asbobidagi bilan bir xil TP reytingi, '
-          + 'lekin rasm shaklida; loss_breakdown - sotilgan/texnologik yo‘qotish/tijoriy '
+          + 'lekin rasm shaklida; loss_breakdown - foydali oqim/texnologik yo‘qotish/tijoriy '
           + 'yo‘qotish taqsimoti; loss_forecast - yo‘qotish foizi prognozi.',
       },
       period: period('Oy, "YYYY-MM". Faqat energy_trend va loss_breakdown uchun ma’noli; '

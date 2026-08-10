@@ -382,7 +382,7 @@ function drawDonutChart(ctx: SKRSContext2D, cfg: DonutChartConfig): void {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Energiya balansi dinamikasi - oxirgi 60 kun (kirgan / sotilgan).
+ * Energiya balansi dinamikasi - oxirgi 60 kun (kirgan / foydali oqim).
  *
  * DIQQAT: `period` bu yerda SO'ROV uchun ishlatilmaydi - grafik doim
  * mavjud eng so'nggi kunlarni ko'rsatadi, tanlangan oyga bog'lanib
@@ -414,7 +414,7 @@ export async function buildEnergyTrendChart(
     categories: rows.map((r) => formatDayLabel(r.date)),
     series: [
       { labelUz: 'Kirgan energiya', color: COLORS.primary, values: rows.map((r) => r.kwhIn) },
-      { labelUz: 'Sotilgan', color: COLORS.green, values: rows.map((r) => r.kwhSold) },
+      { labelUz: 'Foydali oqim', color: COLORS.green, values: rows.map((r) => r.kwhSold) },
     ],
   });
   return canvas.toBuffer('image/png');
@@ -473,7 +473,7 @@ export async function buildTpRankingChart(
   return canvas.toBuffer('image/png');
 }
 
-/** Yo'qotish tuzilmasi - sotilgan / texnologik / tijoriy, donut ko'rinishida. */
+/** Yo'qotish tuzilmasi - foydali oqim / texnologik / tijoriy, donut ko'rinishida. */
 export async function buildLossBreakdownChart(
   ctx: AppContext, feederId: number | null, period: string,
 ): Promise<Buffer> {
@@ -503,7 +503,7 @@ export async function buildLossBreakdownChart(
   drawDonutChart(c, {
     title,
     slices: [
-      { label: 'Sotilgan', value: fm.kwhTpSum, color: COLORS.green },
+      { label: 'Foydali oqim', value: fm.kwhTpSum, color: COLORS.green },
       { label: 'Texnologik yo‘qotish', value: fm.kwhTechLoss, color: COLORS.amber },
       { label: 'Tijoriy yo‘qotish', value: fm.kwhCommercialLoss, color: COLORS.danger },
     ],

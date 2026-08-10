@@ -219,7 +219,7 @@ export async function periodXlsx(input: PeriodReportInput): Promise<Buffer> {
 
   const kpis: [string, number, string][] = [
     ['Tarmoqqa kirgan energiya', input.totals.kwhIn, 'kVt/soat'],
-    ['Sotilgan energiya', input.totals.kwhSold, 'kVt/soat'],
+    ['Foydali oqim', input.totals.kwhSold, 'kVt/soat'],
     ['Jami yo‘qotish', input.totals.kwhLossTotal, 'kVt/soat'],
     ['Yo‘qotish darajasi', input.totals.lossPct, '%'],
     ['Jami iste’molchilar', input.totals.consumersTotal, 'ta'],
@@ -382,7 +382,7 @@ export async function periodPdf(input: PeriodReportInput): Promise<Buffer> {
       { text: 'Qiymat', style: 'th', alignment: 'right' },
     ],
     ['Tarmoqqa kirgan energiya', { text: `${uz(input.totals.kwhIn, '')} kVt/soat`, alignment: 'right' }],
-    ['Sotilgan energiya', { text: `${uz(input.totals.kwhSold, '')} kVt/soat`, alignment: 'right' }],
+    ['Foydali oqim', { text: `${uz(input.totals.kwhSold, '')} kVt/soat`, alignment: 'right' }],
     ['Jami yo‘qotish', { text: `${uz(input.totals.kwhLossTotal, '')} kVt/soat`, alignment: 'right' }],
     ['Yo‘qotish darajasi', { text: `${uz(input.totals.lossPct, '')} %`, alignment: 'right', bold: true }],
     ['Jami iste’molchilar', { text: `${uz(input.totals.consumersTotal, 'ta')} ta`, alignment: 'right' }],

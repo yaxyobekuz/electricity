@@ -64,7 +64,7 @@
   },
   "metric": {
     "kwhIn": "Jami iste’mol",
-    "kwhSold": "Sotilgan elektr energiyasi",
+    "kwhSold": "Foydali oqim",
     "lossPct": "Jami yo‘qotish",
     "naturalPct": "Tabiiy yo‘qotish",
     "technicalPct": "Texnik yo‘qotish",
@@ -105,7 +105,7 @@
   },
   "energy": {
     "in": "Tarmoqqa kirgan energiya",
-    "sold": "Sotilgan energiya",
+    "sold": "Foydali oqim",
     "natural": "Tabiiy yo‘qotish",
     "technical": "Texnik yo‘qotish",
     "illegal": "Noqonuniy foydalanish"

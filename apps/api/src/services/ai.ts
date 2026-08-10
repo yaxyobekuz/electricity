@@ -144,7 +144,7 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
   if (feederMonthly) {
     lines.push('ENERGIYA BALANSI (fider boshidagi hisoblagich bo‘yicha):');
     lines.push(`  Kirgan energiya: ${n(feederMonthly.kwhIn)} kWh`);
-    lines.push(`  Sotilgan (TP hisoblagichlari yig‘indisi): ${n(feederMonthly.kwhTpSum)} kWh`);
+    lines.push(`  Foydali oqim (TP hisoblagichlari yig‘indisi): ${n(feederMonthly.kwhTpSum)} kWh`);
     lines.push(`  Texnologik yo‘qotish: ${n(feederMonthly.kwhTechLoss)} kWh`);
     lines.push(`  Tijoriy yo‘qotish: ${n(feederMonthly.kwhCommercialLoss)} kWh`);
     lines.push(

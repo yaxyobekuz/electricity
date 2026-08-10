@@ -37,7 +37,7 @@ export function TotalsBar({
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <dl className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs">
           <Item label="Kirgan" value={num(totals.kwhIn, 1)} />
-          <Item label="Sotilgan" value={num(totals.kwhSold, 1)} />
+          <Item label="Foydali oqim" value={num(totals.kwhSold, 1)} />
           <Item
             label="Yo‘qotish"
             hint="hisoblanadi"

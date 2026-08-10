@@ -61,7 +61,7 @@ export const energyBalanceDaySchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['kwhSold'],
-        message: 'Sotilgan energiya tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
+        message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p bo‘lishi mumkin emas',
       });
     }
 

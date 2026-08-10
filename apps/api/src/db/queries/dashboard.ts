@@ -357,7 +357,7 @@ export async function districtOverview(
       daysCompared: isPartial ? alignDays : null,
     }),
     tile({
-      key: 'kwhSold', metric: 'kwhSold', labelUz: 'Sotilgan elektr energiyasi', unit: 'kWh',
+      key: 'kwhSold', metric: 'kwhSold', labelUz: 'Foydali oqim', unit: 'kWh',
       value: cur.kwh_sold, prev: alignedPrev?.kwh_sold ?? p.kwh_sold,
       goodDirection: 'up', spark: spark.kwhSold, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
@@ -367,7 +367,7 @@ export async function districtOverview(
      *
      * "34.8%" degan plitka yonidagi "1.0 mln kWh" bilan bir o'lchovda emas -
      * hokim ikkalasini solishtira olmaydi. Foiz plitkaning izohida qoladi,
-     * asosiy raqam esa kWh: yo'qolgan energiyani sotilgan energiya bilan
+     * asosiy raqam esa kWh: yo'qolgan energiyani foydali oqim bilan
      * bevosita taqqoslash mumkin bo'lsin.
      */
     tile({
@@ -440,7 +440,7 @@ export async function energyBalance(
 
   return [
     { key: 'in',        labelUz: 'Tarmoqqa kirgan energiya', kwh: t.kwh_in,   pct: 100 },
-    { key: 'sold',      labelUz: 'Sotilgan energiya',        kwh: t.kwh_sold, pct: pct(t.kwh_sold) },
+    { key: 'sold',      labelUz: 'Foydali oqim',             kwh: t.kwh_sold, pct: pct(t.kwh_sold) },
     { key: 'natural',   labelUz: 'Tabiiy yo‘qotish',         kwh: natural,    pct: pct(natural) },
     { key: 'technical', labelUz: 'Texnik yo‘qotish',         kwh: technical,  pct: pct(technical) },
     { key: 'illegal',   labelUz: 'Noqonuniy foydalanish',    kwh: illegal,    pct: pct(illegal) },

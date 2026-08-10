@@ -89,7 +89,7 @@ async function gatherContext(
         parts.push(`═══ KUNLIK DINAMIKA (${from} … ${to}) ═══`);
         for (const pt of series) {
           parts.push(
-            `  ${pt.date}: kirgan ${n(pt.kwhIn)} kWh, sotilgan ${n(pt.kwhSold)} kWh,`
+            `  ${pt.date}: kirgan ${n(pt.kwhIn)} kWh, foydali oqim ${n(pt.kwhSold)} kWh,`
             + ` yo‘qotish ${n(pt.kwhLoss)} kWh (${pt.lossPct.toFixed(1)}%)`,
           );
         }

@@ -53,7 +53,7 @@ const derived = (
 export const METRIC_PROVENANCE = {
   // ── Energiya balansi ───────────────────────────────────────────────────────
   kwhIn: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_in', 'Tarmoqqa kirgan energiya', 'kWh'),
-  kwhSold: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_sold', 'Sotilgan elektr energiyasi', 'kWh'),
+  kwhSold: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_sold', 'Foydali oqim', 'kWh'),
   kwhLossNatural: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_loss_natural', 'Tabiiy yo‘qotish', 'kWh'),
   kwhLossTechnical: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_loss_technical', 'Texnik yo‘qotish', 'kWh'),
   kwhLossIllegal: input('ENERGY_BALANCE', 'fact.energy_balance_daily', 'kwh_loss_illegal', 'Noqonuniy foydalanish', 'kWh'),

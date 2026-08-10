@@ -3,7 +3,7 @@
  *
  * RANG QARORI: bu KATEGORIK emas, STATUS diagrammasi. Shu sababli
  * kategorik palitra o'rniga ma'noli ranglar ishlatiladi:
- *   Sotilgan       → accent (asosiy, yaxshi)
+ *   Foydali oqim   → accent (asosiy, yaxshi)
  *   Tabiiy yo'qotish → muted  (normativ, oldini olib bo'lmaydi)
  *   Texnik          → warning (kamaytirish mumkin)
  *   Noqonuniy       → critical (bartaraf etish kerak)

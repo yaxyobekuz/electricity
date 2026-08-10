@@ -408,7 +408,7 @@ export async function validateSubmission(
       if (r.kwhSold > r.kwhIn) {
         issues.push({
           path: 'kwhSold', rowKey: r.bizDate, severity: 'error',
-          message: 'Sotilgan energiya tarmoqqa kirgan energiyadan ko‘p',
+          message: 'Foydali oqim tarmoqqa kirgan energiyadan ko‘p',
         });
       }
       const total = r.kwhIn - r.kwhSold;
@@ -501,7 +501,7 @@ const FIELD_LABELS: Record<string, string> = {
   meters_replace_need_cnt: 'Almashtirish kerak',
   meters_replaced_cnt: 'Almashtirilgan',
   kwh_in: 'Tarmoqqa kirgan energiya',
-  kwh_sold: 'Sotilgan energiya',
+  kwh_sold: 'Foydali oqim',
   kwh_loss_natural: 'Tabiiy yo‘qotish',
   kwh_loss_technical: 'Texnik yo‘qotish',
   kwh_loss_illegal: 'Noqonuniy foydalanish',

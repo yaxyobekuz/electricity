@@ -5,7 +5,7 @@
  *   • chiziq 2px, yumaloq uchli
  *   • nuqta faqat NUQTALAR KAM bo'lganda (90 kunlik qatorda har biri
  *     ko'rinsa shovqin bo'ladi) - surface rangli halqa bilan
- *   • maydon to'ldirish faqat "Sotilgan" seriyasida, gradient bilan
+ *   • maydon to'ldirish faqat "Foydali oqim" seriyasida, gradient bilan
  *   • panjara faqat gorizontal, yupqa, TUTASH
  *   • o'q yorliqlari qisqartirilgan: `1.5M`, `900k`, `17-may`
  */
@@ -33,7 +33,7 @@ interface TrendLineProps {
   actions?: React.ReactNode;
   /**
    * `SERIES_META` standart yorliqlarini bekor qiladi - masalan TP balans
-   * grafigida "Tarmoqqa kirgan/Sotilgan" o'rniga "Balans hisoblagichi/
+   * grafigida "Tarmoqqa kirgan/Foydali oqim" o'rniga "Balans hisoblagichi/
    * Bириктирилган iste'molchilar" ko'rsatish uchun. Berilmasa hozirgi
    * standart yorliqlar ishlatiladi - mavjud chaqiruvlarga ta'sir qilmaydi.
    */
@@ -43,7 +43,7 @@ interface TrendLineProps {
 /*
  * Rang biriktirilishi - MAKETDAGIDEK:
  *   tarmoqqa kirgan → ko'k   (--viz-1)
- *   sotilgan        → yashil (--viz-3)
+ *   foydali oqim    → yashil (--viz-3)
  *   yo'qotish       → qizil  (--viz-5)
  *
  * Yo'qotish ilgari to'q sariq edi; qizil "yomon" degan ma'noni beradi va
@@ -51,7 +51,7 @@ interface TrendLineProps {
  */
 const SERIES_META = {
   kwhIn: { label: 'Tarmoqqa kirgan', unit: 'kWh', slot: 0 },
-  kwhSold: { label: 'Sotilgan', unit: 'kWh', slot: 2 },
+  kwhSold: { label: 'Foydali oqim', unit: 'kWh', slot: 2 },
   kwhLoss: { label: 'Yo‘qotish', unit: 'kWh', slot: 4 },
   lossPct: { label: 'Yo‘qotish darajasi', unit: '%', slot: 4 },
 } as const;
@@ -148,7 +148,7 @@ export function TrendLine({
         curve="linear"
         data={data}
         /*
-         * Maydon to'ldirish FAQAT "Sotilgan" ostida.
+         * Maydon to'ldirish FAQAT "Foydali oqim" ostida.
          *
          * Nivo'da `enableArea` butun diagrammaga tegishli, shuning uchun
          * qolgan seriyalarga SHAFFOF gradient beramiz - aks holda uchala

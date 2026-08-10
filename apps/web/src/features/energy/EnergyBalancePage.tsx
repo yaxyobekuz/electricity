@@ -78,7 +78,7 @@ export default function EnergyBalancePage() {
         <MiniStat
           hint={inNode && soldNode ? `Ulushi: ${pct(soldNode.pct, 1)}` : ''}
           icon={<ShoppingCart className="size-4.5" />}
-          label="Sotilgan energiya"
+          label="Foydali oqim"
           tone="good"
           value={energy(totals?.kwhSold ?? 0).text}
         />

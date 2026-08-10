@@ -305,7 +305,7 @@ export default function MfyDashboard() {
                   value={num(today?.kwhIn ?? 0, 0)}
                 />
                 <SummaryBox
-                  label={`${periodWord} sotilgan`}
+                  label={`${periodWord} foydali oqim`}
                   tone="var(--viz-3)"
                   value={num(today?.kwhSold ?? 0, 0)}
                 />

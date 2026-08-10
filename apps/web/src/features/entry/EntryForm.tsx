@@ -331,7 +331,7 @@ function EnergyBalanceGrid({
                             <dd className="tabular font-medium">{num(totals.kwhIn, 1)} kWh</dd>
                           </div>
                           <div className="flex justify-between">
-                            <dt className="text-muted">Sotilgan</dt>
+                            <dt className="text-muted">Foydali oqim</dt>
                             <dd className="tabular font-medium">{num(totals.kwhSold, 1)} kWh</dd>
                           </div>
                           <div className="flex justify-between">
@@ -388,7 +388,7 @@ function EnergyBalanceGrid({
               <tr>
                 <th className="sticky left-0 z-20 w-24 bg-surface">Kun</th>
                 <th className="text-right">Tarmoqqa kirgan</th>
-                <th className="text-right">Sotilgan</th>
+                <th className="text-right">Foydali oqim</th>
                 <th className="text-right">Tabiiy</th>
                 <th className="text-right">Texnik</th>
                 <th className="text-right">Noqonuniy</th>
