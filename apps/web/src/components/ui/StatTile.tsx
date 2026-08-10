@@ -88,6 +88,7 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
   const provenance = isKnownMetric(tile.metric) ? provenanceText(tile.metric as MetricKey) : null;
   const change = changeText(tile);
   const caption = sparkCaption(tile);
+  const secondary = tile.secondary ? fmtByUnit(tile.secondary.value, tile.secondary.unit) : null;
 
   return (
     <article className={cn('kpi group', `tone-${tone}`, compact && 'gap-2 p-3')}>
@@ -151,8 +152,22 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
           {change ? change.word : 'o‘tgan oyga nisbatan'}
           {change && change.abs && delta !== null && ` (${Math.abs(delta).toFixed(1)}%)`}
         </span>
-        
       </div>
+
+      {/*
+        IKKINCHI DARAJALI qiymat - bir xil narsaning boshqa manbadan
+        o'lchovi (masalan TP hisoblagichlari yig'indisi). Asosiy raqamdan
+        farq qilishi mumkin va aynan shu farq ma'lumot beradi, shuning
+        uchun u yashirilmaydi.
+      */}
+      {tile.secondary && secondary && (
+        <p className="truncate text-[10px] leading-tight text-muted">
+          {tile.secondary.labelUz}:{' '}
+          <span className="font-medium">
+            {secondary.value} {secondary.unit}
+          </span>
+        </p>
+      )}
 
       {/*
         Sparkline SHARTSIZ chiziladi va `mt-auto` bilan pastga bosiladi.

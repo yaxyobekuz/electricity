@@ -129,6 +129,18 @@ export interface KpiTile {
   sparkBucket: 'day' | 'month';
   /** Manba (provenance) kaliti - "i" popoveri uchun. */
   metric: string;
+  /**
+   * IKKINCHI DARAJALI qiymat - asosiy raqam bilan bir xil narsani BOSHQA
+   * manbadan o'lchaganda ko'rsatiladi.
+   *
+   * Masalan «Jami iste'mol»: asosiy raqam oy uchun biriktirilgan rasmiy
+   * kirim, ikkinchisi esa TP balans hisoblagichlaridan hisoblangan yig'indi.
+   * Ikkalasi bir xil bo'lishi shart emas va farqning o'zi ma'lumot beradi -
+   * shuning uchun biri ikkinchisini yashirmaydi.
+   *
+   * `null` = ikkinchi manba yo'q yoki u asosiy raqamning o'zi.
+   */
+  secondary: { labelUz: string; value: number; unit: string } | null;
 }
 
 export interface EnergyBalanceNode {

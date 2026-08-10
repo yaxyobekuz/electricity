@@ -320,6 +320,7 @@ export async function districtOverview(
       spark: number[];
       sparkBucket: 'day' | 'month';
       daysCompared?: number | null;
+      secondary?: KpiTile['secondary'];
     },
   ): KpiTile => ({
     key: t.key,
@@ -334,14 +335,46 @@ export async function districtOverview(
     spark: t.spark,
     sparkBucket: t.sparkBucket,
     daysCompared: t.daysCompared ?? null,
+    secondary: t.secondary ?? null,
   });
+
+  /*
+   * Oy uchun BIRIKTIRILGAN rasmiy kirim - fider boshidagi kirish
+   * hisoblagichi. Mavjud bo'lsa «Jami iste'mol» kartasining ASOSIY raqami
+   * shu bo'ladi, TP yig'indisidan hisoblangan qiymat esa ikkinchi darajaga
+   * tushadi. Kelmagan oyda (NULL) karta hisoblangan raqamni ko'rsatadi.
+   *
+   * DIQQAT: bu FAQAT shu kartaning ko'rsatuvi. Energiya balansi, yo'qotish
+   * va samaradorlik hisob-kitobi o'zgarmaydi - ular kunlik qatorlardan
+   * (`agg.mfy_daily`) chiqadi, ya'ni TP yig'indisiga tayanadi.
+   */
+  const officialRow = await queryOne<{ kwh_in_official: number | null }>(
+    `SELECT max(f.kwh_in_official) AS kwh_in_official
+       FROM fact.feeder_monthly f
+       JOIN ref.mfy m ON m.id = f.mfy_id
+      WHERE f.period_month = ($1 || '-01')::date
+        AND ($2::int IS NULL OR f.mfy_id = $2)
+        AND ($3::int IS NULL OR m.elektroset_id = $3)`,
+    [period, mfyId, elektrosetId], ctx,
+  );
+  const officialIn =
+    officialRow?.kwh_in_official === null || officialRow?.kwh_in_official === undefined
+      ? null
+      : Number(officialRow.kwh_in_official);
 
   const tiles: KpiTile[] = [
     tile({
       key: 'kwhIn', metric: 'kwhIn', labelUz: 'Jami iste’mol', unit: 'kWh',
-      value: cur.kwh_in, prev: alignedPrev?.kwh_in ?? p.kwh_in,
+      value: officialIn ?? cur.kwh_in,
+      prev: alignedPrev?.kwh_in ?? p.kwh_in,
       goodDirection: 'down', spark: spark.kwhIn, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
+      /*
+       * TP yig'indisi DOIM ko'rsatiladi - rasmiy qiymat bo'lganda ham,
+       * bo'lmaganda ham. Rasmiy qiymat kelmagan oyda u asosiy raqamning
+       * o'zi bo'ladi, lekin yorlig'i raqamning QAYERDAN kelganini aytadi.
+       */
+      secondary: { labelUz: 'TP bo‘yicha', value: cur.kwh_in, unit: 'kWh' },
     }),
     tile({
       key: 'kwhSold', metric: 'kwhSold', labelUz: 'Foydali oqim', unit: 'kWh',

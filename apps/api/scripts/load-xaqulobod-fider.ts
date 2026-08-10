@@ -40,10 +40,18 @@ import { config, REPO_ROOT } from '../src/config.ts';
 const FILE = join(REPO_ROOT, 'xaqulobod_fider.xlsx');
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
 
-/** Varaq → davr. `days` fayl sarlavhasidagi oraliqdan olingan. */
+/**
+ * Varaq → davr. `days` fayl sarlavhasidagi oraliqdan olingan.
+ *
+ * `officialIn` - oy uchun BIRIKTIRILGAN rasmiy kirim, ya'ni fider boshidagi
+ * kirish hisoblagichi. U `xaqulobod_fider.xlsx` da YO'Q: iyul qiymati
+ * «Умумий ҳисобот» hujjatidan olingan (19 850 → 20 112, koeffitsient 4 000
+ * = 1 048 000 kWh). Avgust uchun bunday o'lchov hali kelmagan - `null`,
+ * demak karta TP yig'indisidan hisoblangan raqamni ko'rsatadi.
+ */
 const PERIODS = [
-  { sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31', days: 31 },
-  { sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10', days: 10 },
+  { sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31', days: 31, officialIn: 1_048_000 },
+  { sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10', days: 10, officialIn: null },
 ] as const;
 
 // ─── Excel yordamchilari ─────────────────────────────────────────────────────
@@ -259,15 +267,16 @@ async function main(): Promise<void> {
       const totalSold = r2(readings.reduce((a, r) => a + r.consumers, 0));
       await c.query(
         `INSERT INTO fact.feeder_monthly
-           (mfy_id, period_month, kwh_in, kwh_tp_sum, source)
-         VALUES ($1, $2::date, $3, $4, 'EXCEL')`,
-        [mfyId, p.start, totalIn, totalSold],
+           (mfy_id, period_month, kwh_in, kwh_tp_sum, kwh_in_official, source)
+         VALUES ($1, $2::date, $3, $4, $5, 'EXCEL')`,
+        [mfyId, p.start, totalIn, totalSold, p.officialIn],
       );
 
       const loss = r2(totalIn - totalSold);
       const pct = totalIn !== 0 ? (loss / totalIn) * 100 : 0;
       console.log(
         `\n${p.sheet} (${p.start} … ${p.end}, ${p.days} kun, ${readings.length} ta TP)`
+        + `\n  rasmiy kirim           ${p.officialIn === null ? '- (kelmagan)' : `${num(p.officialIn)} kWh`}`
         + `\n  balans hisoblagichlari ${num(totalIn)} kWh`
         + `\n  iste’molchilar         ${num(totalSold)} kWh`
         + `\n  yo‘qotish              ${num(loss)} kWh (${pct.toFixed(2)}%)`,
