@@ -1,14 +1,13 @@
 /**
  * «Хатлов» (hisoblagichlar tekshiruvi) ishlarini `fact.work` ga yozish.
  *
- * MANBA - O'YLAB TOPILMAYDI. `8-2-2026.xlsx` har bir TP uchun IKKITA sanani
- * yonma-yon beradi ("Хатловдан кейин" ustuni bilan): birinchisida yo'qotish
- * katta, ikkinchisida sezilarli kichik. Ikki o'lchov orasidagi FARQ - xatlov
- * ishining o'lchangan natijasi, ya'ni tejalgan energiya. Shu fayl allaqachon
- * `import-tp-daily-loss.ts` orqali `fact.tp_loss_daily` ga `source='EXCEL'`
- * bilan yuklangan, shuning uchun bu skript XLSX ni qayta o'qimaydi - bazadagi
- * o'sha haqiqiy qatorlarni oladi (generatsiya qilingan `MANUAL` qatorlar
- * ATAYLAB chetlab o'tiladi).
+ * MANBA - O'YLAB TOPILMAYDI. `1-8.xlsx` va `2-5.xlsx` har bir TP uchun IKKITA
+ * sanani yonma-yon beradi ("Хатловдан кейин" ustuni bilan): birinchisida
+ * yo'qotish katta, ikkinchisida sezilarli kichik. Ikki o'lchov orasidagi FARQ
+ * - xatlov ishining o'lchangan natijasi, ya'ni tejalgan energiya. Bu fayllar
+ * allaqachon `load-chinobod-august.ts` orqali `fact.tp_loss_daily` ga
+ * `source='EXCEL'` bilan yuklangan, shuning uchun bu skript XLSX ni qayta
+ * o'qimaydi - bazadagi o'sha haqiqiy qatorlarni oladi.
  *
  *   node --experimental-strip-types apps/api/scripts/generate-inspection-works.ts
  *
@@ -27,7 +26,7 @@ import { num } from '@beap/shared';
 import { config } from '../src/config.ts';
 
 /** Faqat shu skript yozgan qatorlarni qayta topish uchun belgi. */
-const SOURCE_TAG = '[manba: 8-2-2026.xlsx · xatlov]';
+const SOURCE_TAG = '[manba: 1-8.xlsx + 2-5.xlsx · xatlov]';
 
 /**
  * Kunlik tejamkorlikni oylikka keltirish koeffitsienti.
@@ -108,8 +107,8 @@ async function main(): Promise<void> {
 
     if (rows.rows.length === 0) {
       throw new Error(
-        'Haqiqiy (source=EXCEL) TP o‘lchovlari topilmadi - avval'
-        + ' import-tp-daily-loss.ts 8-2-2026.xlsx ishga tushirilsin',
+        'Haqiqiy (source=EXCEL) TP o‘lchovlari topilmadi -'
+        + ' avval load-chinobod-august.ts ishga tushirilsin',
       );
     }
 

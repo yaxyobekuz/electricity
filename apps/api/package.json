@@ -15,6 +15,7 @@
     "load:july": "node --experimental-strip-types scripts/load-chinobod-july.ts",
     "load:august": "node --experimental-strip-types scripts/load-chinobod-august.ts",
     "fill:derived": "node --experimental-strip-types scripts/fill-derived-data.ts",
+    "works:inspection": "node --experimental-strip-types scripts/generate-inspection-works.ts",
     "verify:passport": "node --experimental-strip-types scripts/verify-passport.ts",
     "import:tp-loss": "node --experimental-strip-types scripts/import-tp-daily-loss.ts",
     "test": "vitest run"
