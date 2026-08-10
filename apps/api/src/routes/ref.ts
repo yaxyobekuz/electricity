@@ -31,12 +31,6 @@ const refRoutes: FastifyPluginAsync = async (app) => {
     return getMfyResponsible(req.ctx, id);
   });
 
-  /*
-   * HOZIRCHA LOGINSIZ HAM YOZISH MUMKIN - tizim hali umumiy ochiq rejimda
-   * sinovdan o'tkazilmoqda, foydalanuvchi hisoblari keyinroq yoqiladi.
-   * Auth qaytarilganda bu yerga `{ onRequest: [app.requireAuth] }` va
-   * `app.assertMfyWrite` tekshiruvi qaytariladi (naqsh: `entry.ts`).
-   */
   app.patch('/mfy/:id/responsible', async (req) => {
     const { id } = idParam.parse(req.params);
     const body = responsibleBody.parse(req.body);

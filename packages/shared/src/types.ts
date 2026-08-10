@@ -93,23 +93,6 @@ export interface Bootstrap {
   dataRange: { minDate: string | null; maxDate: string | null };
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-
-export interface AuthUser {
-  id: number;
-  login: string;
-  fullName: string;
-  role: Role;
-  /** Foydalanuvchi yoza oladigan MFY id lari (viewer/admin uchun bo'sh = hammasi). */
-  mfyIds: number[];
-  elektrosetIds: number[];
-}
-
-export interface LoginResponse {
-  accessToken: string;
-  user: AuthUser;
-}
-
 // ─── Dashboard: umumiy bloklar ───────────────────────────────────────────────
 
 export interface KpiTile {

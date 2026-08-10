@@ -5,22 +5,16 @@
  * Ularni o'zgartirish seed kalibrovkasini va tekshiruv testlarini buzadi.
  */
 
-// ─── Rollar ──────────────────────────────────────────────────────────────────
+/*
+ * ─── Rollar ────────────────────────────────────────────────────────────────
+ *
+ * Tizimda KIRISH YO'Q - hamma amal ochiq (`plugins/context.ts`). Bu ro'yxat
+ * faqat `sec.app_user.role` ustunining shakli uchun qoladi: audit yozuvlari
+ * shu jadvalga tayanadi.
+ */
 
 export const ROLES = ['mfy_operator', 'elektroset_manager', 'hokimiyat_viewer', 'admin'] as const;
 export type Role = (typeof ROLES)[number];
-
-export const ROLE_LABEL_UZ: Record<Role, string> = {
-  mfy_operator: 'MFY operatori',
-  elektroset_manager: 'Elektroset menejeri',
-  hokimiyat_viewer: 'Hokimiyat kuzatuvchisi',
-  admin: 'Administrator',
-};
-
-/** Ma'lumot yozish huquqiga ega rollar. */
-export const WRITE_ROLES: readonly Role[] = ['mfy_operator', 'elektroset_manager', 'admin'];
-/** Submission tasdiqlash huquqiga ega rollar. */
-export const APPROVE_ROLES: readonly Role[] = ['elektroset_manager', 'admin'];
 
 // ─── Submission workflow ─────────────────────────────────────────────────────
 

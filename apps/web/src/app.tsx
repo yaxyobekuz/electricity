@@ -1,18 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nProvider, Toast } from '@heroui/react';
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 
 import { AppShell, LoadingState } from './components/layout/AppShell.tsx';
-import {
-  ApiRequestError,
-  api,
-  apiUrl,
-  setAccessToken,
-  setUnauthorizedHandler,
-} from './lib/api.ts';
-import { useUi } from './lib/ui-store.ts';
-import type { AuthUser } from '@beap/shared';
+import { ApiRequestError, api } from './lib/api.ts';
 
 /*
  * Har bir sahifa alohida bo'lakda - `/entry` hech qachon Nivo/ECharts yuklamaydi.
@@ -30,7 +22,6 @@ const TpListPage = lazy(() => import('./features/tp/TpListPage.tsx'));
 const WorksPage = lazy(() => import('./features/works/WorksPage.tsx'));
 const EnergyBalancePage = lazy(() => import('./features/energy/EnergyBalancePage.tsx'));
 const ReportsPage = lazy(() => import('./features/reports/ReportsPage.tsx'));
-const LoginPage = lazy(() => import('./features/auth/LoginPage.tsx'));
 const ResponsibleSettingsPage = lazy(() => import('./features/settings/ResponsibleSettingsPage.tsx'));
 const TpLossUploadPage = lazy(() => import('./features/tp-loss/TpLossUploadPage.tsx'));
 
@@ -48,45 +39,7 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Sessiyani tiklash - sahifa yangilanganda access token xotirada yo'qoladi. */
-function useSessionRestore(): { ready: boolean } {
-  const setUser = useUi((s) => s.setUser);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setUnauthorizedHandler(() => {
-      setUser(null);
-    });
-
-    void (async () => {
-      try {
-        const res = await fetch(apiUrl('/auth/refresh'), {
-          method: 'POST',
-          credentials: 'include',
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as { accessToken: string; user: AuthUser };
-        if (cancelled) return;
-        setAccessToken(data.accessToken);
-        setUser(data.user);
-      } catch {
-        /* sessiya yo'q - anonim rejimda davom etamiz */
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      setUnauthorizedHandler(null);
-    };
-  }, [setUser]);
-
-  return { ready: true };
-}
-
 export function App() {
-  useSessionRestore();
-
   return (
     // NumberField da `locale` propi YO'Q (hujjatlar jadvalidagi yozuv noto'g'ri -
     // haqiqiy tiplarda u mavjud emas). React Aria lokalni I18nProvider dan oladi,
@@ -102,15 +55,6 @@ export function App() {
               element={
                 <Suspense fallback={<LoadingState />}>
                   <WorkActPrint />
-                </Suspense>
-              }
-            />
-
-            <Route
-              path="/login"
-              element={
-                <Suspense fallback={<LoadingState />}>
-                  <LoginPage />
                 </Suspense>
               }
             />

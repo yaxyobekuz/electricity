@@ -5,7 +5,6 @@
  * so'rov yubora olmaydi. Bu "ma'lumot tashqariga chiqmasin" talabining
  * MASHINA TOMONIDAN majburlanishi.
  */
-import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
@@ -13,10 +12,9 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import { config } from './config.ts';
-import authPlugin from './plugins/auth.ts';
+import contextPlugin from './plugins/context.ts';
 import errorsPlugin from './plugins/errors.ts';
 import aiRoutes from './routes/ai.ts';
-import authRoutes from './routes/auth.ts';
 import dashRoutes from './routes/dash.ts';
 import entryRoutes from './routes/entry.ts';
 import filesRoutes from './routes/files.ts';
@@ -65,8 +63,6 @@ export async function buildApp(): Promise<FastifyInstance> {
     crossOriginEmbedderPolicy: false,
   });
 
-  await app.register(cookie, { secret: config.auth.jwtSecret });
-
   // Dev rejimida Vite (5173) API ga murojaat qiladi. Prod da bir xil origin.
   //
   // LAN dan kirish: sahifa `http://192.168.1.132:5173` dan ochilganda origin
@@ -101,7 +97,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     limits: { fileSize: 8 * 1024 * 1024, files: 1 },
   });
 
-  await app.register(authPlugin);
+  await app.register(contextPlugin);
 
   // ── Sog'liq ────────────────────────────────────────────────────────────
   app.get('/api/health', async () => ({ ok: true, ts: new Date().toISOString() }));
@@ -118,9 +114,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   }));
 
   // ── Marshrutlar ────────────────────────────────────────────────────────
-  // Login urinishlari marshrut darajasida cheklanadi (auth.ts ichida) -
-  // `register` opsiyalari `config` maydonini qabul qilmaydi.
-  await app.register(authRoutes, { prefix: '/api/auth' });
+  // Kirish (login) marshrutlari yo'q - tizim demo rejimida to'liq ochiq
+  // ishlaydi, izohi `plugins/context.ts` da.
   await app.register(refRoutes, { prefix: '/api/ref' });
   await app.register(dashRoutes, { prefix: '/api/dash' });
   await app.register(passportRoutes, { prefix: '/api/passport' });

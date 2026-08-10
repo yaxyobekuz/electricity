@@ -1,9 +1,9 @@
 /**
  * Tasdiqlash navbati.
  *
- * Ko'ruvchi (elektroset menejeri / admin) yuborilgan hisobotlarni ko'radi,
- * oldingi tasdiqlangan revisiya bilan MAYDON DARAJASIDAGI farqni tekshiradi
- * va tasdiqlaydi yoki sabab bilan rad etadi.
+ * Ko'ruvchi yuborilgan hisobotlarni ko'radi, oldingi tasdiqlangan revisiya
+ * bilan MAYDON DARAJASIDAGI farqni tekshiradi va tasdiqlaydi yoki sabab
+ * bilan rad etadi.
  */
 import type { Submission, SubmissionDiffRow } from '@beap/shared';
 import { DOMAIN_LABEL_UZ, dateTimeLabel, num, periodLabel } from '@beap/shared';
@@ -13,7 +13,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Eye, X } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
 import { EmptyPanel, Panel } from '../../components/ui/Panel.tsx';
@@ -22,12 +21,8 @@ import { useReviewQueue } from '../../lib/queries.ts';
 import { useUi } from '../../lib/ui-store.ts';
 
 export default function ReviewQueue() {
-  const { t } = useTranslation();
   const qc = useQueryClient();
-  const user = useUi((s) => s.user);
-  const canReview = user && ['elektroset_manager', 'admin'].includes(user.role);
-
-  const queue = useReviewQueue(Boolean(canReview));
+  const queue = useReviewQueue(true);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [rejectNote, setRejectNote] = useState('');
 
@@ -58,23 +53,6 @@ export default function ReviewQueue() {
     },
   });
 
-  if (!canReview) {
-    return (
-      <>
-        <PageHeader title={t('nav.review')} />
-        <Alert status="warning">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title className="text-xs">Ruxsat yo‘q</Alert.Title>
-            <Alert.Description className="text-[11px]">
-              Hisobotlarni tasdiqlash faqat elektroset menejeri va administrator uchun mavjud.
-            </Alert.Description>
-          </Alert.Content>
-        </Alert>
-      </>
-    );
-  }
-
   if (queue.isLoading) return <LoadingState rows={4} />;
 
   const rows = queue.data ?? [];
@@ -83,12 +61,12 @@ export default function ReviewQueue() {
     <>
       <PageHeader
         subtitle={`${rows.length} ta hisobot ko‘rib chiqishni kutmoqda`}
-        title={t('entry.reviewQueue')}
+        title="Tasdiqlash navbati"
       />
 
       <Panel flush>
         {rows.length === 0 ? (
-          <EmptyPanel message={t('entry.noSubmissions')} />
+          <EmptyPanel message="Tasdiqlash kutayotgan hisobot yo‘q" />
         ) : (
           <table className="dt">
             <thead>

@@ -30,8 +30,6 @@ import {
   ClipboardList,
   FileSpreadsheet,
   Home,
-  Languages,
-  LogOut,
   Menu,
   Moon,
   Ruler,
@@ -44,22 +42,18 @@ import {
 } from "lucide-react";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
 import logoUrl from "../../assets/logo.png";
 import robotUrl from "../../assets/robot.png";
 import { AiAssistant } from "../ai/AiAssistant.tsx";
-import { LANGUAGES, setLanguage, type LanguageCode } from "../../i18n/index.ts";
-import { apiUrl } from "../../lib/api.ts";
 import { useAlerts, useBootstrap, useEfficiency } from "../../lib/queries.ts";
 import { useUi } from "../../lib/ui-store.ts";
 
 interface NavItem {
   to: string;
-  labelKey: string;
+  label: string;
   icon: ReactNode;
-  roles?: string[];
 }
 
 /**
@@ -90,77 +84,60 @@ const FooterSlot = createContext<HTMLElement | null>(null);
 const NAV: NavItem[] = [
   {
     to: "/dashboard",
-    labelKey: "nav.dashboard",
+    label: "Fider paneli",
     icon: <Home className="size-4.5" />,
   },
   {
     to: "/transformers",
-    labelKey: "nav.transformers",
+    label: "Transformatorlar",
     icon: <Zap className="size-4.5" />,
   },
   {
     to: "/energy-balance",
-    labelKey: "nav.energyBalance",
+    label: "Energiya balansi",
     icon: <Activity className="size-4.5" />,
   },
   {
     to: "/works",
-    labelKey: "nav.plannedWorks",
+    label: "Rejalashtirilgan ishlar",
     icon: <ClipboardList className="size-4.5" />,
   },
   {
     to: "/reports",
-    labelKey: "nav.reports",
+    label: "Hisobotlar",
     icon: <FileSpreadsheet className="size-4.5" />,
   },
   {
     to: "/entry",
-    labelKey: "nav.entry",
+    label: "Ma’lumot kiritish",
     icon: <ClipboardCheck className="size-4.5" />,
-    roles: ["mfy_operator", "elektroset_manager", "admin"],
   },
   {
     to: "/tp-loss",
-    labelKey: "nav.tpLoss",
+    label: "Kunlik TP yo‘qotish",
     icon: <Upload className="size-4.5" />,
-    roles: ["mfy_operator", "elektroset_manager", "admin"],
   },
   {
     to: "/review",
-    labelKey: "nav.review",
+    label: "Tasdiqlash",
     icon: <Bell className="size-4.5" />,
-    roles: ["elektroset_manager", "admin"],
   },
   {
     to: "/settings/responsible",
-    labelKey: "nav.admin",
+    label: "Sozlamalar",
     icon: <Settings className="size-4.5" />,
-    roles: ["mfy_operator", "elektroset_manager", "admin"],
   },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { t, i18n } = useTranslation();
-  const {
-    theme,
-    toggleTheme,
-    sidebarOpen,
-    toggleSidebar,
-    user,
-    setUser,
-    period,
-    setAiOpen,
-  } = useUi();
+  const { theme, toggleTheme, sidebarOpen, toggleSidebar, period, setAiOpen } =
+    useUi();
   const { data: boot } = useBootstrap();
   const efficiency = useEfficiency(period ?? undefined);
   const location = useLocation();
   const navigate = useNavigate();
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | null>(null);
   const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
-
-  const visibleNav = NAV.filter(
-    (n) => !n.roles || (user && n.roles.includes(user.role)),
-  );
 
   return (
     <div className="flex min-h-dvh bg-background text-foreground">
@@ -204,7 +181,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Menyu */}
         <nav aria-label="Asosiy menyu" className="scroll-y px-3 pb-3">
           <ul className="flex flex-col gap-1">
-            {visibleNav.map((item) => {
+            {NAV.map((item) => {
               const active =
                 location.pathname === item.to ||
                 location.pathname.startsWith(`${item.to}/`);
@@ -219,7 +196,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 >
                   {item.icon}
                   {sidebarOpen && (
-                    <span className="truncate">{t(item.labelKey)}</span>
+                    <span className="truncate">{item.label}</span>
                   )}
                 </NavLink>
               );
@@ -231,7 +208,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   ) : (
                     <Tooltip delay={200}>
                       {link}
-                      <Tooltip.Content>{t(item.labelKey)}</Tooltip.Content>
+                      <Tooltip.Content>{item.label}</Tooltip.Content>
                     </Tooltip>
                   )}
                 </li>
@@ -260,7 +237,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {sidebarOpen && boot?.lastRefreshAt && (
           <div className="px-5 pb-4">
             <p className="text-[10px] leading-tight text-muted">
-              {t("common.updatedAt")}:{" "}
+              {'Ma’lumotlar yangilangan'}:{" "}
               <span className="font-semibold text-foreground">
                 {dateTimeLabel(boot.lastRefreshAt)}
               </span>
@@ -301,40 +278,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Ogohlantirishlar qo'ng'irog'i - kesh hali tayyor bo'lmasa o'zi yashiradi */}
             <AlertsBell />
 
-            {/* Til */}
-            <Dropdown>
-              <Button
-                aria-label={t("common.language")}
-                className="rounded-lg"
-                size="sm"
-                variant="ghost"
-              >
-                <Languages className="size-4" />
-                <span className="ml-1 hidden text-[11px] font-semibold sm:inline">
-                  {LANGUAGES.find((l) => l.code === i18n.language)?.short ??
-                    "LOT"}
-                </span>
-              </Button>
-              <Dropdown.Popover>
-                <Dropdown.Menu
-                  selectedKeys={new Set([i18n.language])}
-                  selectionMode="single"
-                  onAction={(key) => setLanguage(key as LanguageCode)}
-                >
-                  {LANGUAGES.map((l) => (
-                    <Dropdown.Item key={l.code} id={l.code} textValue={l.label}>
-                      {l.label}
-                      <Dropdown.ItemIndicator />
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown.Popover>
-            </Dropdown>
-
             {/* Tema */}
             <Button
               isIconOnly
-              aria-label={t("common.theme")}
+              aria-label="Mavzu"
               className="rounded-lg"
               size="sm"
               variant="ghost"
@@ -348,64 +295,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Button>
 
             {/* Foydalanuvchi */}
-            {user ? (
-              <Dropdown>
-                <Button
-                  className="rounded-lg bg-surface px-2 shadow-surface"
-                  size="sm"
-                  variant="ghost"
-                >
-                  <span
-                    className="mr-1.5 flex size-6.5 items-center justify-center rounded-md text-[11px] font-bold text-white"
-                    style={{ background: "var(--accent)" }}
-                  >
-                    {user.fullName.slice(0, 1).toUpperCase()}
-                  </span>
-                  <span className="hidden text-left xl:block">
-                    <span className="block text-[11.5px] font-semibold leading-tight">
-                      {user.fullName}
-                    </span>
-                    <span className="block text-[10px] leading-tight text-muted">
-                      {t(`role.${user.role}`)}
-                    </span>
-                  </span>
-                </Button>
-                <Dropdown.Popover>
-                  <Dropdown.Menu
-                    onAction={(key) => {
-                      if (key === "logout") {
-                        void fetch(apiUrl("/auth/logout"), {
-                          method: "POST",
-                          credentials: "include",
-                        });
-                        setUser(null);
-                        window.location.href = "/login";
-                      }
-                    }}
-                  >
-                    <Dropdown.Item
-                      id="logout"
-                      textValue={t("common.logout")}
-                      variant="danger"
-                    >
-                      <LogOut className="size-4" />
-                      {t("common.logout")}
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown>
-            ) : (
-              <Button
-                className="rounded-lg"
-                size="sm"
-                variant="primary"
-                onPress={() => {
-                  window.location.href = "/login";
-                }}
-              >
-                {t("common.login")}
-              </Button>
-            )}
           </div>
         </header>
 
@@ -417,7 +306,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-4 pb-3 text-[10.5px] text-muted">
           <span>
-            © {new Date().getFullYear()} {t("app.footer")}
+            © {new Date().getFullYear()} {'Baliqchi tumani hokimligi. Barcha huquqlar himoyalangan.'}
           </span>
           {/* `contents` - o'ram quti hosil qilmaydi, izoh footer qatorining bandi bo'ladi. */}
           <div ref={setFooterSlot} className="contents" />
@@ -425,7 +314,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Chip size="sm" variant="soft">
               <Chip.Label>Offline rejim</Chip.Label>
             </Chip>
-            <span>{t("app.version")} 1.0.0</span>
+            <span>{'Versiya'} 1.0.0</span>
           </span>
         </footer>
       </div>
@@ -885,11 +774,10 @@ export function ErrorState({
   message: string;
   onRetry?: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <div className="panel items-center gap-3 px-6 py-12 text-center">
       <TriangleAlert className="size-9 text-danger" />
-      <p className="text-sm font-semibold">{t("common.error")}</p>
+      <p className="text-sm font-semibold">{'Xatolik'}</p>
       <p className="max-w-md text-xs text-muted">{message}</p>
       {onRetry && (
         <Button
@@ -898,7 +786,7 @@ export function ErrorState({
           variant="secondary"
           onPress={onRetry}
         >
-          {t("common.retry")}
+          {'Qayta urinish'}
         </Button>
       )}
     </div>

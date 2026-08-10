@@ -2,10 +2,7 @@
  * UI holati - FAQAT uchta narsa uchun.
  * Server shaklidagi ma'lumot bu yerga tushmaydi (u TanStack Query da).
  */
-import type { AuthUser } from '@beap/shared';
 import { create } from 'zustand';
-
-import { currentScript } from '../i18n/index.ts';
 
 export type ThemeName = 'gov' | 'gov-dark';
 
@@ -21,8 +18,6 @@ interface UiState {
    */
   asOfDate: string | null;
   sidebarOpen: boolean;
-  user: AuthUser | null;
-  script: 'latn' | 'cyrl';
   /** AI yordamchi paneli ochiqmi - boshqa joylardan (masalan tavsiya kartasi) ham ochilishi kerak. */
   aiOpen: boolean;
   /**
@@ -38,8 +33,6 @@ interface UiState {
   setPeriod: (p: string | null) => void;
   setAsOfDate: (d: string | null) => void;
   toggleSidebar: () => void;
-  setUser: (u: AuthUser | null) => void;
-  setScript: (s: 'latn' | 'cyrl') => void;
   setAiOpen: (open: boolean) => void;
   /** AI panelni ochadi va shu savolni avtomatik yuboradi (panel ichidagi "AI tavsiya" tugmalari uchun). */
   askAi: (prompt: string) => void;
@@ -76,8 +69,6 @@ export const useUi = create<UiState>((set, get) => ({
   period: null,
   asOfDate: null,
   sidebarOpen: true,
-  user: null,
-  script: currentScript(),
   aiOpen: false,
   aiPendingPrompt: null,
 
@@ -100,8 +91,6 @@ export const useUi = create<UiState>((set, get) => ({
   setAsOfDate: (asOfDate) =>
     set(asOfDate === null ? { asOfDate: null } : { asOfDate, period: asOfDate.slice(0, 7) }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-  setUser: (user) => set({ user }),
-  setScript: (script) => set({ script }),
   setAiOpen: (aiOpen) => set({ aiOpen }),
   askAi: (prompt) => set({ aiOpen: true, aiPendingPrompt: prompt }),
   clearAiPendingPrompt: () => set({ aiPendingPrompt: null }),

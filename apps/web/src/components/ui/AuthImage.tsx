@@ -1,11 +1,10 @@
 /**
- * Himoyalangan rasm.
+ * API dan keladigan rasm.
  *
- * Rasm marshruti autentifikatsiya talab qiladi, token esa `Authorization`
- * sarlavhasida yuriladi - oddiy `<img src>` unga tokenni qo'sha olmaydi va
- * 401 qaytadi. Shuning uchun rasm `fetch` bilan olinadi va `blob:` manzil
- * sifatida beriladi. Manzil komponent yopilganda BEKOR QILINADI, aks holda
- * har ochilishda xotira o'sib boradi.
+ * `fetch` bilan olinadi va `blob:` manzil sifatida beriladi - oddiy
+ * `<img src>` xato holatini (404, buzilgan fayl) ajratib ko'rsata olmaydi,
+ * bu yerda esa "Rasm ochilmadi" holati aniq. Manzil komponent yopilganda
+ * BEKOR QILINADI, aks holda har ochilishda xotira o'sib boradi.
  */
 import { useEffect, useState } from 'react';
 

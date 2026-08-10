@@ -36,8 +36,6 @@ const MIME_EXT: Record<string, string> = {
 const workDir = (workId: number): string => join(config.paths.uploads, 'work', String(workId));
 
 const filesRoutes: FastifyPluginAsync = async (app) => {
-  app.addHook('onRequest', app.requireAuth);
-
   /** Rasmni ko'rsatish / yuklab olish. */
   app.get('/work-photo/:id', async (req, reply) => {
     const { id } = idParam.parse(req.params);
@@ -64,10 +62,9 @@ const filesRoutes: FastifyPluginAsync = async (app) => {
       .send(createReadStream(path));
   });
 
-  /** Rasm yuklash - faqat ma'lumot kirituvchi rollar. */
+  /** Rasm yuklash. */
   app.post(
     '/work-photo/:id',
-    { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       const { kind, caption } = uploadQ.parse(req.query);
@@ -76,9 +73,6 @@ const filesRoutes: FastifyPluginAsync = async (app) => {
         'SELECT mfy_id FROM fact.work WHERE id = $1', [id], req.ctx,
       );
       if (!work) return reply.code(404).send({ error: 'not_found', message: 'Ish topilmadi' });
-      if (!app.assertMfyWrite(req, work.mfy_id)) {
-        return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
-      }
 
       const file = await req.file();
       if (!file) return reply.code(400).send({ error: 'no_file', message: 'Fayl yuborilmadi' });
@@ -132,7 +126,6 @@ const filesRoutes: FastifyPluginAsync = async (app) => {
   /** Rasmni o'chirish - yozuv ham, fayl ham. */
   app.delete(
     '/work-photo/:id',
-    { onRequest: [app.requireRole('mfy_operator', 'elektroset_manager', 'admin')] },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
 
@@ -142,9 +135,6 @@ const filesRoutes: FastifyPluginAsync = async (app) => {
           WHERE p.id = $1`, [id], req.ctx,
       );
       if (!row) return reply.code(404).send({ error: 'not_found', message: 'Rasm topilmadi' });
-      if (!app.assertMfyWrite(req, row.mfy_id)) {
-        return reply.code(403).send({ error: 'forbidden', message: 'O‘chirish huquqingiz yo‘q' });
-      }
 
       await withTransaction(req.ctx, async (client) => {
         await client.query('DELETE FROM fact.work_photo WHERE id = $1', [id]);

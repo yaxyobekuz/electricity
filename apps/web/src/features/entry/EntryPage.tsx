@@ -7,10 +7,9 @@
  */
 import type { CompletenessCell, Domain } from '@beap/shared';
 import { DOMAIN_LABEL_UZ, DOMAINS, periodLabel, toPeriod } from '@beap/shared';
-import { Chip, Tooltip, cn } from '@heroui/react';
+import { Tooltip, cn } from '@heroui/react';
 import { CircleCheck, CircleDashed, Clock, FileEdit, XCircle } from 'lucide-react';
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import { LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
@@ -29,11 +28,9 @@ const STATUS_META = {
 } as const;
 
 export default function EntryPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const boot = useBootstrap();
   const period = useUi((s) => s.period);
-  const user = useUi((s) => s.user);
 
   const effectivePeriod =
     period ?? (boot.data?.dataRange.maxDate ? toPeriod(boot.data.dataRange.maxDate) : null);
@@ -54,7 +51,6 @@ export default function EntryPage() {
   }, [completeness.data]);
 
   const mfys = boot.data?.mfys ?? [];
-  const canWrite = user && ['mfy_operator', 'elektroset_manager', 'admin'].includes(user.role);
 
   if (completeness.isLoading || boot.isLoading) return <LoadingState rows={5} />;
 
@@ -70,7 +66,7 @@ export default function EntryPage() {
             ? `${periodLabel(effectivePeriod)} · ${approvedPct}% tasdiqlangan`
             : undefined
         }
-        title={t('entry.title')}
+        title="Ma’lumot kiritish paneli"
       />
 
       {/* Umumiy holat */}
@@ -97,7 +93,7 @@ export default function EntryPage() {
 
       <Panel
         subtitle="Fider × ma’lumot turi. Katakcha ustiga bosib formani oching."
-        title={t('entry.completeness')}
+        title="To‘liqlik matritsasi"
         flush
       >
         <div className="scroll-y max-h-[70vh] overflow-x-auto">
@@ -129,8 +125,6 @@ export default function EntryPage() {
                     const meta = STATUS_META[status];
                     const Icon = meta.icon;
 
-                    const canOpen = canWrite && (user.role === 'admin' || user.mfyIds.includes(m.id));
-
                     return (
                       <td key={d} className="p-1 text-center">
                         <Tooltip delay={300}>
@@ -139,12 +133,11 @@ export default function EntryPage() {
                             aria-label={`${m.nameUz} - ${DOMAIN_LABEL_UZ[d]}: ${meta.label}`}
                             className={cn(
                               'inline-flex size-8 items-center justify-center rounded-lg transition-transform',
-                              canOpen ? 'cursor-pointer hover:scale-110' : 'cursor-default',
+                              'cursor-pointer hover:scale-110',
                             )}
                             style={{ background: meta.bg }}
-                            disabled={!canOpen}
                             onClick={() => {
-                              if (canOpen && effectivePeriod) {
+                              if (effectivePeriod) {
                                 void navigate(`/entry/${m.id}/${effectivePeriod}/${d}`);
                               }
                             }}
@@ -166,13 +159,6 @@ export default function EntryPage() {
         </div>
       </Panel>
 
-      {!canWrite && (
-        <Chip className="mt-3" size="sm" variant="soft">
-          <Chip.Label>
-            Sizda ma’lumot kiritish huquqi yo‘q - faqat kuzatish rejimi
-          </Chip.Label>
-        </Chip>
-      )}
     </>
   );
 }

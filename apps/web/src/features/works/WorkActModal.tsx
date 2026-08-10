@@ -12,10 +12,7 @@ import { useRef, useState } from 'react';
 
 import { EmptyPanel } from '../../components/ui/Panel.tsx';
 import { useDeleteWorkPhoto, useUploadWorkPhoto, useWork } from '../../lib/queries.ts';
-import { useUi } from '../../lib/ui-store.ts';
 import { WorkAct } from './WorkAct.tsx';
-
-const CAN_EDIT = ['mfy_operator', 'elektroset_manager', 'admin'];
 
 export function WorkActModal({
   workId, onClose,
@@ -27,11 +24,8 @@ export function WorkActModal({
   const work = useWork(workId);
   const upload = useUploadWorkPhoto(workId);
   const remove = useDeleteWorkPhoto(workId);
-  const role = useUi((s) => s.user?.role ?? '');
   const fileRef = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<'BEFORE' | 'AFTER' | 'DOC'>('AFTER');
-
-  const canEdit = CAN_EDIT.includes(role);
 
   return (
     <Modal.Backdrop isOpen={workId !== null} onOpenChange={(open) => !open && onClose()}>
@@ -51,8 +45,8 @@ export function WorkActModal({
             {!work.isLoading && !work.data && <EmptyPanel message="Ish topilmadi" />}
             {work.data && <WorkAct work={work.data} />}
 
-            {/* Rasm biriktirish - faqat kiritish huquqi borlarga */}
-            {work.data && canEdit && (
+            {/* Rasm biriktirish */}
+            {work.data && (
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-separator pt-3">
                 <select
                   aria-label="Rasm turi"

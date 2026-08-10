@@ -47,11 +47,6 @@ const int = (key: string, fallback: number): number => {
   const v = process.env[key];
   return v === undefined || v === '' ? fallback : Number.parseInt(v, 10);
 };
-const bool = (key: string, fallback: boolean): boolean => {
-  const v = process.env[key];
-  return v === undefined || v === '' ? fallback : v === 'true' || v === '1';
-};
-
 export const config = {
   env: str('NODE_ENV', 'development'),
   isProd: str('NODE_ENV', 'development') === 'production',
@@ -69,13 +64,6 @@ export const config = {
     host: str('API_HOST', '127.0.0.1'),
     port: int('API_PORT', 3001),
     logLevel: str('LOG_LEVEL', 'info'),
-  },
-
-  auth: {
-    jwtSecret: str('JWT_SECRET', 'dev-only-secret-change-me-in-production-0123456789abcdef'),
-    accessTtl: str('ACCESS_TOKEN_TTL', '15m'),
-    refreshTtlDays: int('REFRESH_TOKEN_TTL_DAYS', 30),
-    cookieSecure: bool('COOKIE_SECURE', false),
   },
 
   /*
@@ -134,13 +122,3 @@ export const config = {
     uploads: resolve(REPO_ROOT, 'var/uploads'),
   },
 } as const;
-
-export function assertProductionSecrets(): void {
-  if (!config.isProd) return;
-  if (config.auth.jwtSecret.startsWith('dev-only-')) {
-    throw new Error('JWT_SECRET ishlab chiqarishda almashtirilishi SHART');
-  }
-  if (config.auth.jwtSecret.length < 32) {
-    throw new Error('JWT_SECRET kamida 32 belgidan iborat bo‘lishi kerak');
-  }
-}

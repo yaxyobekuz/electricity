@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@beap/shared": "*",
-    "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.2",
     "@fastify/multipart": "^9.2.1",

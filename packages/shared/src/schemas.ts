@@ -387,13 +387,7 @@ export const normUpsertSchema = z.object({
   sourceDoc: z.string().max(300).nullish(),
 });
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-
-export const loginSchema = z.object({
-  login: z.string().min(3, 'Login kamida 3 belgidan iborat bo‘lishi kerak').max(64),
-  password: z.string().min(6, 'Parol kamida 6 belgidan iborat bo‘lishi kerak').max(200),
-});
-export type LoginInput = z.infer<typeof loginSchema>;
+// ─── Foydalanuvchilar (faqat DB shakli - tizimda kirish yo'q) ────────────────
 
 export const userUpsertSchema = z.object({
   id: z.coerce.number().int().positive().nullish(),

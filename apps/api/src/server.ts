@@ -2,7 +2,7 @@
 import cron from 'node-cron';
 
 import { buildApp } from './app.ts';
-import { assertProductionSecrets, config } from './config.ts';
+import { config } from './config.ts';
 import { closePool, SYSTEM_CONTEXT } from './db/pool.ts';
 import { refreshAggregates } from './services/aggregates.ts';
 import * as alerts from './services/alerts.ts';
@@ -10,8 +10,6 @@ import * as narrative from './services/narrative.ts';
 import * as telegram from './services/telegram.ts';
 
 async function main(): Promise<void> {
-  assertProductionSecrets();
-
   const app = await buildApp();
 
   // Agregatlarni har 10 daqiqada yangilash (advisory lock ostida).

@@ -15,7 +15,7 @@
  * ham xuddi shunday) mos emas. Buning o'rniga xizmat hisobi (service
  * account) JSON kalitidan RS256 bilan imzolangan JWT yasab, uni to'g'ridan-
  * to'g'ri Google'ning token endpointiga almashtiramiz - `jose` allaqachon
- * `plugins/auth.ts`da ishlatiladi, yangi bog'liqlik SHART EMAS.
+ * loyihada allaqachon bor, yangi bog'liqlik SHART EMAS.
  */
 import { readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';

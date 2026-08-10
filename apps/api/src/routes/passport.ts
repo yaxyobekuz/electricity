@@ -53,8 +53,8 @@ const passportRoutes: FastifyPluginAsync = async (app) => {
     return p.listSnapshots(req.ctx, scopeType ?? null);
   });
 
-  /** Pasportni muzlatish - imzolanadigan rasmiy hujjat. Faqat admin. */
-  app.post('/freeze', { onRequest: [app.requireRole('admin')] }, async (req) => {
+  /** Pasportni muzlatish - imzolanadigan rasmiy hujjat. */
+  app.post('/freeze', async (req) => {
     const body = z.object({
       scopeType: z.enum(['MFY', 'TUMAN']),
       scopeId: z.coerce.number().int().positive().nullish(),

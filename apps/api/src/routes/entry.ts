@@ -1,9 +1,9 @@
 /**
  * Input panel marshrutlari - ma'lumot kiritish, tekshirish, tasdiqlash.
  *
- * Yozish huquqi ikki qatlamda tekshiriladi:
- *   1. Bu yerda (`assertMfyWrite`) - foydalanuvchiga tushunarli xato beradi
- *   2. Postgres RLS - API xatosi bo'lsa ham himoya qiladi
+ * DEMO REJIMI: kirish (login) va rol tekshiruvi yo'q - har bir amal ochiq.
+ * Yozish `plugins/context.ts` bergan administrator konteksti bilan boradi,
+ * shuning uchun Postgres RLS baribir qanoatlanadi va audit yozilaveradi.
  */
 import {
   DOMAINS, createSubmissionSchema, energyBalancePatchSchema,
@@ -24,27 +24,17 @@ import { parseTpLossWorkbook } from '../services/tpLossImport.ts';
 const idParam = z.object({ id: z.coerce.number().int().positive() });
 
 const entryRoutes: FastifyPluginAsync = async (app) => {
-  // Barcha marshrutlar autentifikatsiya talab qiladi.
-  app.addHook('onRequest', app.requireAuth);
-
   /** To'liqlik matritsasi - MFY × domen. */
   app.get('/periods', async (req) => {
     const { period } = z.object({ period: z.string().regex(/^\d{4}-\d{2}$/) }).parse(req.query);
     return e.completeness(req.ctx, period);
   });
 
-  app.get('/review-queue', { onRequest: [app.requireRole('elektroset_manager', 'admin')] },
-    async (req) => e.reviewQueue(req.ctx));
+  app.get('/review-queue', async (req) => e.reviewQueue(req.ctx));
 
   /** Qoralama ochish (yoki tasdiqlangan hisobotga tuzatish revisiyasi). */
-  app.post('/submission', async (req, reply) => {
+  app.post('/submission', async (req) => {
     const body = createSubmissionSchema.parse(req.body);
-    if (!app.assertMfyWrite(req, body.scopeId)) {
-      return reply.code(403).send({
-        error: 'forbidden',
-        message: 'Bu MFY ga ma’lumot kiritish huquqingiz yo‘q',
-      });
-    }
     return e.openDraft(req.ctx, body.scopeId, body.domain, body.period);
   });
 
@@ -82,9 +72,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
 
     const sub = await e.getSubmission(req.ctx, id);
     if (!sub) return reply.code(404).send({ error: 'not_found', message: 'Konvert topilmadi' });
-    if (!app.assertMfyWrite(req, sub.scopeId)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
-    }
 
     const saved = await e.saveEnergyBalance(req.ctx, id, body.rows);
     const validation = await e.validateSubmission(req.ctx, id);
@@ -97,9 +84,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
 
     const sub = await e.getSubmission(req.ctx, id);
     if (!sub) return reply.code(404).send({ error: 'not_found', message: 'Konvert topilmadi' });
-    if (!app.assertMfyWrite(req, sub.scopeId)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
-    }
 
     await e.saveMonthlyReturn(req.ctx, id, body);
     const validation = await e.validateSubmission(req.ctx, id);
@@ -112,9 +96,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
 
     const sub = await e.getSubmission(req.ctx, id);
     if (!sub) return reply.code(404).send({ error: 'not_found', message: 'Konvert topilmadi' });
-    if (!app.assertMfyWrite(req, sub.scopeId)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
-    }
 
     const saved = await e.saveTpStatus(req.ctx, id, body.rows);
     const validation = await e.validateSubmission(req.ctx, id);
@@ -127,9 +108,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
 
     const sub = await e.getSubmission(req.ctx, id);
     if (!sub) return reply.code(404).send({ error: 'not_found', message: 'Konvert topilmadi' });
-    if (!app.assertMfyWrite(req, sub.scopeId)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
-    }
 
     const saved = await e.saveNetworkDefect(req.ctx, id, body.rows);
     const validation = await e.validateSubmission(req.ctx, id);
@@ -162,7 +140,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.post('/submission/:id/approve',
-    { onRequest: [app.requireRole('elektroset_manager', 'admin')] },
     async (req) => {
       const { id } = idParam.parse(req.params);
       const body = reviewActionSchema.parse(req.body ?? {});
@@ -175,7 +152,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
     });
 
   app.post('/submission/:id/reject',
-    { onRequest: [app.requireRole('elektroset_manager', 'admin')] },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       const body = reviewActionSchema.parse(req.body ?? {});
@@ -194,9 +170,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
     const { id } = idParam.parse(req.params);
     const sub = await e.getSubmission(req.ctx, id);
     if (!sub) return reply.code(404).send({ error: 'not_found', message: 'Konvert topilmadi' });
-    if (!app.assertMfyWrite(req, sub.scopeId)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Yozish huquqingiz yo‘q' });
-    }
     return e.openDraft(req.ctx, sub.scopeId, sub.domain, sub.periodStart.slice(0, 7));
   });
 
@@ -210,10 +183,7 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
   // o'g'irlik-sezgir ma'lumot - xodim noto'g'ri fayl yuklab, eski (to'g'ri)
   // o'qishlarni ustidan yozib yubormasligi kerak.
 
-  const TP_LOSS_ROLES = ['mfy_operator', 'elektroset_manager', 'admin'] as const;
-
   app.post('/tp-daily-loss/preview',
-    { onRequest: [app.requireRole(...TP_LOSS_ROLES)] },
     async (req, reply) => {
       const file = await req.file();
       if (!file) return reply.code(400).send({ error: 'no_file', message: 'Fayl yuborilmadi' });
@@ -252,7 +222,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
     });
 
   app.post('/tp-daily-loss/confirm',
-    { onRequest: [app.requireRole(...TP_LOSS_ROLES)] },
     async (req, reply) => {
       const file = await req.file();
       if (!file) return reply.code(400).send({ error: 'no_file', message: 'Fayl yuborilmadi' });
@@ -262,13 +231,6 @@ const entryRoutes: FastifyPluginAsync = async (app) => {
 
       const codes = [...new Set(rows.map((r) => r.tpCode))];
       const resolved = await tq.resolveTpCodes(req.ctx, codes);
-
-      const distinctMfyIds = [...new Set([...resolved.values()].map((tp) => tp.mfyId))];
-      for (const mfyId of distinctMfyIds) {
-        if (!app.assertMfyWrite(req, mfyId)) {
-          return reply.code(403).send({ error: 'forbidden', message: 'Bu fiderga yozish huquqingiz yo‘q' });
-        }
-      }
 
       const resolvedRows = rows.filter((r) => resolved.has(r.tpCode));
       const skippedUnresolved = [...new Set(

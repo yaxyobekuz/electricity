@@ -71,24 +71,6 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
       });
     }
 
-    /*
-     * Bu marshrut `requireAuth` talab qilmaydi - mehmon ham chatlasha oladi.
-     * Lekin `Authorization` sarlavhasi BERILGAN bo'lib, token yaroqsiz/eskirgan
-     * bo'lsa (`plugins/auth.ts`ning `onRequest` ilgagi buni jimgina `req.user =
-     * null` qilib qo'yadi - mehmon bilan farqlanmaydi), shu yerda 401
-     * qaytariladi. Aks holda avval kirgan foydalanuvchi 15 daqiqadan keyin
-     * "mehmon" sifatida davom etib, yozish asboblari doim "kirish huquqi yo'q"
-     * deb qaytaraverardi - klient buni hech qachon tushunmas, chunki
-     * `apiFetchRaw`dagi token-yangilash mexanizmi FAQAT 401 statusiga
-     * ishlaydi. 401 qaytarilsa, klient tokenni yangilab qayta so'raydi.
-     */
-    if (req.headers.authorization && !req.user) {
-      return reply.code(401).send({
-        error: 'token_expired',
-        message: 'Sessiya muddati tugagan. Qaytadan urinib ko‘ring.',
-      });
-    }
-
     const parsed = chatBody.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: 'bad_request', message: 'So‘rov noto‘g‘ri' });
@@ -146,10 +128,8 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
      */
     const tools: ToolContext = {
       ctx: { ...req.ctx, requestId: `ai:${req.id}` },
-      user: req.user,
       feederId: snapshot?.feederId ?? null,
       period: snapshot?.period ?? new Date().toISOString().slice(0, 7),
-      canWriteMfy: (mfyId) => app.assertMfyWrite(req, mfyId),
     };
 
     try {
@@ -209,16 +189,6 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(503).send({
         error: 'ai_disabled',
         message: 'AI yordamchi sozlanmagan: .env faylida OPENAI_API_KEY berilishi kerak',
-      });
-    }
-
-    // `/chat` dagi bilan bir xil sabab - 401 klientning token-yangilash
-    // mexanizmini ishga tushiradi, aks holda eskirgan token jimgina
-    // mehmon rejimiga tushib qolardi.
-    if (req.headers.authorization && !req.user) {
-      return reply.code(401).send({
-        error: 'token_expired',
-        message: 'Sessiya muddati tugagan. Qaytadan urinib ko‘ring.',
       });
     }
 
