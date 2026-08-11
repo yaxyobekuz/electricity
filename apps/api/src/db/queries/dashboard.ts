@@ -1318,29 +1318,15 @@ export async function operational(
 export async function results(
   ctx: AppContext, mfyId: number | null, period: string, months = 12,
 ): Promise<ResultsSummary> {
-  const rows = await query<{ p: string; loss_pct: number }>(
+  const rows = await query<{ p: string; loss_pct: number; kwh_in: number }>(
     `SELECT to_char(a.period_month, 'YYYY-MM') AS p,
-            round(100 * sum(a.kwh_loss_total) / nullif(sum(a.kwh_in), 0), 2) AS loss_pct
+            round(100 * sum(a.kwh_loss_total) / nullif(sum(a.kwh_in), 0), 2) AS loss_pct,
+            coalesce(sum(a.kwh_in), 0) AS kwh_in
      FROM agg.mfy_monthly a
      WHERE a.period_month <= ($1 || '-01')::date
        AND a.period_month >  ($1 || '-01')::date - ($2 || ' months')::interval
        AND ($3::int IS NULL OR a.mfy_id = $3)
      GROUP BY 1 ORDER BY 1`, [period, months, mfyId], ctx);
-
-  /*
-   * Oyna yuqoridan HAM yopiladi. Aks holda tanlangan davrdan KEYIN tugagan
-   * ish ham qo'shilib ketardi - iyulni tanlaganda avgustdagi natija ko'rinib,
-   * karta davr tanlagichga umuman javob bermay qolardi. Yuqori chegara
-   * yo'qotish qatoridagi `period_month <= $1` bilan bir xil ma'noni beradi:
-   * "tanlangan oy va undan oldingi 12 oy".
-   */
-  const saved = await queryOne<{ kwh: number }>(
-    `SELECT coalesce(sum(effect_saving_kwh_month), 0) AS kwh
-     FROM fact.work
-     WHERE status = 'COMPLETED' AND ($1::int IS NULL OR mfy_id = $1)
-       AND actual_end >  ($2 || '-01')::date - ($3 || ' months')::interval
-       AND actual_end <  ($2 || '-01')::date + INTERVAL '1 month'`,
-    [mfyId, period, months], ctx);
 
   const first = rows[0];
   const last = rows.at(-1);
@@ -1351,13 +1337,35 @@ export async function results(
    * aks holda `improvementPp` NULL (interfeys belgini butunlay yashiradi).
    */
   const comparable = rows.length >= 2 && first && last;
+  const improvementPp = comparable
+    ? Number((Number(first.loss_pct) - Number(last.loss_pct)).toFixed(2))
+    : null;
+
+  /*
+   * IQTISOD QILINGAN ENERGIYA - yo'qotish darajasi pasayishining natijasi.
+   *
+   * Formula: (boshlang'ich % − oxirgi %) × oxirgi davrning kirimi. Ya'ni
+   * "agar yo'qotish eski darajada qolganda, shuncha kWh ortiqcha yo'qolgan
+   * bo'lardi". Shu sababli raqam oxirgi davrning HAJMIGA bog'liq va u bilan
+   * bir o'lchovda bo'ladi.
+   *
+   * Ilgari bu son `fact.work.effect_saving_kwh_month` yig'indisidan olinardi -
+   * ya'ni FAQAT dalolatnomasi yozilgan ishlar hisobga olinardi. Yo'qotish
+   * boshqa sabab bilan kamaysa (yoki ish yozuvi kiritilmagan bo'lsa), karta
+   * yaxshilanishni ko'rsatib turib, natijani 0 deb qo'yardi.
+   *
+   * Yo'qotish OSHGAN bo'lsa 0 qaytadi: "manfiy iqtisod" degan tushuncha yo'q,
+   * yomonlashuvni esa `improvementPp` ning o'zi manfiy son bilan aytadi.
+   */
+  const savedKwh = improvementPp !== null && improvementPp > 0 && last
+    ? Number(((improvementPp / 100) * Number(last.kwh_in)).toFixed(2))
+    : 0;
+
   return {
     lossPctStart: first ? Number(first.loss_pct) : null,
     lossPctEnd: last ? Number(last.loss_pct) : null,
-    improvementPp: comparable
-      ? Number((Number(first.loss_pct) - Number(last.loss_pct)).toFixed(2))
-      : null,
-    savedKwh: Number(saved?.kwh ?? 0),
+    improvementPp,
+    savedKwh,
     periodFrom: first?.p ?? period,
     periodTo: last?.p ?? period,
   };

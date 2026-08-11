@@ -821,11 +821,6 @@ export default function MfyDashboard() {
 
                 <p className="mt-2 flex items-baseline justify-between gap-2">
                   <span className="flex items-baseline gap-1.5">
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="size-3.5 shrink-0 self-center"
-                      style={{ color: "var(--viz-good)" }}
-                    />
                     <span
                       className="tabular text-[19px] font-bold leading-none"
                       style={{ color: "var(--viz-good)" }}
@@ -845,7 +840,7 @@ export default function MfyDashboard() {
                     lekin raqamning ma'nosi p.p.
                   */
                   <p
-                    className="mt-3 rounded-lg px-2.5 py-1.5 text-center text-[11.5px] font-semibold"
+                    className="mt-3 rounded-full px-2.5 py-1.5 text-center text-[11.5px] font-semibold"
                     style={{
                       background: `color-mix(in oklab, var(--viz-${
                         results.data.improvementPp > 0 ? "good" : "critical"
@@ -853,16 +848,21 @@ export default function MfyDashboard() {
                       color: `var(--viz-${results.data.improvementPp > 0 ? "good" : "critical"})`,
                     }}
                   >
-                    Yaxshilanish:{" "}
-                    {Math.abs(results.data.improvementPp).toFixed(1)} p.p.
+                    Farq:{" "}
+                    {Math.abs(results.data.improvementPp).toFixed(1)}%
                   </p>
                 )}
               </div>
 
-              {/* O'ng ustun - o'sha ishlarning natijasi: tejalgan energiya */}
+              {/*
+                O'ng ustun - yo'qotish darajasi pasayishining natijasi:
+                (boshlang'ich % − oxirgi %) × oxirgi davr kirimi. Ya'ni
+                "yo'qotish eski darajada qolganda shuncha kWh ortiqcha
+                yo'qolgan bo'lardi".
+              */}
               <div className="min-w-0 sm:pl-4">
                 <p className="text-[11px] font-medium leading-tight text-muted">
-                  Iqtisod qilingan energiya
+                  Foyda
                 </p>
 
                 <div className="mt-3.5 flex items-center gap-2.5">
@@ -901,7 +901,7 @@ export default function MfyDashboard() {
                   className="mt-1.5 pl-8.5 text-[10.5px] leading-tight"
                   style={{ color: "var(--viz-good)" }}
                 >
-                  (so‘nggi 12 oy · {num(TARIFF_SUM_PER_KWH)} so‘m/kWh)
+                  (yo‘qotish kamayishi hisobiga · {num(TARIFF_SUM_PER_KWH)} so‘m/kWh)
                 </p>
               </div>
             </div>
