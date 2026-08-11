@@ -22,6 +22,7 @@ import {
   monthShort,
   num,
   pct,
+  periodLabel,
   pieces,
   volts,
 } from "@beap/shared";
@@ -124,7 +125,7 @@ const TILE_ICONS: Record<string, React.ReactNode> = {
  * yaxshi, shuning uchun rang faqat shu belgiga qarab tanlanadi.
  */
 function CompareFooter({
-  labelUz, current, previous, prevPeriod, format, goodDirection,
+  labelUz, current, previous, prevPeriod, format, goodDirection, diffAsPp = false,
 }: {
   labelUz: string;
   current: number | null;
@@ -132,6 +133,12 @@ function CompareFooter({
   prevPeriod: string | null;
   format: (v: number) => string;
   goodDirection: "up" | "down";
+  /**
+   * Farqni FOIZ PUNKTIDA ko'rsatish - taqqoslanayotgan qiymatning o'zi foiz
+   * bo'lganda. 31.1% dan 20.1% ga o'tish "35% kamaydi" emas, "11.0 p.p.
+   * kamaydi": foizning foizi chalkashtiradi.
+   */
+  diffAsPp?: boolean;
 }) {
   if (current === null || previous === null || prevPeriod === null) {
     return (
@@ -142,14 +149,15 @@ function CompareFooter({
   }
 
   const diff = current - previous;
-  const pctDiff = previous === 0 ? null : (diff / Math.abs(previous)) * 100;
+  const pctDiff = diffAsPp || previous === 0 ? null : (diff / Math.abs(previous)) * 100;
   const isGood = diff === 0 ? null : goodDirection === "up" ? diff > 0 : diff < 0;
   const Icon = diff === 0 ? TrendingUp : diff > 0 ? TrendingUp : TrendingDown;
 
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
       <span className="text-[11px] text-muted">
-        {periodLabel(prevPeriod)}: <span className="font-medium">{format(previous)}</span>
+        {labelUz} · {periodLabel(prevPeriod)}:{" "}
+        <span className="font-medium">{format(previous)}</span>
       </span>
       <span
         className="inline-flex items-center gap-1 text-[11.5px] font-semibold"
@@ -165,14 +173,15 @@ function CompareFooter({
         {diff !== 0 && <Icon aria-hidden="true" className="size-3.5" />}
         {diff === 0
           ? "o‘zgarmadi"
-          : `${diff > 0 ? "+" : "−"}${format(Math.abs(diff))}`}
+          : `${diff > 0 ? "+" : "−"}${
+              diffAsPp ? `${Math.abs(diff).toFixed(1)} p.p.` : format(Math.abs(diff))
+            }`}
         {pctDiff !== null && diff !== 0 && (
           <span className="font-normal text-muted">
             ({Math.abs(pctDiff).toFixed(1)}%)
           </span>
         )}
       </span>
-      <span className="sr-only">{labelUz}</span>
     </div>
   );
 }
@@ -216,6 +225,15 @@ export default function MfyDashboard() {
   const consumers = useMfyConsumers(mfyId, period ?? undefined);
   const energySplit = useMfyEnergySplit(mfyId, period ?? undefined);
   const debt = useMfyDebt(mfyId, period ?? undefined);
+  /*
+   * O'tgan davr - panellar pastidagi solishtirish uchun. Davr nomi
+   * SERVERDAN olinadi (`tiles[].prevPeriod`), chunki "oldingi oy" qaysi
+   * ekanini u allaqachon hisoblagan - bu yerda sana arifmetikasi
+   * takrorlanmaydi.
+   */
+  const prevPeriod = overview.data?.tiles[0]?.prevPeriod ?? null;
+  const prevEnergySplit = useMfyEnergySplit(mfyId, prevPeriod ?? undefined, prevPeriod !== null);
+  const prevDebt = useMfyDebt(mfyId, prevPeriod ?? undefined, prevPeriod !== null);
   const works = useMfyWorks(mfyId);
   const results = useMfyResults(mfyId, period ?? undefined);
   const violations = useMfyViolations(mfyId, period ?? undefined);
@@ -608,7 +626,27 @@ export default function MfyDashboard() {
 
         <Panel
           className="xl:col-span-3"
-          footerAction={{ label: "Batafsil tahlil", to: "/losses" }}
+          footer={
+            /*
+             * MUTLAQ kWh emas, YO'QOTISH FOIZI solishtiriladi.
+             *
+             * Joriy oy tugamagan bo'lishi mumkin (avgustda 10 kunlik
+             * ma'lumot), o'tgan oy esa to'liq - mutlaq raqamlar "76%
+             * kamaydi" degan soxta yaxshilanish ko'rsatardi. Foiz esa
+             * davr uzunligiga bog'liq emas.
+             */
+            <CompareFooter
+              current={energySplit.data?.parts.find((x) => x.key === "loss")?.pct ?? null}
+              diffAsPp
+              format={(v) => pct(v, 1)}
+              goodDirection="down"
+              labelUz="Yo‘qotish darajasi"
+              prevPeriod={prevPeriod}
+              previous={
+                prevEnergySplit.data?.parts.find((x) => x.key === "loss")?.pct ?? null
+              }
+            />
+          }
           title="Energiya taqsimoti"
         >
           {energySplit.data ? (
@@ -634,7 +672,16 @@ export default function MfyDashboard() {
 
         <Panel
           className="xl:col-span-3"
-          footerAction={{ label: "Qarzdorlar ro‘yxati", to: "/debt" }}
+          footer={
+            <CompareFooter
+              current={debt.data?.totalMln ?? null}
+              format={(v) => money(v).text}
+              goodDirection="down"
+              labelUz="Jami qarzdorlik"
+              prevPeriod={prevPeriod}
+              previous={prevDebt.data?.totalMln ?? null}
+            />
+          }
           title="Qarzdorlik tuzilmasi"
         >
           {debt.data ? (

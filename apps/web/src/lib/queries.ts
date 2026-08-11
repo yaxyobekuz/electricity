@@ -239,10 +239,11 @@ export function useMfyEnergySplit(id: number, period?: string, enabled = true) {
   });
 }
 
-export function useMfyDebt(id: number, period?: string) {
+export function useMfyDebt(id: number, period?: string, enabled = true) {
   return useQuery({
     queryKey: keys.mfy(id, 'debt', { period }),
     queryFn: ({ signal }) => api.get<DebtBreakdown>(`/dash/mfy/${id}/debt${qs({ period })}`, signal),
+    enabled,
     ...DASH_OPTIONS,
   });
 }
