@@ -144,8 +144,10 @@ export function ViolationsPanel({
    */
   return (
     <div className="@container flex flex-col gap-2">
+      {/* Bitta oy tanlanganda oraliq emas, oyning o'zi yoziladi. */}
       <p className="text-[10.5px] text-muted">
-        {periodLabel(from)} - {periodLabel(to)} · jami {num(total)} ta dalolatnoma
+        {from === to ? periodLabel(to) : `${periodLabel(from)} - ${periodLabel(to)}`}
+        {' · jami '}{num(total)} ta dalolatnoma
       </p>
 
       {/*

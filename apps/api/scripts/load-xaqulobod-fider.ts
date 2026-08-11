@@ -74,6 +74,21 @@ interface PeriodSpec {
   /** Oy uchun biriktirilgan rasmiy qiymatlar; `null` = kelmagan. */
   officialIn: number | null;
   officialSold: number | null;
+  /**
+   * Shu oyda «Muammolar» varag'idagi TP lar NOSOZ deb belgilanadimi.
+   *
+   * Varaq holatni «shu paytgacha», ya'ni oxirgi (avgust) holatiga ko'ra
+   * beradi va iyul uchun nosozlik qayd etilmagan. Shuning uchun iyulda hamma
+   * TP soz deb yoziladi, nosozlik esa avgustda paydo bo'ladi.
+   */
+  faultsFromProblems: boolean;
+  /**
+   * Qarzdorlik - SO'MDA yoziladi (mijoz shu ko'rinishda beradi), bazaga esa
+   * mln so'mga o'girib tushadi. Manba Excel fayllarida yo'q, alohida
+   * berilgan.
+   */
+  debtPopulationSum: number;
+  debtLegalSum: number;
   /** Abonentlar faylidagi ustun raqamlari. */
   activeCol: number;
   disconnectedCol: number;
@@ -82,13 +97,15 @@ interface PeriodSpec {
 const PERIODS: PeriodSpec[] = [
   {
     sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31',
-    days: 31, officialIn: 1_048_000, officialSold: 722_507.7,
+    days: 31, officialIn: 1_048_000, officialSold: 722_507.7, faultsFromProblems: false,
+    debtPopulationSum: 275_788_690, debtLegalSum: 128_764_000,
     // «xaqulobod_itemolchilar.xlsx» dagi ustunlar: aloqada / aloqadamas.
     activeCol: 6, disconnectedCol: 7,
   },
   {
     sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10',
-    days: 10, officialIn: 252_000, officialSold: 201_426.3,
+    days: 10, officialIn: 252_000, officialSold: 201_426.3, faultsFromProblems: true,
+    debtPopulationSum: 261_861_400, debtLegalSum: 68_430_140,
     activeCol: 8, disconnectedCol: 9,
   },
 ];
@@ -525,13 +542,54 @@ async function main(): Promise<void> {
          RETURNING id`,
         [mfyId, p.start, p.end, adminId],
       );
+      /*
+       * Qarzdorlik so'mdan MLN SO'MGA o'giriladi - baza shu birlikda
+       * saqlaydi. Budjet tashkilotlari ulushi berilmagan, 0 bo'lib qoladi.
+       */
+      const debtPopMln = p.debtPopulationSum / 1e6;
+      const debtLegalMln = p.debtLegalSum / 1e6;
       await c.query(
         `INSERT INTO fact.mfy_monthly_return
            (submission_id, mfy_id, period_month, consumers_population, consumers_legal,
-            consumers_active, consumers_disconnected)
-         VALUES ($1, $2, $3::date, $4, 0, $5, $6)`,
-        [mrSub.rows[0]!.id, mfyId, p.start, cTotal, cActive, cDisc],
+            consumers_active, consumers_disconnected,
+            debt_population_mln, debt_legal_mln)
+         VALUES ($1, $2, $3::date, $4, 0, $5, $6, $7, $8)`,
+        [mrSub.rows[0]!.id, mfyId, p.start, cTotal, cActive, cDisc,
+          debtPopMln, debtLegalMln],
       );
+
+      /*
+       * TP OYLIK HOLATI - «Transformatorlar» kartasidagi nosoz/soz tarkibi
+       * shundan chiqadi. Nosozlik manbai «Muammolar» varag'i, sabab esa
+       * o'sha yerdagi matnning o'zi (`ts_repair_reason` cheklovi sababsiz
+       * "ta'mir kerak" yozishga yo'l qo'ymaydi).
+       *
+       * Yuklama foizi va cho'qqi quvvat manbada YO'Q - 0 bo'lib qoladi.
+       */
+      const tsSub = await c.query<{ id: number }>(
+        `INSERT INTO fact.submission
+           (scope_type, scope_id, domain, period_type, period_start, period_end,
+            status, created_by, reviewed_by, reviewed_at, submitted_at)
+         VALUES ('MFY', $1, 'TP_STATUS', 'MONTH', $2::date, $3::date,
+                 'approved', $4, $4, now(), now())
+         RETURNING id`,
+        [mfyId, p.start, p.end, adminId],
+      );
+      let faulty = 0;
+      for (const rd of readings) {
+        const problem = p.faultsFromProblems ? (problems.get(tpKey(rd.tp)) ?? null) : null;
+        if (problem) faulty += 1;
+        await c.query(
+          `INSERT INTO fact.tp_status_monthly
+             (submission_id, tp_id, period_month, condition, under_load,
+              repair_needed, repair_reason)
+           VALUES ($1, $2, $3::date, $4, true, $5, $6)`,
+          [
+            tsSub.rows[0]!.id, resolve(rd.tp), p.start,
+            problem ? 'FAULT' : 'GOOD', problem !== null, problem,
+          ],
+        );
+      }
 
       const loss = r2(effectiveIn - effectiveSold);
       const pct = effectiveIn !== 0 ? (loss / effectiveIn) * 100 : 0;
@@ -545,7 +603,11 @@ async function main(): Promise<void> {
         + `\n  AMALDAGI foydali oqim  ${num(effectiveSold)} kWh`
         + `\n  yo‘qotish              ${num(loss)} kWh (${pct.toFixed(2)}%)`
         + `\n  abonentlar             ${num(cTotal)} ta`
-        + ` (aloqada ${num(cActive)}, aloqadamas ${num(cDisc)})`,
+        + ` (aloqada ${num(cActive)}, aloqadamas ${num(cDisc)})`
+        + `\n  transformatorlar       ${readings.length} ta`
+        + ` (nosoz ${faulty}, soz ${readings.length - faulty})`
+        + `\n  qarzdorlik             ${num(debtPopMln + debtLegalMln)} mln so‘m`
+        + ` (aholi ${num(debtPopMln)}, yuridik ${num(debtLegalMln)})`,
       );
     }
 

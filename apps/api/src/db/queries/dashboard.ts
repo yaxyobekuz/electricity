@@ -93,7 +93,8 @@ interface PeriodTotals {
   consumers_total: number; consumers_active: number; consumers_disconnected: number;
   consumers_new: number; consumers_population: number; consumers_legal: number;
   debt_total_mln: number; debt_population_mln: number; debt_legal_mln: number; debt_budget_mln: number;
-  tp_total: number; tp_overloaded: number; meters_offline_cnt: number;
+  tp_total: number; tp_overloaded: number; tp_repair_needed: number;
+  meters_offline_cnt: number;
   capacity_kva: number; used_kva: number;
   total_loss_target_pct: number | null;
   /** Shu davrda kunlik ma'lumot kiritilgan kunlar soni - oy hali tugamagan bo'lishi mumkin. */
@@ -117,6 +118,7 @@ const TOTALS_SELECT = `
   coalesce(sum(a.debt_budget_mln), 0)        AS debt_budget_mln,
   coalesce(sum(a.tp_total), 0)               AS tp_total,
   coalesce(sum(a.tp_overloaded), 0)          AS tp_overloaded,
+  coalesce(sum(a.tp_repair_needed), 0)       AS tp_repair_needed,
   coalesce(sum(a.meters_offline_cnt), 0)     AS meters_offline_cnt,
   coalesce(sum(a.capacity_kva), 0)           AS capacity_kva,
   coalesce(sum(a.used_kva), 0)               AS used_kva,
@@ -374,11 +376,11 @@ export async function districtOverview(
        * bo'lmaganda ham. Rasmiy qiymat kelmagan oyda u asosiy raqamning
        * o'zi bo'ladi, lekin yorlig'i raqamning QAYERDAN kelganini aytadi.
        */
-      secondary: { labelUz: 'TP bo‘yicha', value: kwhInTp ?? cur.kwh_in, unit: 'kWh' },
+      secondary: [{ labelUz: 'TP bo‘yicha', value: kwhInTp ?? cur.kwh_in, unit: 'kWh' }],
     }),
     tile({
       key: 'kwhSold', metric: 'kwhSold', labelUz: 'Foydali oqim', unit: 'kWh',
-      secondary: { labelUz: 'TP bo‘yicha', value: kwhSoldTp ?? cur.kwh_sold, unit: 'kWh' },
+      secondary: [{ labelUz: 'TP bo‘yicha', value: kwhSoldTp ?? cur.kwh_sold, unit: 'kWh' }],
       value: cur.kwh_sold, prev: alignedPrev?.kwh_sold ?? p.kwh_sold,
       goodDirection: 'up', spark: spark.kwhSold, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
@@ -426,6 +428,19 @@ export async function districtOverview(
       key: 'tpCount', metric: 'tpCount', labelUz: 'Transformatorlar', unit: 'ta',
       value: cur.tp_total, prev: p.tp_total,
       goodDirection: 'up', spark: spark.tpCount, sparkBucket: 'month',
+      /*
+       * Jami son o'zi kam narsa aytadi - registrda nechta TP borligi oydan
+       * oyga o'zgarmaydi. Ma'noli qism TARKIBDA: o'sha oyda nechtasi nosoz
+       * deb belgilangan va nechtasi soz ishlagan.
+       *
+       * Nosoz son OYLIK HOLAT hisobotidan (`tp_repair_needed`), jami esa
+       * REGISTRDAN olinadi - shuning uchun holat hisoboti kelmagan oyda
+       * "0 nosoz" emas, hammasi soz deb ko'rsatiladi.
+       */
+      secondary: [
+        { labelUz: 'Nosoz', value: cur.tp_repair_needed, unit: 'ta' },
+        { labelUz: 'Soz', value: Math.max(0, cur.tp_total - cur.tp_repair_needed), unit: 'ta' },
+      ],
     }),
   ];
 
@@ -917,16 +932,24 @@ export async function works(
 /**
  * Aniqlangan qoidabuzarliklar - toifa bo'yicha soni va summasi.
  *
- * DAVR: tanlangan oy bilan tugaydigan 12 oy. Bitta oy olinsa karta ko'pincha
- * bo'sh chiqadi (bir mahallada oyiga bitta dalolatnoma ham bo'lmasligi
- * mumkin), holbuki savol "qancha aniqlandi?" - bu yig'ma ko'rsatkich.
+ * DAVR: TANLANGAN OYNING O'ZI.
+ *
+ * Ilgari bu yerda 12 oylik siljiydigan oyna turardi va sababi shunday edi:
+ * "bir mahallada oyiga bitta dalolatnoma ham bo'lmasligi mumkin, karta esa
+ * bo'sh chiqadi". O'sha izoh tizim 22 ta mahallani qamragan davrga tegishli.
+ * Endi qamrov BITTA fider va oyiga o'nlab dalolatnoma bor, 12 oylik oyna esa
+ * teskari muammoni tug'diradi: davr tanlagichda avgust tanlansa, kartada
+ * iyulniki ham qo'shilib ko'rinadi va raqam oylik hisobotga mos kelmaydi.
+ *
+ * `months` parametri saqlanadi - kelajakda "yillik jami" kerak bo'lsa,
+ * chaqiruvda 12 berish yetarli.
  *
  * Har bir toifa bilan birga DALOLATNOMALAR RO'YXATI qaytadi: foydalanuvchi
  * raqam ustiga bosganda "bu qayerdan chiqdi?" degan savolga javob shu yerda,
  * qo'shimcha so'rovsiz turadi.
  */
 export async function violations(
-  ctx: AppContext, period: string, mfyId: number | null = null, months = 12,
+  ctx: AppContext, period: string, mfyId: number | null = null, months = 1,
 ): Promise<ViolationSummary> {
   const rows = await query<{
     id: number; act_no: string; act_date: string; mfy_id: number; mfy_name: string;

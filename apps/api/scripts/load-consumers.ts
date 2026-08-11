@@ -19,7 +19,9 @@
  *   • `fact.mfy_monthly_return` - fider bo'yicha UMUMIY yig'indi (2 qator)
  *
  * Ikkinchisi kerak, chunki dashboard KPI raqamlari `agg.mfy_monthly` orqali
- * aynan shu jadvaldan oziqlanadi, TP kesimidan emas.
+ * aynan shu jadvaldan oziqlanadi, TP kesimidan emas. Jami iste'molchilar
+ * o'sha yerda AHOLI va YURIDIK bo'laklariga ajratiladi - ajratma manba
+ * faylda yo'q, u `LEGAL_CONSUMERS` konstantasida turadi.
  *
  * NIMAGA TEGMAYDI: `tp_monthly` dagi hisoblagich ustunlari (meter_no, coef,
  * reading_prev/curr, kwh_month) va `mfy_monthly_return` dagi qarzdorlik va
@@ -45,6 +47,20 @@ const PERIODS = [
 const COL_CODE = 3;
 const COL_TOTAL = 5;
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
+
+/*
+ * YURIDIK iste'molchilar (abonentlar) soni.
+ *
+ * Manba faylda aholi/yuridik ajratmasi YO'Q - u faqat TP bo'yicha JAMI
+ * beradi. Bu son fider bo'yicha alohida aytilgan va butun fiderga tegishli,
+ * TP kesimida taqsimlanmagan.
+ *
+ * MUHIM: bu son jamining ICHIDA, ustiga qo'shilmaydi. Ya'ni
+ * `aholi = jami − yuridik`. Aks holda `consumers_total` (GENERATED ustun:
+ * aholi + yuridik) TP kesimi yig'indisidan katta chiqib, ikki jadval
+ * bir-biriga zid bo'lib qolardi.
+ */
+const LEGAL_CONSUMERS = 69;
 
 const DEFAULT_FILE = join(REPO_ROOT, 'xaqulobod_itemolchilar.xlsx');
 
@@ -225,7 +241,16 @@ async function main(): Promise<void> {
     });
     const grandTotal = source.reduce((a, s) => a + s.total, 0);
 
+    if (LEGAL_CONSUMERS > grandTotal) {
+      throw new Error(
+        `Yuridik iste'molchilar soni (${LEGAL_CONSUMERS}) jami iste'molchilardan `
+        + `(${grandTotal}) ko‘p bo‘lishi mumkin emas.`,
+      );
+    }
+    const populationConsumers = grandTotal - LEGAL_CONSUMERS;
+
     console.log(`\nUMUMIY YIG‘INDI  ·  jami iste'molchilar: ${grandTotal}`);
+    console.log(`  shundan aholi ${populationConsumers} · yuridik ${LEGAL_CONSUMERS}`);
     for (const t of totals) {
       const pct = grandTotal > 0 ? ((t.offline / grandTotal) * 100).toFixed(2) : '0';
       console.log(
@@ -303,10 +328,9 @@ async function main(): Promise<void> {
       }
 
       /*
-       * Aholi / yuridik ajratmasi manba faylda YO'Q - hammasi ajratilmagan
-       * holda «aholi» ustuniga yoziladi (`load-chinobod-july.ts` dagi bilan
-       * bir xil qoida). `consumers_total` GENERATED, shuning uchun uni
-       * to'g'ridan-to'g'ri yozib bo'lmaydi.
+       * `consumers_total` GENERATED (aholi + yuridik), shuning uchun u
+       * to'g'ridan-to'g'ri yozilmaydi - bo'laklar yoziladi va jami o'z-o'zidan
+       * chiqadi (yuqoridagi `LEGAL_CONSUMERS` izohiga qarang).
        *
        * Qarzdorlik va hisoblagich ustunlari `DO UPDATE` da YO'Q: ular boshqa
        * hisobotdan keladi, bu skript ularni nolga tushirmasligi kerak.
@@ -315,13 +339,14 @@ async function main(): Promise<void> {
         `INSERT INTO fact.mfy_monthly_return
            (submission_id, mfy_id, period_month,
             consumers_population, consumers_legal, consumers_active, consumers_disconnected)
-         VALUES ($1, $2, $3::date, $4, 0, $5, $6)
+         VALUES ($1, $2, $3::date, $4, $5, $6, $7)
          ON CONFLICT (submission_id, mfy_id, period_month) DO UPDATE
            SET consumers_population   = EXCLUDED.consumers_population,
+               consumers_legal        = EXCLUDED.consumers_legal,
                consumers_active       = EXCLUDED.consumers_active,
                consumers_disconnected = EXCLUDED.consumers_disconnected,
                updated_at             = now()`,
-        [submissionId, mfyId, pStart, grandTotal, t.active, t.offline]);
+        [submissionId, mfyId, pStart, populationConsumers, LEGAL_CONSUMERS, t.active, t.offline]);
     }
 
     await client.query('COMMIT');

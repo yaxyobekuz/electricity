@@ -130,17 +130,18 @@ export interface KpiTile {
   /** Manba (provenance) kaliti - "i" popoveri uchun. */
   metric: string;
   /**
-   * IKKINCHI DARAJALI qiymat - asosiy raqam bilan bir xil narsani BOSHQA
-   * manbadan o'lchaganda ko'rsatiladi.
+   * IKKINCHI DARAJALI qiymatlar - asosiy raqamni ochib beradigan qo'shimcha
+   * o'lchovlar. Ikki xil vazifada ishlatiladi:
    *
-   * Masalan «Jami iste'mol»: asosiy raqam oy uchun biriktirilgan rasmiy
-   * kirim, ikkinchisi esa TP balans hisoblagichlaridan hisoblangan yig'indi.
-   * Ikkalasi bir xil bo'lishi shart emas va farqning o'zi ma'lumot beradi -
-   * shuning uchun biri ikkinchisini yashirmaydi.
+   *   • BOSHQA MANBA - «Jami iste'mol»da asosiy raqam oy uchun biriktirilgan
+   *     rasmiy kirim, ikkinchisi esa TP hisoblagichlaridan o'lchov. Ikkalasi
+   *     bir xil bo'lishi shart emas va farqning o'zi ma'lumot beradi;
+   *   • TARKIB - «Transformatorlar»da jami son nechtasi nosoz, nechtasi
+   *     ishlayotganiga bo'linadi.
    *
-   * `null` = ikkinchi manba yo'q yoki u asosiy raqamning o'zi.
+   * `null` yoki bo'sh ro'yxat = qo'shimcha o'lchov yo'q.
    */
-  secondary: { labelUz: string; value: number; unit: string } | null;
+  secondary: { labelUz: string; value: number; unit: string }[] | null;
 }
 
 export interface EnergyBalanceNode {

@@ -16,6 +16,7 @@
     "load:august": "node --experimental-strip-types scripts/load-chinobod-august.ts",
     "load:consumers": "node --experimental-strip-types scripts/load-consumers.ts",
     "load:problems": "node --experimental-strip-types scripts/load-tp-problems.ts",
+    "load:violations": "node --experimental-strip-types scripts/load-violations.ts",
     "fill:derived": "node --experimental-strip-types scripts/fill-derived-data.ts",
     "works:inspection": "node --experimental-strip-types scripts/generate-inspection-works.ts",
     "verify:passport": "node --experimental-strip-types scripts/verify-passport.ts",

@@ -88,7 +88,10 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
   const provenance = isKnownMetric(tile.metric) ? provenanceText(tile.metric as MetricKey) : null;
   const change = changeText(tile);
   const caption = sparkCaption(tile);
-  const secondary = tile.secondary ? fmtByUnit(tile.secondary.value, tile.secondary.unit) : null;
+  const secondary = (tile.secondary ?? []).map((s) => ({
+    labelUz: s.labelUz,
+    ...fmtByUnit(s.value, s.unit),
+  }));
 
   return (
     <article className={cn('kpi group', `tone-${tone}`, compact && 'gap-2 p-3')}>
@@ -160,12 +163,17 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
         farq qilishi mumkin va aynan shu farq ma'lumot beradi, shuning
         uchun u yashirilmaydi.
       */}
-      {tile.secondary && secondary && (
+      {secondary.length > 0 && (
         <p className="truncate text-[10px] leading-tight text-muted">
-          {tile.secondary.labelUz}:{' '}
-          <span className="font-medium">
-            {secondary.value} {secondary.unit}
-          </span>
+          {secondary.map((s, i) => (
+            <span key={s.labelUz}>
+              {i > 0 && <span aria-hidden="true"> · </span>}
+              {s.labelUz}:{' '}
+              <span className="font-medium">
+                {s.value} {s.unit}
+              </span>
+            </span>
+          ))}
         </p>
       )}
 
