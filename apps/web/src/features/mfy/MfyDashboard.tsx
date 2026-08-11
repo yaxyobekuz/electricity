@@ -114,6 +114,69 @@ const TILE_ICONS: Record<string, React.ReactNode> = {
   tpCount: <Building2 className="size-4" />,
 };
 
+/**
+ * Panel pastidagi «o'tgan oyga nisbatan» qatori.
+ *
+ * Havola o'rniga turadi: bosiladigan joydan ko'ra, aynan shu panel raqami
+ * o'tgan oydan qanchaga farq qilgani ko'proq narsa aytadi.
+ *
+ * `goodDirection` - o'sish YAXSHIMI. Yo'qotish va qarzdorlik uchun kamayish
+ * yaxshi, shuning uchun rang faqat shu belgiga qarab tanlanadi.
+ */
+function CompareFooter({
+  labelUz, current, previous, prevPeriod, format, goodDirection,
+}: {
+  labelUz: string;
+  current: number | null;
+  previous: number | null;
+  prevPeriod: string | null;
+  format: (v: number) => string;
+  goodDirection: "up" | "down";
+}) {
+  if (current === null || previous === null || prevPeriod === null) {
+    return (
+      <p className="text-[11px] text-muted">
+        O‘tgan oy bilan solishtirish uchun ma’lumot yo‘q
+      </p>
+    );
+  }
+
+  const diff = current - previous;
+  const pctDiff = previous === 0 ? null : (diff / Math.abs(previous)) * 100;
+  const isGood = diff === 0 ? null : goodDirection === "up" ? diff > 0 : diff < 0;
+  const Icon = diff === 0 ? TrendingUp : diff > 0 ? TrendingUp : TrendingDown;
+
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+      <span className="text-[11px] text-muted">
+        {periodLabel(prevPeriod)}: <span className="font-medium">{format(previous)}</span>
+      </span>
+      <span
+        className="inline-flex items-center gap-1 text-[11.5px] font-semibold"
+        style={{
+          color:
+            isGood === null
+              ? "var(--viz-muted)"
+              : isGood
+                ? "var(--viz-delta-good)"
+                : "var(--viz-delta-bad)",
+        }}
+      >
+        {diff !== 0 && <Icon aria-hidden="true" className="size-3.5" />}
+        {diff === 0
+          ? "o‘zgarmadi"
+          : `${diff > 0 ? "+" : "−"}${format(Math.abs(diff))}`}
+        {pctDiff !== null && diff !== 0 && (
+          <span className="font-normal text-muted">
+            ({Math.abs(pctDiff).toFixed(1)}%)
+          </span>
+        )}
+      </span>
+      <span className="sr-only">{labelUz}</span>
+    </div>
+  );
+}
+
 const TILE_TONES: Record<string, Tone> = {
   kwhIn: "blue",
   kwhSold: "green",

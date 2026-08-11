@@ -29,10 +29,15 @@ interface PanelProps {
   flush?: boolean;
   /** Panel pastidagi havola - mockupdagi "Batafsil" / "Barchasi". */
   footerAction?: { label: string; to: string } | undefined;
+  /**
+   * Panel pastidagi ERKIN mazmun - havola o'rniga xulosa qatori uchun.
+   * `footerAction` bilan birga berilmaydi; berilsa shu ustun turadi.
+   */
+  footer?: ReactNode;
 }
 
 export function Panel({
-  title, subtitle, actions, children, className, bodyClassName, flush, footerAction,
+  title, subtitle, actions, children, className, bodyClassName, flush, footerAction, footer,
 }: PanelProps) {
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
 
@@ -61,7 +66,7 @@ export function Panel({
           className={cn(
             'panel__body',
             flush && 'panel__body--flush',
-            footerAction && !flush && 'pb-3',
+            (footerAction || footer) && !flush && 'pb-3',
             bodyClassName,
           )}
         >
@@ -69,11 +74,13 @@ export function Panel({
         </div>
       </PanelHeaderSlotContext.Provider>
 
-      {footerAction && (
+      {footer ? (
+        <div className="border-t border-separator/50 px-3.5 py-2.5">{footer}</div>
+      ) : footerAction ? (
         <Link className="panel__action" to={footerAction.to}>
           {footerAction.label}
         </Link>
-      )}
+      ) : null}
     </section>
   );
 }

@@ -225,10 +225,16 @@ export function useMfyTpMonthly(id: number, period?: string) {
   });
 }
 
-export function useMfyEnergySplit(id: number, period?: string) {
+/**
+ * `enabled` - solishtirish uchun O'TGAN davr so'ralganda kerak: davr hali
+ * ma'lum bo'lmaguncha so'rov yuborilmasin, aks holda server sukut bo'yicha
+ * JORIY davrni qaytarib, "o'tgan oy" o'rniga o'zini ko'rsatardi.
+ */
+export function useMfyEnergySplit(id: number, period?: string, enabled = true) {
   return useQuery({
     queryKey: keys.mfy(id, 'energy-split', { period }),
     queryFn: ({ signal }) => api.get<EnergySplit>(`/dash/mfy/${id}/energy-split${qs({ period })}`, signal),
+    enabled,
     ...DASH_OPTIONS,
   });
 }
