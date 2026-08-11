@@ -1,12 +1,15 @@
 /**
- * Ishlar ro'yxati - sana · nom · holat qatorlari.
+ * Ishlar ro'yxati - nom · holat qatorlari.
  * Mockupdagi "Amalga oshirilgan ishlar" / "Rejalashtirilgan ishlar" panellari.
+ *
+ * SANA USTUNI YO'Q: reja ishlarining ko'pchiligida muddat belgilanmagan va
+ * ustun bo'ylab "-" ustuni hosil bo'lardi - u joy egallab, hech nima
+ * aytmasdi. Aniq sanalar dalolatnoma oynasida, qator bosilganda ko'rinadi.
  *
  * Har bir qator BOSILADI va ishning dalolatnomasini ochadi: to'liq maydonlar,
  * rasmlar va chop etish. Qator `<button>` - klaviatura bilan ham yuriladi.
  */
 import type { WorkRow } from '@beap/shared';
-import { dateShort } from '@beap/shared';
 import { Chip } from '@heroui/react';
 import { useState } from 'react';
 
@@ -24,7 +27,7 @@ export function WorkTimeline({
   rows, planned = false, limit = 4,
 }: {
   rows: WorkRow[];
-  /** Reja ro'yxati - sana sifatida rejalashtirilgan tugash sanasi olinadi. */
+  /** Reja ro'yxatimi - ro'yxat bo'sh bo'lganda ko'rsatiladigan xabar shunga qarab tanlanadi. */
   planned?: boolean;
   limit?: number;
 }) {
@@ -46,13 +49,6 @@ export function WorkTimeline({
               type="button"
               onClick={() => setOpenId(w.id)}
             >
-              <span
-                className="w-17 shrink-0 text-[11px] font-medium text-muted"
-                style={{ fontVariantNumeric: 'tabular-nums' }}
-              >
-                {((d) => (d ? dateShort(d) : '-'))(planned ? w.plannedEnd : w.actualEnd)}
-              </span>
-
               <span className="min-w-0 flex-1 truncate text-[12px]" title={w.titleUz}>
                 {w.titleUz}
                 {w.quantity > 0 && (
