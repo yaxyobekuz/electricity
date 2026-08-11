@@ -42,14 +42,19 @@ export default function WorksPage() {
             </Tabs.List>
           </Tabs.ListContainer>
 
-          <Tabs.Panel id="progress">
-            <WorksPanel mode="planned" rows={inProgress} />
+          {/*
+            `full` - bu ALOHIDA sahifa: ro'yxat balandligi cheklanmaydi va
+            hech bir qator kesilmaydi. Dashboarddagi ixcham panel esa yonidagi
+            panellar bilan bir qatorda turgani uchun past bo'lib qolaveradi.
+          */}
+          <Tabs.Panel className="p-3" id="progress">
+            <WorksPanel full mode="planned" rows={inProgress} />
           </Tabs.Panel>
-          <Tabs.Panel id="planned">
-            <WorksPanel mode="planned" rows={planned} />
+          <Tabs.Panel className="p-3" id="planned">
+            <WorksPanel full mode="planned" rows={planned} />
           </Tabs.Panel>
-          <Tabs.Panel id="completed">
-            <WorksPanel mode="completed" rows={completed} />
+          <Tabs.Panel className="p-3" id="completed">
+            <WorksPanel full mode="completed" rows={completed} />
           </Tabs.Panel>
         </Tabs>
       </Panel>

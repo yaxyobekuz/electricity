@@ -128,6 +128,24 @@ const DAYS_PER_MONTH = 30;
 /** Xatlov yozuvlarini keyin qayta topish uchun belgi. */
 const SOURCE_TAG = '[manba: xaqulobod_fider.xlsx · бир кунлик · xatlov]';
 
+/** Reja ishlari uchun belgi. */
+const PROBLEM_TAG = '[manba: xaqulobod_fider.xlsx · Muammolar]';
+
+/**
+ * «Muammolar» varag'idagi kirillcha izohlarning lotincha ko'rinishi.
+ *
+ * FAQAT YOZUV TIZIMI o'zgaradi - mazmun manbadagidek qoladi va asl matn
+ * izohda saqlanadi. Qanday chora ko'rilishi (hisoblagich almashtiriladimi,
+ * ta'mirlanadimi) hujjatda YOZILMAGAN, shuning uchun sarlavha muammoni
+ * ataydi, yechimni EMAS.
+ */
+const PROBLEM_LABEL_UZ: Record<string, string> = {
+  'Баланс хисоблагич носоз': 'balans hisoblagichi nosoz',
+  'Баланс хисоблагич тока трансформатори носоз':
+    'balans hisoblagichining tok transformatori nosoz',
+  'Истеъмолчилар тури бриктирилди': 'iste’molchilar turi biriktirilgan',
+};
+
 /**
  * `effect_loss_pct_*` ustunlarida `CHECK (... BETWEEN 0 AND 100)` turibdi,
  * manba foizi esa nosoz hisoblagichli TP larda MANFIY. Bunday qatorda foiz
@@ -347,11 +365,15 @@ async function main(): Promise<void> {
     );
     const tpByCode = new Map(tpRes.rows.map((t) => [normalize(t.code), t.id]));
 
-    const resolve = (raw: string): number => {
-      const id = tpByCode.get(normalize(tpKey(raw)));
-      if (id === undefined) throw new Error(`TP registrda topilmadi: «${raw}» → ${tpKey(raw)}`);
+    /** Tayyor kod bo'yicha («TP-024») - registrdagi kirill «А» hisobga olinadi. */
+    const resolveCode = (code: string): number => {
+      const id = tpByCode.get(normalize(code));
+      if (id === undefined) throw new Error(`TP registrda topilmadi: ${code}`);
       return id;
     };
+
+    /** Fayldagi xom nom bo'yicha («24», «122A»). */
+    const resolve = (raw: string): number => resolveCode(tpKey(raw));
 
     // Audit triggeri ommaviy yuklashda o'chiriladi - boshqa skriptlar bilan bir xil.
     const trg = await c.query<{ sch: string; tbl: string }>(`
@@ -575,6 +597,39 @@ async function main(): Promise<void> {
         + `  ·  tejaldi ${num(Math.round(savingMonth))} kWh/oy`,
       );
     }
+
+    // ── 4. Muammolar → rejalashtirilgan ishlar ─────────────────────────────
+    /*
+     * «Muammolar» varag'idagi har bir TP uchun bitta REJA ishi ochiladi.
+     * Varaq sarlavhasining o'zi aytadi: «ayrim muammolar qisman hal qilingan
+     * ... ammo to'liq hal etilmagan» - ya'ni ular hamon ochiq ish.
+     *
+     * MUDDAT YOZILMAYDI: hujjatda sana yo'q, o'ylab topilgan muddat esa
+     * rejani soxta aniq ko'rsatardi. `planned_start`/`planned_end` NULL
+     * qoladi va interfeys muddatni «-» deb ko'rsatadi.
+     *
+     * `work_type = OTHER`: nosozlik TURI ma'lum, lekin ko'riladigan CHORA
+     * (almashtirish / ta'mirlash) hujjatda yozilmagan - aniqroq tur tanlash
+     * tekshirilmagan da'vo bo'lardi.
+     */
+    let planned = 0;
+    for (const [code, note] of [...problems.entries()].sort()) {
+      const labelUz = PROBLEM_LABEL_UZ[note] ?? note;
+      await c.query(
+        `INSERT INTO fact.work
+           (mfy_id, tp_id, work_type, title_uz, description, status, progress_pct)
+         VALUES ($1, $2, 'OTHER', $3, $4, 'PLANNED', 0)`,
+        [
+          mfyId, resolveCode(code),
+          `${code} - ${labelUz}`,
+          `Hisobotning «Muammolar» varag'ida qayd etilgan: «${note}».`
+          + ' Muddat va ko’riladigan chora hujjatda ko’rsatilmagan.'
+          + ` ${PROBLEM_TAG}`,
+        ],
+      );
+      planned += 1;
+    }
+    console.log(`\nMuammolar - ${planned} ta TP uchun reja ishi ochildi`);
 
     await c.query('COMMIT');
 
