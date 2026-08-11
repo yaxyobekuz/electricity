@@ -89,6 +89,14 @@ interface PeriodSpec {
    */
   debtPopulationSum: number;
   debtLegalSum: number;
+  /**
+   * YURIDIK iste'molchilar soni.
+   *
+   * `xaqulobod_itemolchilar.xlsx` faqat JAMI sonni beradi, aholi/yuridik
+   * ajratmasi unda YO'Q - shuning uchun bu raqam alohida beriladi. Aholi
+   * ulushi qoldiq sifatida chiqadi: jami − yuridik.
+   */
+  legalConsumers: number;
   /** Abonentlar faylidagi ustun raqamlari. */
   activeCol: number;
   disconnectedCol: number;
@@ -98,14 +106,14 @@ const PERIODS: PeriodSpec[] = [
   {
     sheet: 'Iyul', period: '2026-07', start: '2026-07-01', end: '2026-07-31',
     days: 31, officialIn: 1_048_000, officialSold: 722_507.7, faultsFromProblems: false,
-    debtPopulationSum: 275_788_690, debtLegalSum: 128_764_000,
+    debtPopulationSum: 275_788_690, debtLegalSum: 128_764_000, legalConsumers: 69,
     // «xaqulobod_itemolchilar.xlsx» dagi ustunlar: aloqada / aloqadamas.
     activeCol: 6, disconnectedCol: 7,
   },
   {
     sheet: 'Avgust', period: '2026-08', start: '2026-08-01', end: '2026-08-10',
     days: 10, officialIn: 252_000, officialSold: 201_426.3, faultsFromProblems: true,
-    debtPopulationSum: 261_861_400, debtLegalSum: 68_430_140,
+    debtPopulationSum: 261_861_400, debtLegalSum: 68_430_140, legalConsumers: 69,
     activeCol: 8, disconnectedCol: 9,
   },
 ];
@@ -406,16 +414,41 @@ async function main(): Promise<void> {
     await c.query('BEGIN');
 
     // ── 1. Tozalash ────────────────────────────────────────────────────────
+    /*
+     * FAQAT SHU SKRIPT TO'LDIRADIGAN jadvallar tozalanadi.
+     *
+     * Ilgari bu yerda butun `fact` sxemasi o'chirilardi va boshqa manbadan
+     * kelgan ma'lumot - dalolatnomalar (`load-violations.ts`), tarmoq
+     * nuqsonlari, kunlik forma - har safar qayta yuklashda YO'QOLARDI.
+     * Skript o'zi qayta yozmaydigan narsani o'chirmasligi kerak: aks holda
+     * u yuklovchi emas, ma'lumot yo'q qiluvchi bo'lib qoladi.
+     *
+     * `work` ro'yxatda BOR, chunki xatlov va muammo ishlarini shu skript
+     * yaratadi; `work_photo` esa unga bog'liq.
+     */
     console.log('Eski fakt ma’lumoti o‘chirilmoqda…');
     for (const t of [
       'tp_loss_daily', 'tp_monthly', 'feeder_monthly', 'energy_balance_daily',
-      'mfy_monthly_return', 'tp_status_monthly', 'tp_reading_daily', 'network_defect',
-      'debt_top_entry', 'violation_act', 'work_photo', 'work', 'daily_form',
-      'passport_snapshot', 'submission',
+      'mfy_monthly_return', 'tp_status_monthly', 'work_photo', 'work',
     ]) {
       const { rowCount } = await c.query(`DELETE FROM fact.${t}`);
       if (rowCount) console.log(`  fact.${t}: ${rowCount} qator`);
     }
+
+    /*
+     * Konvertlar - faqat shu skript ochadigan domenlar. Boshqa domendagi
+     * konvert (masalan qo'lda kiritilgan kunlik forma) o'z joyida qoladi.
+     * `energy_balance_daily` / `mfy_monthly_return` / `tp_status_monthly`
+     * yuqorida allaqachon o'chirilgan, shuning uchun kaskad ortiqcha narsa
+     * olib ketmaydi.
+     */
+    const subDel = await c.query(
+      `DELETE FROM fact.submission
+        WHERE scope_type = 'MFY' AND scope_id = $1
+          AND domain IN ('ENERGY_BALANCE', 'MONTHLY_RETURN', 'TP_STATUS')`,
+      [mfyId],
+    );
+    if (subDel.rowCount) console.log(`  fact.submission: ${subDel.rowCount} qator`);
 
     // ── 2. Har bir davr ────────────────────────────────────────────────────
     let tpRows = 0;
@@ -520,18 +553,24 @@ async function main(): Promise<void> {
       /*
        * Fider darajasidagi abonentlar hisoboti - TP kesimidan yig'iladi.
        *
-       * AHOLI / YURIDIK ajratmasi hujjatda YO'Q, shuning uchun jami son
-       * ajratilmagan holda `consumers_population` ga yoziladi va
-       * `consumers_legal` 0 bo'lib qoladi (baza `consumers_total` ni shu
-       * ikkisidan hosil qiladi). Bu taxmin emas - shunchaki mavjud yagona
-       * raqamni buzmasdan saqlash usuli.
+       * AHOLI / YURIDIK ajratmasi hujjatda YO'Q: fayl faqat JAMI sonni
+       * beradi. Yuridik iste'molchilar soni alohida berilgan, aholi ulushi
+       * esa qoldiq - jami minus yuridik. Baza `consumers_total` ni shu
+       * ikkisidan hosil qiladi, ya'ni jami manba songa teng bo'lib qoladi.
        *
-       * Qarzdorlik, yangi ulanganlar va hisoblagich ko'rsatkichlari ikkala
-       * faylda ham yo'q - ular 0 bo'lib qoladi.
+       * Yangi ulanganlar va hisoblagich ko'rsatkichlari ikkala faylda ham
+       * yo'q - ular 0 bo'lib qoladi.
        */
       const cTotal = [...cons.values()].reduce((a, x) => a + x.total, 0);
       const cActive = [...cons.values()].reduce((a, x) => a + x.active, 0);
       const cDisc = [...cons.values()].reduce((a, x) => a + x.disconnected, 0);
+
+      if (p.legalConsumers > cTotal) {
+        throw new Error(
+          `Yuridik iste’molchilar (${p.legalConsumers}) jamidan (${cTotal}) ko‘p - ${p.sheet}`,
+        );
+      }
+      const cPopulation = cTotal - p.legalConsumers;
 
       const mrSub = await c.query<{ id: number }>(
         `INSERT INTO fact.submission
@@ -553,8 +592,8 @@ async function main(): Promise<void> {
            (submission_id, mfy_id, period_month, consumers_population, consumers_legal,
             consumers_active, consumers_disconnected,
             debt_population_mln, debt_legal_mln)
-         VALUES ($1, $2, $3::date, $4, 0, $5, $6, $7, $8)`,
-        [mrSub.rows[0]!.id, mfyId, p.start, cTotal, cActive, cDisc,
+         VALUES ($1, $2, $3::date, $4, $5, $6, $7, $8, $9)`,
+        [mrSub.rows[0]!.id, mfyId, p.start, cPopulation, p.legalConsumers, cActive, cDisc,
           debtPopMln, debtLegalMln],
       );
 
@@ -603,7 +642,8 @@ async function main(): Promise<void> {
         + `\n  AMALDAGI foydali oqim  ${num(effectiveSold)} kWh`
         + `\n  yo‘qotish              ${num(loss)} kWh (${pct.toFixed(2)}%)`
         + `\n  abonentlar             ${num(cTotal)} ta`
-        + ` (aloqada ${num(cActive)}, aloqadamas ${num(cDisc)})`
+        + ` (aholi ${num(cPopulation)}, yuridik ${num(p.legalConsumers)})`
+        + `\n                         aloqada ${num(cActive)}, aloqadamas ${num(cDisc)}`
         + `\n  transformatorlar       ${readings.length} ta`
         + ` (nosoz ${faulty}, soz ${readings.length - faulty})`
         + `\n  qarzdorlik             ${num(debtPopMln + debtLegalMln)} mln so‘m`

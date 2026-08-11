@@ -412,6 +412,14 @@ export async function districtOverview(
       key: 'consumersTotal', metric: 'consumersTotal', labelUz: 'Umumiy abonentlar', unit: 'ta',
       value: cur.consumers_total, prev: p.consumers_total,
       goodDirection: 'up', spark: spark.consumersTotal, sparkBucket: 'month',
+      /*
+       * Jami son TARKIBI - aholi va yuridik. Baza `consumers_total` ni
+       * aynan shu ikkisidan hosil qiladi, ya'ni yig'indi doim jamiga teng.
+       */
+      secondary: [
+        { labelUz: 'Aholi', value: cur.consumers_population, unit: 'ta' },
+        { labelUz: 'Yuridik', value: cur.consumers_legal, unit: 'ta' },
+      ],
     }),
     tile({
       key: 'consumersActive', metric: 'consumersActive', labelUz: 'Aloqaga chiqayotgan istemolchilar', unit: 'ta',
