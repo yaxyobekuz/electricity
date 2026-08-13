@@ -15,7 +15,7 @@
  * holatini beradi, oylar esa faqat ALOQA holatida farq qiladi.
  *
  * NIMA YOZADI:
- *   • `fact.tp_monthly`         - har bir TP × oy (51 × 2 = 102 qator)
+ *   • `fact.tp_monthly`         - har bir TP × oy (47 × 2 = 94 qator)
  *   • `fact.mfy_monthly_return` - fider bo'yicha UMUMIY yig'indi (2 qator)
  *
  * Ikkinchisi kerak, chunki dashboard KPI raqamlari `agg.mfy_monthly` orqali
@@ -40,12 +40,25 @@ import pg from 'pg';
 import { config, REPO_ROOT } from '../src/config.ts';
 
 const PERIODS = [
-  { period: '2026-07', label: 'iyul', colActive: 6, colOffline: 7 },
-  { period: '2026-08', label: 'avgust', colActive: 8, colOffline: 9 },
+  { period: '2026-07', label: 'iyul' },
+  { period: '2026-08', label: 'avgust' },
 ] as const;
 
+/** Eski fayl («xaqulobod_itemolchilar.xlsx») - IYUL aloqa holati shu yerdan. */
 const COL_CODE = 3;
 const COL_TOTAL = 5;
+const COL_JULY_ACTIVE = 6;
+const COL_JULY_OFFLINE = 7;
+
+/** Yangi fayl - TP ro'yxati, jami abonent va AVGUST aloqa holati. */
+const NEW_FILE = join(REPO_ROOT, 'xaqulobod_fider_12kunlik.xlsx');
+const NEW_SHEET = 'Sheet0 (2)';
+const NEW_FIRST_ROW = 5;
+const NEW_COL_CODE = 2;
+const NEW_COL_TOTAL = 9;
+const NEW_COL_ACTIVE = 10;
+const NEW_COL_OFFLINE = 11;
+
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
 
 /*
@@ -68,10 +81,8 @@ const DEFAULT_FILE = join(REPO_ROOT, 'xaqulobod_itemolchilar.xlsx');
 const EXPECTED_HEADER: Record<number, RegExp> = {
   [COL_CODE]: /tp\s*nomer/i,
   [COL_TOTAL]: /jami/i,
-  6: /aloqada\s*iyul/i,
-  7: /aloqadamas\s*iyul/i,
-  8: /aloqada\s*avgust/i,
-  9: /aloqadamas\s*avgust/i,
+  [COL_JULY_ACTIVE]: /aloqada\s*iyul/i,
+  [COL_JULY_OFFLINE]: /aloqadamas\s*iyul/i,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -103,7 +114,7 @@ const intOf = (x: ExcelJS.CellValue): number => {
  * `TP-15A`, `TP-66A` to'ldirilmagan; `TP-166А`, `TP-44А`, `TP-47А` da esa
  * kirillcha «А» (U+0410) turibdi. Shu sababli `chinobod-common.ts` dagi
  * `tpCodeOf()` bilan (u har doim 3 xonaga to'ldiradi va kirillni lotinga
- * o'giradi) 51 tadan faqat 44 tasi mos keladi.
+ * o'giradi) hammasi ham mos kelmaydi.
  *
  * Bu yerda REGISTR O'ZGARTIRILMAYDI - ikkala tomon ham bir xil kanonik
  * ko'rinishga keltirilib solishtiriladi: prefiks olib tashlanadi, kirill
@@ -135,7 +146,16 @@ interface TpConsumers {
   byPeriod: Map<string, { active: number; offline: number }>;
 }
 
-async function readWorkbook(file: string): Promise<TpConsumers[]> {
+/** Bitta fayldagi bitta qator - bitta TP ning bitta davr uchun holati. */
+interface PeriodRow {
+  rawCode: string;
+  key: string;
+  total: number;
+  active: number;
+  offline: number;
+}
+
+async function readWorkbook(file: string): Promise<PeriodRow[]> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(file);
   const ws = wb.worksheets[0];
@@ -153,7 +173,7 @@ async function readWorkbook(file: string): Promise<TpConsumers[]> {
     }
   }
 
-  const rows: TpConsumers[] = [];
+  const rows: PeriodRow[] = [];
   const seen = new Set<string>();
 
   for (let r = 2; r <= ws.rowCount; r += 1) {
@@ -166,26 +186,131 @@ async function readWorkbook(file: string): Promise<TpConsumers[]> {
     seen.add(key);
 
     const total = intOf(row.getCell(COL_TOTAL).value);
-    const byPeriod = new Map<string, { active: number; offline: number }>();
-
-    for (const p of PERIODS) {
-      const active = intOf(row.getCell(p.colActive).value);
-      const offline = intOf(row.getCell(p.colOffline).value);
-      // Manba ma'lumotining o'zini tekshiramiz: jim tuzatish yo'q, xato tashlanadi.
-      if (active + offline !== total) {
-        throw new Error(
-          `${r}-qator, TP ${rawCode}, ${p.label}: aloqada (${active}) + aloqada emas (${offline}) `
-          + `= ${active + offline}, «Jami» esa ${total}. Manba faylni tekshiring.`,
-        );
-      }
-      byPeriod.set(p.period, { active, offline });
+    const active = intOf(row.getCell(COL_JULY_ACTIVE).value);
+    const offline = intOf(row.getCell(COL_JULY_OFFLINE).value);
+    // Manba ma'lumotining o'zini tekshiramiz: jim tuzatish yo'q, xato tashlanadi.
+    if (active + offline !== total) {
+      throw new Error(
+        `${r}-qator, TP ${rawCode}, iyul: aloqada (${active}) + aloqada emas (${offline}) `
+        + `= ${active + offline}, «Jami» esa ${total}. Manba faylni tekshiring.`,
+      );
     }
 
-    rows.push({ rawCode, key, total, byPeriod });
+    rows.push({ rawCode, key, total, active, offline });
   }
 
   if (rows.length === 0) throw new Error(`${file}: ma'lumot qatori topilmadi`);
   return rows;
+}
+
+/**
+ * Yangi hisobot - AMALDAGI TP ro'yxati, jami abonent va avgust aloqa holati.
+ *
+ * Bu fayl TP↔abonent bog'lanishida ASOSIY manba: eski faylda 6 ta «A»
+ * transformatorning yorlig'i bir pozitsiyaga surilgan (masalan 107 ta abonent
+ * `131A` ga emas, `15A` ga tegishli).
+ */
+async function readNewWorkbook(): Promise<PeriodRow[]> {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.readFile(NEW_FILE);
+  const ws = wb.getWorksheet(NEW_SHEET);
+  if (!ws) throw new Error(`${NEW_FILE}: «${NEW_SHEET}» varag'i topilmadi`);
+
+  const rows: PeriodRow[] = [];
+  const seen = new Set<string>();
+
+  for (let r = NEW_FIRST_ROW; r <= ws.rowCount; r += 1) {
+    const row = ws.getRow(r);
+    const rawCode = text(row.getCell(NEW_COL_CODE).value).trim();
+    // Oxirgi qator «Жами» - unda TP raqami yo'q.
+    if (!rawCode || !/\d/.test(rawCode)) continue;
+
+    const key = matchKey(rawCode);
+    if (seen.has(key)) throw new Error(`${r}-qator: TP "${rawCode}" yangi faylda takrorlangan`);
+    seen.add(key);
+
+    const total = intOf(row.getCell(NEW_COL_TOTAL).value);
+    const active = intOf(row.getCell(NEW_COL_ACTIVE).value);
+    const offline = intOf(row.getCell(NEW_COL_OFFLINE).value);
+    if (active + offline !== total) {
+      throw new Error(
+        `${r}-qator, TP ${rawCode}, avgust: aloqada (${active}) + aloqada emas (${offline}) `
+        + `= ${active + offline}, «Jami» esa ${total}. Manba faylni tekshiring.`,
+      );
+    }
+
+    rows.push({ rawCode, key, total, active, offline });
+  }
+
+  if (rows.length === 0) throw new Error(`${NEW_FILE}: ma'lumot qatori topilmadi`);
+  return rows;
+}
+
+/**
+ * Ikki faylni BIRLASHTIRADI: yorliq yangi fayldan, iyul aloqa holati eskidan.
+ *
+ * MUAMMO: eski faylda TP yorliqlari surilgan, shuning uchun `131A` ni `131A`
+ * ga qarab bog'lash noto'g'ri qiymat beradi. Lekin ikkala faylning QATOR
+ * TARTIBI bir xil - eskisida shunchaki ortiqcha TP lar bor.
+ *
+ * Shu sababli moslash POZITSIYA bo'yicha ketadi: ikki ro'yxat yonma-yon
+ * yuriladi va «Jami» ustuni mos tushgan joyda juftlik hosil bo'ladi, mos
+ * kelmasa eski qator ortiqcha deb o'tkazib yuboriladi.
+ *
+ * Bu jimgina taxmin emas - oxirida ikkita shart TEKSHIRILADI:
+ *   • yangi fayldagi HAR BIR qator juftlik topgan bo'lishi;
+ *   • o'tkazib yuborilgan eski qatorlar yangi faylda UMUMAN yo'qligi.
+ * Bittasi buzilsa skript to'xtaydi.
+ */
+function align(oldRows: PeriodRow[], newRows: PeriodRow[]): TpConsumers[] {
+  const out: TpConsumers[] = [];
+  const skipped: PeriodRow[] = [];
+  const relabelled: { from: string; to: string; total: number }[] = [];
+
+  let i = 0;
+  for (const nw of newRows) {
+    while (i < oldRows.length && oldRows[i]!.total !== nw.total) {
+      skipped.push(oldRows[i]!);
+      i += 1;
+    }
+    if (i >= oldRows.length) {
+      throw new Error(
+        `Eski fayl bilan moslashtirib bo‘lmadi: «${nw.rawCode}» (jami ${nw.total})`
+        + ' uchun juftlik topilmadi. Fayllar tartibi o‘zgargan bo‘lishi mumkin.',
+      );
+    }
+    const od = oldRows[i]!;
+    i += 1;
+
+    if (od.key !== nw.key) relabelled.push({ from: od.rawCode, to: nw.rawCode, total: nw.total });
+
+    const byPeriod = new Map<string, { active: number; offline: number }>();
+    byPeriod.set('2026-07', { active: od.active, offline: od.offline });
+    byPeriod.set('2026-08', { active: nw.active, offline: nw.offline });
+    out.push({ rawCode: nw.rawCode, key: nw.key, total: nw.total, byPeriod });
+  }
+  while (i < oldRows.length) { skipped.push(oldRows[i]!); i += 1; }
+
+  const newKeys = new Set(newRows.map((x) => x.key));
+  const wrong = skipped.filter((x) => newKeys.has(x.key));
+  if (wrong.length > 0) {
+    throw new Error(
+      'Moslash noto‘g‘ri ketdi: o‘tkazib yuborilgan TP yangi faylda ham bor - '
+      + wrong.map((x) => x.rawCode).join(', '),
+    );
+  }
+
+  if (skipped.length > 0) {
+    console.log(`\nEski fayldagi ortiqcha ${skipped.length} ta TP hisobga olinmadi:`);
+    console.log('  ' + skipped.map((x) => `${x.rawCode} (${x.total} ta)`).join(', '));
+  }
+  if (relabelled.length > 0) {
+    console.log(`\nYangi fayl bo‘yicha qayta bog‘landi (${relabelled.length} ta):`);
+    for (const r of relabelled) {
+      console.log(`  ${String(r.total).padStart(4)} ta abonent:  ${r.from}  →  ${r.to}`);
+    }
+  }
+  return out;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -198,7 +323,9 @@ async function main(): Promise<void> {
   const file = args.find((a) => !a.startsWith('--')) ?? DEFAULT_FILE;
 
   console.log(`Manba: ${file}${dry ? '  [DRY-RUN - hech narsa yozilmaydi]' : ''}`);
-  const source = await readWorkbook(file);
+  const [oldRows, newRows] = await Promise.all([readWorkbook(file), readNewWorkbook()]);
+  console.log(`Yangi ro‘yxat: ${NEW_FILE.split('/').pop()} · ${newRows.length} ta TP`);
+  const source = align(oldRows, newRows);
   console.log(`O‘qildi: ${source.length} ta TP · har bir qatorda aloqada + aloqada emas = jami ✓`);
 
   const client = new pg.Client({

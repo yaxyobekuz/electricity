@@ -171,7 +171,7 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
     /*
      * TAYYOR REYTINGLAR - modelga saralashni topshirib bo'lmaydi.
      *
-     * Sinovda ko'rindi: 51 qatorli ro'yxat berilganda model faqat boshidagi
+     * Sinovda ko'rindi: o'nlab qatorli ro'yxat berilganda model faqat boshidagi
      * bir nechta qatorni ko'radi va "eng ko'p uzilgan abonent" savoliga
      * ro'yxat boshidagi TP ni aytadi. Ro'yxat esa ISTE'MOL bo'yicha
      * saralangan. Shuning uchun kerakli tartiblar shu yerda hisoblanadi.
@@ -280,7 +280,7 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
 const GUIDE = `
 PANEL BO'LIMLARI (navigate asbobidagi yo'llar):
   · /dashboard      - KPI kartalari, dinamika, yo'qotish tuzilmasi, TP holati
-  · /transformers   - 51 ta TP: hisoblagich, abonentlar, oylik iste'mol
+  · /transformers   - 47 ta TP: hisoblagich, abonentlar, oylik iste'mol
   · /energy-balance - kirgan energiya qayerga ketgani
   · /works          - rejalashtirilgan va bajarilgan ishlar, dalolatnomalar
   · /reports        - Excel/PDF eksport sahifasi

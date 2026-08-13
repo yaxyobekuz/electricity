@@ -2,7 +2,7 @@
  * TP darajasidagi kunlik chiziqli yo'qotish - balans hisoblagichi vs
  * biriktirilgan iste'molchilar, har bir TP uchun eng so'nggi o'qish.
  *
- * Fider (oylik) balansidan FARQLI: bu yerdagi ma'lumot 51 TP dan faqat
+ * Fider (oylik) balansidan FARQLI: bu yerdagi ma'lumot barcha TP dan faqat
  * balans hisoblagichi ishlaydiganlari uchun, elektroset yuboradigan kunlik
  * hisobotdan keladi. Manfiy yo'qotish - iste'molchilar yig'indisi balansdan
  * ko'p - fizik jihatdan mumkin emas, shuning uchun rangli belgi bilan

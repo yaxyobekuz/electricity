@@ -90,7 +90,7 @@ export const TOOL_SPECS: ToolSpec[] = [
         description: 'kwh - iste’mol; disconnected - uzilgan abonentlar soni; '
           + 'off_share - uzilganlar ulushi (%); consumers - abonentlar soni',
       },
-      limit: int('Nechta qator kerak (1–51). Standart 10.'),
+      limit: int('Nechta qator kerak (1–100). Standart 10.'),
     }, ['sort_by']),
 
   fn('get_period_totals', 'Berilgan OY bo‘yicha umumiy ko‘rsatkichlar: kirgan energiya, '
@@ -705,7 +705,8 @@ export async function runTool(
 
     case 'list_tps': {
       const sortBy = asString(args['sort_by']) ?? 'kwh';
-      const limit = Math.min(Math.max(asNumber(args['limit']) ?? 10, 1), 51);
+      // Yuqori chegara TP soniga bog'lanmaydi - u registrda o'zgarib turadi.
+      const limit = Math.min(Math.max(asNumber(args['limit']) ?? 10, 1), 100);
       const rows = await q.tpMonthly(tc.ctx, period, tc.feederId);
       const share = (r: (typeof rows)[number]): number =>
         r.consumersTotal > 0 ? r.consumersDisconnected / r.consumersTotal : 0;

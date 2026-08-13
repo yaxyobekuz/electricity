@@ -14,6 +14,7 @@
     "load:mfy": "node --experimental-strip-types scripts/load-mfy-data.ts",
     "load:july": "node --experimental-strip-types scripts/load-chinobod-july.ts",
     "load:august": "node --experimental-strip-types scripts/load-chinobod-august.ts",
+    "prune:tps": "node --experimental-strip-types scripts/prune-extra-tps.ts",
     "load:consumers": "node --experimental-strip-types scripts/load-consumers.ts",
     "load:problems": "node --experimental-strip-types scripts/load-tp-problems.ts",
     "load:violations": "node --experimental-strip-types scripts/load-violations.ts",

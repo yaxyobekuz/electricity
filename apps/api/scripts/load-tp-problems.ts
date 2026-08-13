@@ -1,24 +1,29 @@
 /**
  * XAQULOBOD FIDERI - TP muammolari, rejalashtirilgan va bajarilgan ishlar.
  *
- * MANBA: `xaqulobod_fider.xlsx`, ikkita varaq.
+ * IKKI MANBA:
  *
- * ─── 1. «Muammolar» varag'i ────────────────────────────────────────────────
- * Har bir TP uchun bitta izoh. Uch xil yozuv uchraydi:
+ * ─── 1. `xaqulobod_fider_12kunlik.xlsx` · «Аниқланган камчиликлар» ─────────
+ * Eng yangi hisobotning 8-ustuni - 12.08.2026 holatidagi nosozliklar. Bir
+ * necha xil yozuv uchraydi:
  *
  *   «Баланс хисоблагич носоз»                        → hisoblagichning o'zi nosoz
  *   «Баланс хисоблагич тока трансформатори носоз»    → tok transformatori nosoz
+ *   «Баланс хисоблагич йук»                          → hisoblagich umuman yo'q
  *   «Истеъмолчилар тури бриктирилди»                 → BAJARILGAN ish (o'tgan zamon)
  *
- * Birinchi ikkitasi - HAL ETILMAGAN nosozlik: TP holati `FAULT` bo'ladi va
- * rejalashtirilgan ish ochiladi. Uchinchisi allaqachon bajarilgan.
+ * Dastlabki uchtasi - HAL ETILMAGAN nosozlik: TP holati `FAULT` bo'ladi va
+ * rejalashtirilgan ish ochiladi. Oxirgisi allaqachon bajarilgan.
  *
- * ─── 2. «бир кунлик» varag'i ───────────────────────────────────────────────
+ * Nosozlik FAQAT o'z oyiga (`FAULT_PERIOD`) yoziladi - ro'yxat bugungi
+ * holatni beradi, iyulga orqaga qarab yozilmaydi.
+ *
+ * ─── 2. `xaqulobod_fider.xlsx` · «бир кунлик» varag'i ─────────────────────
  * 7 ta TP uchun xatlovdan OLDIN (02.08) va KEYIN (05.08) o'lchangan yo'qotish.
  * Ikki o'lchov orasidagi farq - bajarilgan ishning o'lchangan natijasi.
  *
  * NIMA YOZADI:
- *   • `fact.tp_status_monthly` - 51 TP × 2 oy: nosozlar `FAULT`, qolgani `GOOD`
+ *   • `fact.tp_status_monthly` - har bir TP × 2 oy: nosozlar `FAULT`, qolgani `GOOD`
  *   • `fact.work` PLANNED      - har bir nosoz TP uchun bitta ish
  *   • `fact.work` COMPLETED    - xatlov ishlari (o'lchangan natija bilan)
  *
@@ -41,16 +46,53 @@ import pg from 'pg';
 
 import { config, REPO_ROOT } from '../src/config.ts';
 
+/** Xatlov o'lchovlari («бир кунлик» varag'i) shu faylda qoladi. */
 const DEFAULT_FILE = join(REPO_ROOT, 'xaqulobod_fider.xlsx');
+
+/**
+ * NOSOZLIKLAR RO'YXATI - eng yangi hisobotning «Аниқланган камчиликлар»
+ * ustuni (12.08.2026 holati). Eski faylning «Muammolar» varag'i O'RNINI
+ * BOSADI: u 51 ta TP davridagi ro'yxat edi va bugungi holatni bermaydi.
+ */
+const PROBLEM_FILE = join(REPO_ROOT, 'xaqulobod_fider_12kunlik.xlsx');
+const PROBLEM_SHEET = 'Sheet0 (2)';
+const PROBLEM_FIRST_ROW = 5;
+const PROBLEM_COL_CODE = 2;
+const PROBLEM_COL_NOTE = 8;
+
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
 const PERIODS = ['2026-07', '2026-08'] as const;
 
+/**
+ * Nosozlik QAYSI oyga tegishli.
+ *
+ * Ro'yxat 12.08.2026 holatini beradi, iyul uchun nosozlik qayd etilmagan -
+ * shuning uchun iyulda hamma TP soz deb yoziladi. Aks holda avgustdagi
+ * nosozlik iyulga ham "orqaga qarab" yozilib, o'tmish soxtalashtirilardi.
+ */
+const FAULT_PERIOD = '2026-08';
+
 /** Faqat shu skript yozgan qatorlarni qayta topish uchun belgi. */
-const TAG_PROBLEM = '[manba: xaqulobod_fider.xlsx · Muammolar]';
+const TAG_PROBLEM = '[manba: xaqulobod_fider_12kunlik.xlsx · Aniqlangan kamchiliklar]';
 const TAG_INSPECTION = '[manba: xaqulobod_fider.xlsx · bir kunlik xatlov]';
 
-/** Reja oynasi - manbada muddat yo'q, izohda shunday deb aytiladi. */
-const PLAN_START = '2026-08-11';
+/**
+ * ESKI belgilar - ishlarni ilgari `load-xaqulobod-fider.ts` monoliti yozardi.
+ * U endi ish yozmaydi, lekin bazada qolgan qatorlari yangilari bilan
+ * yonma-yon turib, ro'yxatni ikki barobar ko'rsatardi. Shu sababli ular ham
+ * tozalanadi - qayta paydo bo'lmaydi.
+ */
+const LEGACY_TAGS = [
+  '[manba: xaqulobod_fider.xlsx · Muammolar]',
+  '[manba: xaqulobod_fider.xlsx · бир кунлик · xatlov]',
+];
+
+/**
+ * Reja oynasi - manbada muddat yo'q, izohda shunday deb aytiladi.
+ * Boshlanish sanasi ma'lumot oynasidan (12.08) KEYIN turishi kerak, aks
+ * holda reja o'z ma'lumot davrining ichiga tushib qoladi.
+ */
+const PLAN_START = '2026-08-13';
 const PLAN_END = '2026-09-30';
 const PLAN_NOTE = 'Muddat manba faylda ko‘rsatilmagan - reja oynasi shartli.';
 
@@ -80,6 +122,11 @@ const PROBLEMS: Record<string, ProblemSpec> = {
     labelUz: 'Balans hisoblagich tok transformatori nosoz',
     isFault: true,
     workTitle: (c) => `${c} balans hisoblagichi tok transformatorini almashtirish`,
+  },
+  'баланс хисоблагич йук': {
+    labelUz: 'Balans hisoblagich yo‘q',
+    isFault: true,
+    workTitle: (c) => `${c} ga balans hisoblagich o‘rnatish`,
   },
   'истеъмолчилар тури бриктирилди': {
     labelUz: 'Iste’molchilar turi biriktirildi',
@@ -147,19 +194,24 @@ async function readSource(file: string): Promise<{ problems: Problem[]; inspecti
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(file);
 
-  // ── «Muammolar» ─────────────────────────────────────────────────────────
-  const mw = wb.getWorksheet('Muammolar');
-  if (!mw) throw new Error(`${file}: «Muammolar» varag'i topilmadi`);
-  if (!/tp/i.test(text(mw.getRow(2).getCell(2).value))
-    || !/muammo/i.test(text(mw.getRow(2).getCell(3).value))) {
-    throw new Error('«Muammolar» varag‘i sarlavhasi kutilganidan farq qiladi (2-qator: TP | Muammolar)');
+  // ── Nosozliklar - eng yangi hisobotdan ──────────────────────────────────
+  const pwb = new ExcelJS.Workbook();
+  await pwb.xlsx.readFile(PROBLEM_FILE);
+  const mw = pwb.getWorksheet(PROBLEM_SHEET);
+  if (!mw) throw new Error(`${PROBLEM_FILE}: «${PROBLEM_SHEET}» varag'i topilmadi`);
+  if (!/камчилик/i.test(text(mw.getRow(3).getCell(PROBLEM_COL_NOTE).value))) {
+    throw new Error(
+      `«${PROBLEM_SHEET}» varag‘ining ${PROBLEM_COL_NOTE}-ustuni`
+      + ' «Аниқланган камчиликлар» emas - fayl tuzilmasi o‘zgargan.',
+    );
   }
 
   const problems: Problem[] = [];
-  for (let r = 3; r <= mw.rowCount; r += 1) {
-    const rawCode = text(mw.getRow(r).getCell(2).value).trim();
-    const note = text(mw.getRow(r).getCell(3).value).trim();
-    if (!rawCode || !note) continue;
+  for (let r = PROBLEM_FIRST_ROW; r <= mw.rowCount; r += 1) {
+    const rawCode = text(mw.getRow(r).getCell(PROBLEM_COL_CODE).value).trim();
+    const note = text(mw.getRow(r).getCell(PROBLEM_COL_NOTE).value).trim();
+    // Oxirgi qator «Жами»; kamchiligi yo'q TP larda katak bo'sh.
+    if (!rawCode || !/\d/.test(rawCode) || !note) continue;
 
     const spec = PROBLEMS[problemKey(note)];
     if (!spec) {
@@ -214,14 +266,17 @@ async function main(): Promise<void> {
   const dry = args.includes('--dry');
   const file = args.find((a) => !a.startsWith('--')) ?? DEFAULT_FILE;
 
-  console.log(`Manba: ${file}${dry ? '  [DRY-RUN]' : ''}`);
+  console.log(
+    `Nosozliklar: ${PROBLEM_FILE.split('/').pop()} · ${PROBLEM_SHEET}`
+    + `\nXatlov:      ${file.split('/').pop()} · бир кунлик${dry ? '   [DRY-RUN]' : ''}`,
+  );
   const { problems, inspections } = await readSource(file);
 
   const faults = problems.filter((p) => p.spec.isFault);
   const done = problems.filter((p) => !p.spec.isFault);
   console.log(
-    `«Muammolar»: ${problems.length} ta yozuv - ${faults.length} ta hal etilmagan nosozlik,`
-    + ` ${done.length} ta bajarilgan.`,
+    `\n«Aniqlangan kamchiliklar»: ${problems.length} ta yozuv -`
+    + ` ${faults.length} ta hal etilmagan nosozlik, ${done.length} ta bajarilgan.`,
   );
   console.log(`«бир кунлик»: ${inspections.length} ta xatlov o‘lchovi.`);
 
@@ -306,7 +361,8 @@ async function main(): Promise<void> {
       }
 
       for (const tp of tpRows.rows) {
-        const spec = faultByKey.get(matchKey(tp.code));
+        // Nosozlik FAQAT o'z oyiga yoziladi - iyulda hamma TP soz.
+        const spec = period === FAULT_PERIOD ? faultByKey.get(matchKey(tp.code)) : undefined;
         await client.query(
           `INSERT INTO fact.tp_status_monthly
              (submission_id, tp_id, period_month, condition, repair_needed, repair_reason)
@@ -326,8 +382,9 @@ async function main(): Promise<void> {
     // Avval shu skript yozgan ishlarni olib tashlaymiz - qayta yurgizilganda
     // takrorlanmasin. Boshqa manbadan kelgan ishlarga tegilmaydi.
     const wiped = await client.query(
-      `DELETE FROM fact.work WHERE description LIKE $1 OR description LIKE $2`,
-      [`%${TAG_PROBLEM}%`, `%${TAG_INSPECTION}%`]);
+      `DELETE FROM fact.work
+        WHERE description LIKE ANY($1)`,
+      [[TAG_PROBLEM, TAG_INSPECTION, ...LEGACY_TAGS].map((t) => `%${t}%`)]);
     if (wiped.rowCount) console.log(`\nEski ${wiped.rowCount} ta ish o‘chirildi (qayta yozish).`);
 
     // 2a. Rejalashtirilgan - hal etilmagan nosozliklar.
@@ -402,7 +459,7 @@ async function main(): Promise<void> {
     await client.query('COMMIT');
 
     console.log(`\nYozildi:`);
-    console.log(`  TP holati        ${statusWritten} qator (${faults.length} × 2 ta FAULT)`);
+    console.log(`  TP holati        ${statusWritten} qator (${FAULT_PERIOD} da ${faults.length} ta FAULT)`);
     console.log(`  Rejalashtirilgan ${faults.length} ta ish`);
     console.log(`  Bajarilgan       ${done.length + inspections.length} ta ish`);
     console.log(`  Tejalgan energiya ${Math.round(saved).toLocaleString('en-US').replace(/,/g, ' ')} kWh/oy`);

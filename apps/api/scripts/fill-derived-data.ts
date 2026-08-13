@@ -26,7 +26,7 @@ import { config } from '../src/config.ts';
 import { mulberry32 } from '../seed/generate.ts';
 
 const PERIODS = ['2026-07-01', '2026-08-01'] as const;
-const TODAY = '2026-08-08';
+const TODAY = '2026-08-12';
 /** Kunlik ko'rsatkichlar shu oralig'da yoziladi (kelajak sana yo'q). */
 const READING_FROM = '2026-07-01';
 

@@ -948,7 +948,7 @@ export default function MfyDashboard() {
         Mijoz maketida yo'q - YANGI, alohida qator: fider oylik balansidan
         farqli, TP darajasidagi kunlik ma'lumot (elektroset "xatlov"
         hisobotidan). Faqat balans hisoblagichi ishlaydigan TP lar uchun
-        mavjud - 51 tadan bir nechtasi, shu sababli EmptyPanel odatiy holat.
+        mavjud - hammasidan emas, shu sababli EmptyPanel odatiy holat.
       */}
       <div className="grid grid-cols-1 gap-3 mt-4 xl:grid-cols-12">
         <Panel
