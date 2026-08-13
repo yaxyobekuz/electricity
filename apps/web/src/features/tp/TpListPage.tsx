@@ -10,14 +10,18 @@
  * bosiladi va o'sha ustun bo'yicha saralaydi; aniq TP ni topish uchun esa
  * qidiruv maydoni bor. Ikkalasi birga ishlaydi.
  */
-import { compareTpCode, num, pct, tpCodeKey } from '@beap/shared';
+import { compareTpCode, energy, num, pct, tpCodeKey } from '@beap/shared';
 import { Button, Chip, SearchField, cn } from '@heroui/react';
-import { ArrowDown, ArrowUp, ChevronsUpDown, RotateCcw } from 'lucide-react';
+import {
+  Activity, ArrowDown, ArrowUp, Building2, ChevronsUpDown, CircleDollarSign, RotateCcw,
+  UsersRound, Zap,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import { LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
 import { EmptyPanel, Panel } from '../../components/ui/Panel.tsx';
+import { MiniStat } from '../../components/ui/StatTile.tsx';
 import { PeriodPicker } from '../district/panels/PeriodPicker.tsx';
 import { useBootstrap, useMfyTpLoss, useTpMonthly, useTpMonitoring } from '../../lib/queries.ts';
 import { useUi } from '../../lib/ui-store.ts';
@@ -222,6 +226,43 @@ export default function TpListPage() {
     setSortDir(TEXT_KEYS.has(key) ? 'asc' : 'desc');
   };
 
+  /*
+   * KPI kartalari - BARCHA TP bo'yicha, qidiruvdan qat'i nazar.
+   *
+   * Karta sahifaning xulosasi: qidiruv maydoniga bir belgi yozilganda
+   * "fiderda qancha energiya oqyapti" degan javob o'zgarib ketmasligi
+   * kerak. Filtr natijasi yonidagi chipda ko'rinadi.
+   *
+   * Raqamlar JADVAL bilan bir manbadan (`tp_loss_daily`) - shuning uchun
+   * ustunlar yig'indisi kartadagi son bilan aynan bir xil chiqadi. Fider
+   * paneli boshqa asosda o'lchaydi (fider boshi → TP), ya'ni u yerdagi
+   * yo'qotish bu yerdagi bilan mos kelmasligi mumkin.
+   */
+  const kpi = useMemo(() => {
+    const sum = (pick: (r: Row) => number | null): number =>
+      all.reduce((a, r) => a + (pick(r) ?? 0), 0);
+
+    const balance = sum((r) => r.balanceKwh);
+    const loss = sum((r) => r.lossKwh);
+    return {
+      tpTotal: all.length,
+      faulty: (monthly.data ?? []).filter((m) => m.condition === 'FAULT').length,
+      consumers: sum((r) => r.consumersTotal),
+      consumersOff: sum((r) => r.consumersOff),
+      balance,
+      sold: sum((r) => r.soldKwh),
+      loss,
+      lossPct: balance > 0 ? (loss / balance) * 100 : null,
+      /*
+       * Manfiy yo'qotish - biriktirilgan iste'molchilar balans
+       * hisoblagichidan ko'p yeganda. Bu o'lchov nosozligining belgisi va
+       * jadvalda sariq rangda ajratiladi; karta ularning SONINI aytadi,
+       * aks holda 47 qator ichida ko'zdan qochadi.
+       */
+      negative: all.filter((r) => r.lossKwh !== null && r.lossKwh < 0).length,
+    };
+  }, [all, monthly.data]);
+
   const dirty = search !== '' || sortKey !== DEFAULT_SORT || sortDir !== DEFAULT_DIR;
 
   const reset = (): void => {
@@ -235,20 +276,73 @@ export default function TpListPage() {
   }
 
   const withData = (monthly.data ?? []).length;
-  const consumers = (monthly.data ?? []).reduce((a, m) => a + m.consumersTotal, 0);
-  // Jami foydali oqim - jadvaldagi ustun bilan BIR MANBADAN.
-  const kwh = (tpLoss.data ?? []).reduce((a, l) => a + l.kwhConsumersAttached, 0);
 
   return (
     <>
       <PageHeader
         actions={<PeriodPicker />}
-        subtitle={
-          `${monitoring.data?.length ?? 0} ta transformator · ${num(consumers)} ta iste’molchi`
-          + ` · ${num(kwh)} kWh oylik iste’mol`
-        }
+        /*
+          Sarlavha ostida RAQAM YO'Q - jami TP, abonent va energiya endi
+          KPI kartalarida turibdi. Bu yerda faqat sahifa nima ko'rsatishi
+          va raqamlar qaysi o'lchovdan kelgani aytiladi.
+        */
+        subtitle="Har bir TP ning balans hisoblagichi, foydali oqimi va yo‘qotishi"
         title="Transformatorlar"
       />
+
+      {/* ═══ KPI kartalari - jadvalning xulosasi ═══ */}
+      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <MiniStat
+          compact
+          hint={`Nosoz: ${num(kpi.faulty)} · Soz: ${num(kpi.tpTotal - kpi.faulty)}`}
+          icon={<Building2 className="size-4" />}
+          label="Transformatorlar"
+          unit="ta"
+          value={num(kpi.tpTotal)}
+        />
+        <MiniStat
+          compact
+          hint={`Aloqada emas: ${num(kpi.consumersOff)} ta`}
+          icon={<UsersRound className="size-4" />}
+          label="Iste’molchilar"
+          unit="ta"
+          value={num(kpi.consumers)}
+        />
+        <MiniStat
+          compact
+          hint="TP balans hisoblagichlari"
+          icon={<Zap className="size-4" />}
+          label="Qabul qilingan"
+          unit={energy(kpi.balance).unit}
+          value={num(energy(kpi.balance).value, 1)}
+        />
+        <MiniStat
+          compact
+          hint="biriktirilgan iste’molchilardan"
+          icon={<CircleDollarSign className="size-4" />}
+          label="Foydali oqim"
+          tone="good"
+          unit={energy(kpi.sold).unit}
+          value={num(energy(kpi.sold).value, 1)}
+        />
+        {/*
+          Yo'qotish MANFIY bo'lishi mumkin - jadvaldagi kabi bu yerda ham
+          yashirilmaydi, faqat rangi boshqacha: qizil «ko'p yo'qotilyapti»,
+          sariq esa «o'lchov nosoz» degani.
+        */}
+        <MiniStat
+          compact
+          hint={
+            (kpi.lossPct === null ? '' : pct(kpi.lossPct, 1))
+            + (kpi.negative > 0 ? ` · ${num(kpi.negative)} ta TP da manfiy` : '')
+          }
+          icon={<Activity className="size-4" />}
+          label="Yo’qotish"
+          tone={kpi.loss < 0 ? 'warning' : 'critical'}
+          unit={energy(kpi.loss).unit}
+          value={num(energy(kpi.loss).value, 1)}
+        />
+      </div>
 
       {/* ═══ Boshqaruv qatori ═══ */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
