@@ -20,8 +20,8 @@
  */
 import type { Domain, MonthlyReturn, Work } from '@beap/shared';
 import {
-  DOMAINS, monthlyReturnSchema, networkDefectPatchSchema, TP_CONDITIONS, tpStatusPatchSchema,
-  WORK_STATUSES, WORK_TYPE_LABEL_UZ, WORK_TYPES, workSchema,
+  DOMAINS, monthlyReturnSchema, networkDefectPatchSchema, TP_CONDITIONS, tpCodeKey,
+  tpStatusPatchSchema, WORK_STATUSES, WORK_TYPE_LABEL_UZ, WORK_TYPES, workSchema,
 } from '@beap/shared';
 
 import type { AppContext } from '../db/pool.ts';
@@ -80,7 +80,7 @@ export const TOOL_SPECS: ToolSpec[] = [
   // ── A. Ma'lumot ───────────────────────────────────────────────────────────
   fn('get_tp', 'Bitta transformator punkti (TP) haqida to‘liq ma’lumot: abonentlar, '
     + 'hisoblagich, oylik iste’mol, holati va yuklamasi.',
-    { code: str('TP kodi, masalan "TP-067". Katta-kichik harf farq qilmaydi.') }, ['code']),
+    { code: str('TP kodi, masalan "67" yoki "44A" - hujjatdagi nom. "TP-" prefiksi shart emas.') }, ['code']),
 
   fn('list_tps', 'Transformatorlarni tanlangan tartibda saralab beradi. Reyting '
     + 'savollari uchun SHU asbobni ishlat - ro‘yxatni o‘zing saralama.',
@@ -331,7 +331,7 @@ export const TOOL_SPECS: ToolSpec[] = [
       title: str('Ish nomi (kamida 3 belgidan)'),
       description: str('Qo‘shimcha tavsif (ixtiyoriy)'),
       tp_id: int('Tegishli transformatorning ICHKI raqami (masalan recommend_works '
-        + 'natijasidagi tpId) - "TP-067" kabi KODNING O‘ZI EMAS. Foydalanuvchi TP kodini '
+        + 'natijasidagi tpId) - "67" kabi KODNING O‘ZI EMAS. Foydalanuvchi TP kodini '
         + 'aytgan bo‘lsa, avval get_tp bilan shu kodni qidirib ID\'sini top; ID\'ni hech '
         + 'qachon kod raqamidan (masalan "067"dan) o‘ylab topma. Bilmasangiz bo‘sh qoldir.'),
       status: {
@@ -360,14 +360,14 @@ export const TOOL_SPECS: ToolSpec[] = [
     }, ['id', 'status']),
 
   fn('update_tp_status', 'Bitta TP ning oylik holatini (yuklama %, holati: yaxshi/diqqat/'
-    + 'ortiqcha yuklama/nosozlik) belgilaydi yoki yangilaydi. «TP-067 ortiqcha yuklangan», '
-    + '«TP-043 nosoz» kabi xabarlarda SHU asbobni chaqir - bu ma’lumot recommend_works, '
+    + 'ortiqcha yuklama/nosozlik) belgilaydi yoki yangilaydi. «67-TP ortiqcha yuklangan», '
+    + '«171 nosoz» kabi xabarlarda SHU asbobni chaqir - bu ma’lumot recommend_works, '
     + 'get_alerts va TP monitoring jadvalining barchasiga ta’sir qiladi. Qoralama '
     + 'sifatida saqlaydi (`draft`); rasman ko‘rinishi uchun keyin submit_submission, '
     + 'kerak bo‘lsa approve_submission ham chaqirilishi kerak - buni foydalanuvchiga ayt '
     + 'yoki ruxsating bo‘lsa o‘zing bajar.',
     {
-      tp_code: str('TP kodi, masalan "TP-067"'),
+      tp_code: str('TP kodi, masalan "67" - hujjatdagi nom'),
       condition: {
         type: 'string', enum: [...TP_CONDITIONS],
         description: 'Holati: GOOD (yaxshi), ATTENTION (diqqat talab qiladi), '
@@ -658,16 +658,21 @@ async function recommendWorks(tc: ToolContext, period: string): Promise<{
 }
 
 /**
- * TP kodini ("TP-067") ichki ID/MFY'ga aylantiradi - `get_tp`dagi bilan bir
- * xil qidiruv. `update_tp_status` shu orqali ishlaydi, model hech qachon
- * ID'ni kod raqamidan o'ylab topmasin deb (`create_work`da bir marta shu
- * xato ko'rilgan - bu yerda boshidanoq oldi olingan).
+ * TP kodini ("67", "TP-067", "67-TP") ichki ID/MFY'ga aylantiradi -
+ * `get_tp`dagi bilan bir xil qidiruv. `update_tp_status` shu orqali ishlaydi,
+ * model hech qachon ID'ni kod raqamidan o'ylab topmasin deb (`create_work`da
+ * bir marta shu xato ko'rilgan - bu yerda boshidanoq oldi olingan).
+ *
+ * Solishtirish `tpCodeKey` orqali: registrda kod hujjatdagi nom (`67`),
+ * lekin foydalanuvchi ham, model ham eski odat bo'yicha "TP-067" deb
+ * yozishi mumkin. Ikkalasi bir kalitga tushadi.
  */
 async function resolveTpByCode(
   tc: ToolContext, code: string, period: string,
 ): Promise<{ tpId: number; mfyId: number; mfyName: string; code: string } | null> {
   const rows = await q.tpMonitoring(tc.ctx, period, tc.feederId, 500);
-  const found = rows.find((r) => r.code.toUpperCase() === code.trim().toUpperCase());
+  const key = tpCodeKey(code);
+  const found = rows.find((r) => tpCodeKey(r.code) === key);
   return found ? { tpId: found.tpId, mfyId: found.mfyId, mfyName: found.mfyName, code: found.code } : null;
 }
 
@@ -684,13 +689,14 @@ export async function runTool(
   switch (name) {
     // ── A. Ma'lumot ─────────────────────────────────────────────────────────
     case 'get_tp': {
-      const code = (asString(args['code']) ?? '').trim().toUpperCase();
+      const code = (asString(args['code']) ?? '').trim();
+      const key = tpCodeKey(code);
       const [monthly, monitoring] = await Promise.all([
         q.tpMonthly(tc.ctx, period, tc.feederId),
         q.tpMonitoring(tc.ctx, period, tc.feederId, 500),
       ]);
-      const m = monthly.find((r) => r.code.toUpperCase() === code);
-      const mon = monitoring.find((r) => r.code.toUpperCase() === code);
+      const m = monthly.find((r) => tpCodeKey(r.code) === key);
+      const mon = monitoring.find((r) => tpCodeKey(r.code) === key);
       if (!m && !mon) {
         return {
           kind: 'data',

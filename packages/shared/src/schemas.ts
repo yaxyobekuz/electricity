@@ -315,7 +315,8 @@ export const violationsPatchSchema = z.object({ rows: z.array(violationActSchema
 
 export const tpLossDailyRowSchema = z
   .object({
-    tpCode: z.string().regex(/^TP-\d{2,}$/, 'TP kodi "TP-179" ko‘rinishida bo‘lishi kerak'),
+    // Kod - hujjatdagi original nom: `171`, `44A`. Prefiks/nol to'ldirish yo'q.
+    tpCode: z.string().regex(/^\d{1,5}[A-Z]?$/, 'TP kodi "179" ko‘rinishida bo‘lishi kerak'),
     bizDate: dateSchema,
     kwhBalanceMeter: qty(1_000_000),
     kwhConsumersAttached: qty(1_000_000),

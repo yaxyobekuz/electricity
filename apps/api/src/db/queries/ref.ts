@@ -54,6 +54,13 @@ export async function bootstrap(ctx: AppContext): Promise<Bootstrap> {
   };
 }
 
+/**
+ * TP registri, TABIIY tartibda.
+ *
+ * Kod endi hujjatdagi nom (`10`, `122A`) va nol bilan to'ldirilmagan -
+ * oddiy matn saralashi `10` ni `122` dan keyinga qo'yardi. Shuning uchun
+ * avval kodning raqam qismi, so'ng harf qo'shimchasi bo'yicha saralanadi.
+ */
 export async function listTp(ctx: AppContext, mfyId: number | null): Promise<Tp[]> {
   const rows = await query<Record<string, unknown>>(
     `SELECT t.id, t.mfy_id, m.name_uz AS mfy_name, t.code, t.name, t.rated_kva,
@@ -61,7 +68,8 @@ export async function listTp(ctx: AppContext, mfyId: number | null): Promise<Tp[
             t.commissioned_on::text, t.decommissioned_on::text
      FROM ref.tp t JOIN ref.mfy m ON m.id = t.mfy_id
      WHERE ($1::int IS NULL OR t.mfy_id = $1)
-     ORDER BY t.code`, [mfyId], ctx);
+     ORDER BY NULLIF(regexp_replace(t.code, '\\D', '', 'g'), '')::int NULLS LAST,
+              t.code`, [mfyId], ctx);
 
   return rows.map((r) => ({
     id: Number(r['id']), mfyId: Number(r['mfy_id']), mfyName: String(r['mfy_name']),

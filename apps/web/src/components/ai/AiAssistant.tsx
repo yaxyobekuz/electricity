@@ -39,7 +39,7 @@ const STORE_KEY = 'beap.ai.chat';
 const SUGGESTIONS = [
   'Oylik hisobotni Excelda yuklab ber',
   'Qaysi transformatorlarda eng ko‘p muammo bor?',
-  'TP-067 ni ko‘rsat',
+  '67-TP ni ko‘rsat',
   'O‘tgan oy bilan solishtir',
 ];
 

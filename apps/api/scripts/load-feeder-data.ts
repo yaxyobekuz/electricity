@@ -27,6 +27,7 @@ import pg from 'pg';
 
 import { num } from '@beap/shared';
 
+import { tpCodeOf } from './chinobod-common.ts';
 import { config } from '../src/config.ts';
 
 /** Yuklanadigan fider - nomi ikkala faylda ham shu ko'rinishda. */
@@ -140,7 +141,7 @@ async function readTps(): Promise<TpRow[]> {
     const kwh = numOf(row.getCell(14).value) || Math.abs(curr - prev) * coef;
 
     out.push({
-      code: `TP-${String(val(row.getCell(3).value)).trim().padStart(3, '0')}`,
+      code: tpCodeOf(String(val(row.getCell(3).value))),
       total: numOf(row.getCell(5).value),
       active: numOf(row.getCell(6).value),
       disconnected: numOf(row.getCell(7).value),

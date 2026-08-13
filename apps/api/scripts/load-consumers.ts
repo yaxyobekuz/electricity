@@ -34,6 +34,7 @@
  */
 import { join } from 'node:path';
 
+import { tpCodeKey } from '@beap/shared';
 import ExcelJS from 'exceljs';
 import pg from 'pg';
 
@@ -108,31 +109,14 @@ const intOf = (x: ExcelJS.CellValue): number => {
 };
 
 /*
- * TP kodini SOLISHTIRISH kaliti.
+ * TP kodini SOLISHTIRISH kaliti - `@beap/shared` dagi yagona qoida.
  *
- * `ref.tp.code` registrda IZCHIL EMAS: `TP-010` nol bilan to'ldirilgan, lekin
- * `TP-15A`, `TP-66A` to'ldirilmagan; `TP-166А`, `TP-44А`, `TP-47А` da esa
- * kirillcha «А» (U+0410) turibdi. Shu sababli `chinobod-common.ts` dagi
- * `tpCodeOf()` bilan (u har doim 3 xonaga to'ldiradi va kirillni lotinga
- * o'giradi) hammasi ham mos kelmaydi.
- *
- * Bu yerda REGISTR O'ZGARTIRILMAYDI - ikkala tomon ham bir xil kanonik
- * ko'rinishga keltirilib solishtiriladi: prefiks olib tashlanadi, kirill
- * harflar lotinga o'giriladi, boshidagi nollar tushiriladi.
- *   `TP-010` va `10` → `10`;  `TP-166А` va `166А` → `166A`
+ * Manba fayllar bitta TP ni turlicha yozadi (`10`, `010`, `44А` kirillcha).
+ * Registrdagi kod endi hujjatdagi nomning o'zi bo'lsa-da, ikkala tomonni
+ * shu kalit orqali solishtirish saqlanib qoladi - eski fayllar hali ham
+ * nol bilan to'ldirilgan va kirillcha harfli kodlarni beradi.
  */
-const CYR_TO_LAT: Record<string, string> = {
-  А: 'A', В: 'B', С: 'C', Е: 'E', К: 'K', М: 'M', Н: 'H', О: 'O', Р: 'P', Т: 'T', Х: 'X',
-};
-
-function matchKey(raw: string): string {
-  const s = raw.trim()
-    .replace(/^TP-/i, '')
-    .replace(/[АВСЕКМНОРТХ]/g, (c) => CYR_TO_LAT[c] ?? c)
-    .toUpperCase();
-  const m = /^0*(\d+)(.*)$/.exec(s);
-  return m ? `${Number(m[1])}${m[2]!.trim()}` : s;
-}
+const matchKey = tpCodeKey;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Manbani o'qish

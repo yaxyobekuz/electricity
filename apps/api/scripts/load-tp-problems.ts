@@ -41,6 +41,7 @@
  */
 import { join } from 'node:path';
 
+import { tpCodeKey } from '@beap/shared';
 import ExcelJS from 'exceljs';
 import pg from 'pg';
 
@@ -156,19 +157,8 @@ const numOf = (x: ExcelJS.CellValue): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-/** `load-consumers.ts` dagi bilan AYNAN bir xil qoida - registr kodlari izchil emas. */
-const CYR_TO_LAT: Record<string, string> = {
-  А: 'A', В: 'B', С: 'C', Е: 'E', К: 'K', М: 'M', Н: 'H', О: 'O', Р: 'P', Т: 'T', Х: 'X',
-};
-
-function matchKey(raw: string): string {
-  const s = raw.trim()
-    .replace(/^TP-/i, '')
-    .replace(/[АВСЕКМНОРТХ]/g, (c) => CYR_TO_LAT[c] ?? c)
-    .toUpperCase();
-  const m = /^0*(\d+)(.*)$/.exec(s);
-  return m ? `${Number(m[1])}${m[2]!.trim()}` : s;
-}
+/** Manba fayl va registr kodini bir ko'rinishga keltiradi (`@beap/shared`). */
+const matchKey = tpCodeKey;
 
 /** Izohni solishtirish uchun: kichik harf, ortiqcha bo'shliqlar olib tashlanadi. */
 const problemKey = (s: string): string => s.trim().toLowerCase().replace(/\s+/g, ' ');

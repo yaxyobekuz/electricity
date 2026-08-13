@@ -10,7 +10,7 @@
  * bosiladi va o'sha ustun bo'yicha saralaydi; aniq TP ni topish uchun esa
  * qidiruv maydoni bor. Ikkalasi birga ishlaydi.
  */
-import { num, pct } from '@beap/shared';
+import { compareTpCode, num, pct, tpCodeKey } from '@beap/shared';
 import { Button, Chip, SearchField, cn } from '@heroui/react';
 import { ArrowDown, ArrowUp, ChevronsUpDown, RotateCcw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -125,9 +125,9 @@ export default function TpListPage() {
   const tpLoss = useMfyTpLoss(feederId, { period: period ?? undefined });
 
   /*
-   * Qidiruv boshlang'ich qiymati manzildan olinadi (`?q=TP-067`).
+   * Qidiruv boshlang'ich qiymati manzildan olinadi (`?q=67`).
    *
-   * AI agent «TP-067 ni ko'rsat» deganda shu sahifani ochadi va qidiruvni
+   * AI agent «67-TP ni ko'rsat» deganda shu sahifani ochadi va qidiruvni
    * oldindan to'ldiradi - foydalanuvchi ro'yxatdan o'zi izlamaydi. Keyin
    * maydon oddiy holatga o'tadi, ya'ni qo'lda o'zgartirish erkin.
    */
@@ -181,9 +181,16 @@ export default function TpListPage() {
   const rows = useMemo(() => {
     let out = all;
 
-    if (search) {
-      const q = search.toLowerCase();
-      out = out.filter((r) => r.code.toLowerCase().includes(q));
+    /*
+     * Qidiruv KODNING YOZILISHIGA bog'liq emas.
+     *
+     * Kod endi hujjatdagidek («171»), lekin odam eski odat bo'yicha
+     * «TP-171» yoki «171-TP» deb yozishi mumkin; «44A» ni kirillcha «А»
+     * bilan terishi ham mumkin. Ikkala tomon `tpCodeKey` ga keltiriladi.
+     */
+    if (search.trim()) {
+      const q = tpCodeKey(search);
+      out = out.filter((r) => tpCodeKey(r.code).includes(q));
     }
 
     /*
@@ -198,8 +205,9 @@ export default function TpListPage() {
       if (x === null && y === null) return 0;
       if (x === null) return 1;
       if (y === null) return -1;
+      // TP kodi TABIIY tartibda: `10, 15A, 20, 122, 122A` - `10, 122, 15A` emas.
       if (typeof x === 'string' && typeof y === 'string') {
-        return x.localeCompare(y, 'uz') * dir;
+        return compareTpCode(x, y) * dir;
       }
       return ((x as number) - (y as number)) * dir;
     });
@@ -252,7 +260,7 @@ export default function TpListPage() {
         >
           <SearchField.Group>
             <SearchField.SearchIcon />
-            <SearchField.Input placeholder="TP kodi yoki hisoblagich raqami…" />
+            <SearchField.Input placeholder="TP raqami, masalan 171 yoki 44A…" />
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>

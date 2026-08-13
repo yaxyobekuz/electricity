@@ -35,19 +35,19 @@ const FROM = '2026-07-01';
 /** Fider kodi — `load-feeder-data.ts` shu kod bilan yozadi (`mfy_id` qat'iy emas). */
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
 const TECH_NORM_PCT = 3.2; // TP darajasidagi chiziqli yo'qotish uchun kutilgan daraja
-const MIN_BASELINE_KWH = 30; // kwh_month=0 bo'lgan TP uchun (masalan TP-039) pastki chegara
+const MIN_BASELINE_KWH = 30; // kwh_month=0 bo'lgan TP uchun (masalan 39) pastki chegara
 
 interface Anchor { date: string; lossPct: number }
 
 /** 7 ta anomaliya TP — haqiqiy fayldan olingan ikkita sana/foiz nuqtasi. */
 const ANOMALY_ANCHORS: Record<string, Anchor[]> = {
-  'TP-066': [{ date: '2026-08-02', lossPct: -287.18 }, { date: '2026-08-05', lossPct: -100.47 }],
-  'TP-089': [{ date: '2026-08-02', lossPct: -172.73 }, { date: '2026-08-05', lossPct: -93.34 }],
-  'TP-166': [{ date: '2026-08-01', lossPct: -88.41 }, { date: '2026-08-05', lossPct: -9.23 }],
-  'TP-170': [{ date: '2026-08-02', lossPct: -193.14 }, { date: '2026-08-05', lossPct: -76.16 }],
-  'TP-171': [{ date: '2026-08-02', lossPct: 18.46 }, { date: '2026-08-05', lossPct: 15.54 }],
-  'TP-179': [{ date: '2026-08-02', lossPct: 34.53 }, { date: '2026-08-05', lossPct: 15.95 }],
-  'TP-226': [{ date: '2026-08-02', lossPct: -41.23 }, { date: '2026-08-05', lossPct: -11.2 }],
+  '66': [{ date: '2026-08-02', lossPct: -287.18 }, { date: '2026-08-05', lossPct: -100.47 }],
+  '89': [{ date: '2026-08-02', lossPct: -172.73 }, { date: '2026-08-05', lossPct: -93.34 }],
+  '166': [{ date: '2026-08-01', lossPct: -88.41 }, { date: '2026-08-05', lossPct: -9.23 }],
+  '170': [{ date: '2026-08-02', lossPct: -193.14 }, { date: '2026-08-05', lossPct: -76.16 }],
+  '171': [{ date: '2026-08-02', lossPct: 18.46 }, { date: '2026-08-05', lossPct: 15.54 }],
+  '179': [{ date: '2026-08-02', lossPct: 34.53 }, { date: '2026-08-05', lossPct: 15.95 }],
+  '226': [{ date: '2026-08-02', lossPct: -41.23 }, { date: '2026-08-05', lossPct: -11.2 }],
 };
 /** Muammo boshlanishidan necha kun oldin me'yoriy holatdan uzoqlasha boshlaydi. */
 const RAMP_DAYS = 12;

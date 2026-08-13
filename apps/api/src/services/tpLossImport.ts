@@ -12,6 +12,7 @@
  *   9=САНА(2), 10=Баланс(2), 11=Бириктирилган(2).
  * 6/7/12/13-ustunlar (yo'qotish/foiz) HISOBLANADI, o'qilmaydi.
  */
+import { tpCodeKey } from '@beap/shared';
 import ExcelJS from 'exceljs';
 
 export interface ParsedTpLossRow {
@@ -99,7 +100,9 @@ export async function parseTpLossWorkbook(buffer: Buffer): Promise<ParseResult> 
     // Bo'sh qatorlarni VA "Жами" jamlovchi qatorini (2-ustuni bo'sh) o'tkazib yuboradi.
     if (!/^\d+$/.test(bare)) continue;
 
-    const tpCode = `TP-${bare.padStart(3, '0')}`;
+    // Registrdagi kod - hujjatdagi nomning o'zi; `tpCodeKey` faqat yozilishini
+    // (boshidagi nollar, kirillcha harf) kanonik ko'rinishga keltiradi.
+    const tpCode = tpCodeKey(bare);
     const noteRaw = String(val(row.getCell(8).value)).trim();
     const inspectionNote = noteRaw.length > 0 ? noteRaw : null;
 

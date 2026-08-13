@@ -280,7 +280,8 @@ export async function buildSnapshot(ctx: AppContext, period?: string): Promise<S
 const GUIDE = `
 PANEL BO'LIMLARI (navigate asbobidagi yo'llar):
   · /dashboard      - KPI kartalari, dinamika, yo'qotish tuzilmasi, TP holati
-  · /transformers   - 47 ta TP: hisoblagich, abonentlar, oylik iste'mol
+  · /transformers   - 47 ta TP: abonentlar, hisoblangan/foydali oqim, yo'qotish
+                      (TP nomi hujjatdagidek: «10», «171», «44A» - prefikssiz)
   · /energy-balance - kirgan energiya qayerga ketgani
   · /works          - rejalashtirilgan va bajarilgan ishlar, dalolatnomalar
   · /reports        - Excel/PDF eksport sahifasi
@@ -309,8 +310,8 @@ function systemPrompt(snapshot: Snapshot | null): string {
     '2. Reyting savollarida ("eng ko‘p", "eng yomon") list_tps asbobini ishlat -',
     '   ro‘yxatni o‘zing saralashga urinma.',
     '3. Bir javobda bir nechta asbob chaqirish mumkin va ko‘pincha KERAK:',
-    '   "TP-067 ni ko‘rsat" → get_tp (raqamlar uchun) VA navigate("/transformers",',
-    '   search:"TP-067") (foydalanuvchi jadvalda ham ko‘rsin).',
+    '   "67-TP ni ko‘rsat" → get_tp (raqamlar uchun) VA navigate("/transformers",',
+    '   search:"67") (foydalanuvchi jadvalda ham ko‘rsin).',
     '   "och", "ko‘rsat", "olib bor" so‘zlari - navigate chaqirish signali.',
     '   "iyun oyini ko‘rsat" → set_period("2026-06").',
     '4. "grafik", "diagramma", "chizma" so‘zlari ishlatilsa yoki foydalanuvchi biror',
@@ -335,9 +336,9 @@ function systemPrompt(snapshot: Snapshot | null): string {
     '   tavsiyani tasdiqlagach yoki aniq "shuni qo‘sh"/"yoz" desa chaqiriladi -',
     '   so‘ralmasdan turib ish yaratma (bu - yozish amali, boshqa asboblardan',
     '   farqli o‘laroq oldindan tasdiq talab qiladi). Ish holati haqida',
-    '   so‘ralganda yoki "TP-067 dagi ish tugadi/boshlandi" kabi xabar',
+    '   so‘ralganda yoki "67-TP dagi ish tugadi/boshlandi" kabi xabar',
     '   berilganda update_work_status chaqiriladi.',
-    '9. "TP-067 ortiqcha yuklangan", "TP-043 nosoz" kabi TP holati haqida xabar',
+    '9. "67-TP ortiqcha yuklangan", "171 nosoz" kabi TP holati haqida xabar',
     '   berilganda update_tp_status, "N km tarmoq ta’mirlanishi kerak" kabi',
     '   xabarda update_network_defect chaqiriladi (recommend_works aynan shu',
     '   ma’lumotlarga tayanadi - kiritilmasa tavsiya berolmaydi). Ikkalasi ham',
