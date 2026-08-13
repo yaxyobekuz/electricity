@@ -194,7 +194,7 @@ async function main(): Promise<void> {
   console.log(`\nFider: ${FEEDER.nameUz} · ${balance.substation} · ${balance.input}`);
   console.log(`  hisoblagich: ${balance.meterPrev} → ${balance.meterCurr} (koef ${balance.coef})`);
   console.log(`  kirgan ${num(kwhIn)} kWh`);
-  console.log(`  sotilgan ${num(kwhSold)} kWh - ${tps.length} ta TP hisoblagichi yig‘indisi`);
+  console.log(`  sotilgan ${num(kwhSold)} kWh - ${tps.length} ta TP balans hisobi yig‘indisi`);
   console.log(`  yo‘qotish ${num(loss)} kWh - ${((loss / kwhIn) * 100).toFixed(1)}%`);
 
   if (loss < 0) {

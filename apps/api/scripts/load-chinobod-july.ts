@@ -213,7 +213,7 @@ async function main(): Promise<void> {
    *
    *   kirgan     - fider hisoblagichidan: (20 112 − 19 850) × 4 000 = 1 048 000.
    *                Hujjatdagi «Бир ойлик оқиб ўтган» ustuni bilan aynan bir xil.
-   *   sotilgan   - 51 ta TP hisoblagichi YIG'INDISI. Hujjatda «Elektr oqimi»
+   *   sotilgan   - 51 ta TP balans hisobi YIG'INDISI. Hujjatda «Elektr oqimi»
    *                683 812.3 deb ham yozilgan, lekin TP yig'indisi (724 165)
    *                afzal: u qator-ma-qator tekshiriladi.
    *   yo'qotish  - QOLDIQ: kirgan − sotilgan. Alohida saqlanmaydi, chunki
@@ -238,7 +238,7 @@ async function main(): Promise<void> {
       + ` ${num(fromMeter)} kWh bilan mos emas`);
   }
   console.log(`  kirgan       ${num(kwhIn)} kWh`);
-  console.log(`  sotilgan     ${num(kwhSold)} kWh - ${tps.length} ta TP hisoblagichi yig‘indisi`);
+  console.log(`  sotilgan     ${num(kwhSold)} kWh - ${tps.length} ta TP balans hisobi yig‘indisi`);
   if (summary.kwhFlow > 0 && Math.abs(kwhSold - summary.kwhFlow) > 1) {
     console.log(`               (hujjatdagi «Elektr oqimi» ${num(summary.kwhFlow)} kWh,`
       + ` farq ${num(kwhSold - summary.kwhFlow)})`);
