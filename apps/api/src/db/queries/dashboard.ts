@@ -399,20 +399,6 @@ export async function districtOverview(
       daysCompared: isPartial ? alignDays : null,
     }),
     /*
-     * YO'QOTISH DARAJASI - miqdordan OLDIN.
-     *
-     * Avval "qanchalik yomon" (17.7%), keyin "qancha" (33.8 ming kWh).
-     * Daraja kun soniga bog'liq emas va o'tgan oy bilan bevosita
-     * solishtiriladi, shuning uchun savolga birinchi bo'lib u javob
-     * beradi; miqdor esa uning og'irligini ko'rsatadi.
-     */
-    tile({
-      key: 'lossPct', metric: 'lossPct', labelUz: 'Yo‘qotish darajasi', unit: '%',
-      value: cur.loss_pct,
-      prev: p.loss_pct,
-      goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
-    }),
-    /*
      * Yo'qotish MIQDORDA beriladi, foizda emas.
      *
      * "34.8%" degan plitka yonidagi "1 048 ming kWh" bilan bir o'lchovda emas -
@@ -425,6 +411,19 @@ export async function districtOverview(
       value: cur.kwh_loss_total, prev: alignedPrev?.kwh_loss_total ?? p.kwh_loss_total,
       goodDirection: 'down', spark: spark.kwhLoss, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
+    }),
+    /*
+     * YO'QOTISH DARAJASI - miqdordan keyin.
+     *
+     * Yuqoridagi plitka "qancha" (33.8 ming kWh), bu esa "qanchalik
+     * yomon" (17.7%). Daraja kun soniga bog'liq emas, shuning uchun
+     * o'tgan oy bilan bevosita - ikki davr yonma-yon - solishtiriladi.
+     */
+    tile({
+      key: 'lossPct', metric: 'lossPct', labelUz: 'Yo‘qotish darajasi', unit: '%',
+      value: cur.loss_pct,
+      prev: p.loss_pct,
+      goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
     }),
     /*
      * Qarzdorlik o'rniga UMUMIY ABONENTLAR.
