@@ -24,3 +24,24 @@ export function tpCodeOf(raw: string): string {
   if (!m) return `TP-${s}`;
   return `TP-${m[1]!.padStart(3, '0')}${m[2]!.toUpperCase()}`;
 }
+
+/**
+ * TP kodining SOLISHTIRISH kaliti - `tpCodeOf` dan farqli o'laroq yangi kod
+ * yasamaydi, balki mavjud ikki yozuvni bir ko'rinishga keltiradi.
+ *
+ * Kerak, chunki `ref.tp.code` registrda IZCHIL EMAS: `TP-010` nol bilan
+ * to'ldirilgan, `TP-15A` esa yo'q; `TP-166А`, `TP-44А`, `TP-47А` da kirillcha
+ * «А» (U+0410) turibdi. Manba fayllar ham har xil yozadi. Ikkala tomonni shu
+ * kalit orqali solishtirsa, 47 tasi ham mos tushadi:
+ *
+ *   `TP-010` va `10`    → `10`
+ *   `TP-166А` va `166A` → `166A`
+ */
+export function tpMatchKey(raw: string): string {
+  const s = raw.trim()
+    .replace(/^TP-/i, '')
+    .replace(/[АВСЕКМНОРТХ]/g, (ch) => CYR_TO_LAT[ch] ?? ch)
+    .toUpperCase();
+  const m = /^0*(\d+)(.*)$/.exec(s);
+  return m ? `${Number(m[1])}${m[2]!.trim()}` : s;
+}

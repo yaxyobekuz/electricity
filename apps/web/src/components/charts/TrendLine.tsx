@@ -184,7 +184,7 @@ export function TrendLine({
             : [{ match: { id: soldId }, id: 'areaSold' }, { match: '*', id: 'areaNone' }]
         }
         lineWidth={2.5}
-        margin={{ top: 12, right: 18, bottom: 34, left: 52 }}
+        margin={{ top: 12, right: 18, bottom: 34, left: 28 }}
         pointBorderColor={t.surface}
         pointBorderWidth={2}
         /*

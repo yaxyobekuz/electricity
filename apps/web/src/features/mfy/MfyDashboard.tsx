@@ -100,9 +100,12 @@ import { AskAiButton } from "../../components/ai/AskAiButton.tsx";
  * iste'mol tartibida qoladi.
  */
 const faultRank = (r: { condition: string | null }): number =>
-  r.condition === "OVERLOAD" ? 0
-    : r.condition === "FAULT" ? 1
-      : r.condition === "ATTENTION" ? 2
+  r.condition === "OVERLOAD"
+    ? 0
+    : r.condition === "FAULT"
+      ? 1
+      : r.condition === "ATTENTION"
+        ? 2
         : 3;
 
 const TILE_ICONS: Record<string, React.ReactNode> = {
@@ -125,7 +128,13 @@ const TILE_ICONS: Record<string, React.ReactNode> = {
  * yaxshi, shuning uchun rang faqat shu belgiga qarab tanlanadi.
  */
 function CompareFooter({
-  labelUz, current, previous, prevPeriod, format, goodDirection, diffAsPp = false,
+  labelUz,
+  current,
+  previous,
+  prevPeriod,
+  format,
+  goodDirection,
+  diffAsPp = false,
 }: {
   labelUz: string;
   current: number | null;
@@ -149,8 +158,10 @@ function CompareFooter({
   }
 
   const diff = current - previous;
-  const pctDiff = diffAsPp || previous === 0 ? null : (diff / Math.abs(previous)) * 100;
-  const isGood = diff === 0 ? null : goodDirection === "up" ? diff > 0 : diff < 0;
+  const pctDiff =
+    diffAsPp || previous === 0 ? null : (diff / Math.abs(previous)) * 100;
+  const isGood =
+    diff === 0 ? null : goodDirection === "up" ? diff > 0 : diff < 0;
   const Icon = diff === 0 ? TrendingUp : diff > 0 ? TrendingUp : TrendingDown;
 
   return (
@@ -174,7 +185,9 @@ function CompareFooter({
         {diff === 0
           ? "o‘zgarmadi"
           : `${diff > 0 ? "+" : "−"}${
-              diffAsPp ? `${Math.abs(diff).toFixed(1)} p.p.` : format(Math.abs(diff))
+              diffAsPp
+                ? `${Math.abs(diff).toFixed(1)} p.p.`
+                : format(Math.abs(diff))
             }`}
         {pctDiff !== null && diff !== 0 && (
           <span className="font-normal text-muted">
@@ -232,8 +245,16 @@ export default function MfyDashboard() {
    * takrorlanmaydi.
    */
   const prevPeriod = overview.data?.tiles[0]?.prevPeriod ?? null;
-  const prevEnergySplit = useMfyEnergySplit(mfyId, prevPeriod ?? undefined, prevPeriod !== null);
-  const prevDebt = useMfyDebt(mfyId, prevPeriod ?? undefined, prevPeriod !== null);
+  const prevEnergySplit = useMfyEnergySplit(
+    mfyId,
+    prevPeriod ?? undefined,
+    prevPeriod !== null,
+  );
+  const prevDebt = useMfyDebt(
+    mfyId,
+    prevPeriod ?? undefined,
+    prevPeriod !== null,
+  );
   const works = useMfyWorks(mfyId);
   const results = useMfyResults(mfyId, period ?? undefined);
   const violations = useMfyViolations(mfyId, period ?? undefined);
@@ -361,7 +382,9 @@ export default function MfyDashboard() {
        */}
       <div
         className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-[repeat(var(--kpi-cols),minmax(0,1fr))]"
-        style={{ "--kpi-cols": overview.data.tiles.length } as React.CSSProperties}
+        style={
+          { "--kpi-cols": overview.data.tiles.length } as React.CSSProperties
+        }
       >
         {overview.data.tiles.map((tile) => (
           <StatTile
@@ -376,9 +399,9 @@ export default function MfyDashboard() {
       {/* ═══ 2-QATOR: dinamika · quvvat · abonentlar · ko'rsatkichlar ═══ */}
       <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
         <Panel
-          actions={<BucketPicker onChange={setBucket} value={bucket} />}
           className="md:col-span-2 xl:col-span-4"
           title="Iste’mol va yo‘qotish dinamikasi"
+          actions={<BucketPicker onChange={setBucket} value={bucket} />}
         >
           {series.length > 0 ? (
             <div className="flex flex-col gap-3 lg:flex-row">
@@ -636,14 +659,18 @@ export default function MfyDashboard() {
              * davr uzunligiga bog'liq emas.
              */
             <CompareFooter
-              current={energySplit.data?.parts.find((x) => x.key === "loss")?.pct ?? null}
+              current={
+                energySplit.data?.parts.find((x) => x.key === "loss")?.pct ??
+                null
+              }
               diffAsPp
               format={(v) => pct(v, 1)}
               goodDirection="down"
               labelUz="Yo‘qotish darajasi"
               prevPeriod={prevPeriod}
               previous={
-                prevEnergySplit.data?.parts.find((x) => x.key === "loss")?.pct ?? null
+                prevEnergySplit.data?.parts.find((x) => x.key === "loss")
+                  ?.pct ?? null
               }
             />
           }
@@ -848,8 +875,7 @@ export default function MfyDashboard() {
                       color: `var(--viz-${results.data.improvementPp > 0 ? "good" : "critical"})`,
                     }}
                   >
-                    Farq:{" "}
-                    {Math.abs(results.data.improvementPp).toFixed(1)}%
+                    Farq: {Math.abs(results.data.improvementPp).toFixed(1)}%
                   </p>
                 )}
               </div>
@@ -901,7 +927,8 @@ export default function MfyDashboard() {
                   className="mt-1.5 pl-8.5 text-[10.5px] leading-tight"
                   style={{ color: "var(--viz-good)" }}
                 >
-                  (yo‘qotish kamayishi hisobiga · {num(TARIFF_SUM_PER_KWH)} so‘m/kWh)
+                  (yo‘qotish kamayishi hisobiga · {num(TARIFF_SUM_PER_KWH)}{" "}
+                  so‘m/kWh)
                 </p>
               </div>
             </div>
