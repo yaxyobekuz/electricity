@@ -159,7 +159,7 @@ export function ViolationsPanel({
       {rows[0] && <CaseRow r={rows[0]} onOpen={setOpen} />}
 
       {rows.length > 1 && (
-        <div className="grid grid-cols-1 gap-2 @xs:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {rows.slice(1).map((r) => (
             <CaseTile key={r.caseType} r={r} onOpen={setOpen} />
           ))}
