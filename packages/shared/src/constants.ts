@@ -218,7 +218,7 @@ export type ViolationCaseType = (typeof VIOLATION_CASE_TYPES)[number];
 export const VIOLATION_CASE_LABEL_UZ: Record<ViolationCaseType, string> = {
   ADMINISTRATIVE: 'Ma’muriy holat',
   CRIMINAL: 'Jinoiy holat',
-  NO_FAULT: 'Iste’molchi aybsiz',
+  NO_FAULT: 'Aybsiz',
 };
 
 /** Har bir toifaning ma'nosi - kartadagi "nima asosida?" oynasi uchun. */

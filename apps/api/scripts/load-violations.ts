@@ -4,8 +4,8 @@
  * MANBA: operator bergan OYLIK SONLAR. Excel fayl yo'q, shuning uchun
  * ro'yxat shu skriptning o'zida turadi:
  *
- *   iyul    11 ta ma'muriy  ·  10 ta «iste'molchi aybsiz»
- *   avgust   2 ta ma'muriy  ·   5 ta «iste'molchi aybsiz»
+ *   iyul    11 ta ma'muriy  ·  10 ta «aybsiz»
+ *   avgust   2 ta ma'muriy  ·   5 ta «aybsiz»
  *
  * MA'LUM BO'LGAN NARSA FAQAT SHU: oy, toifa va SONI.
  *
@@ -103,7 +103,7 @@ async function main(): Promise<void> {
   for (const { spec, acts } of plan) {
     console.log(
       `  ${spec.label.padEnd(7)} ${String(acts.length).padStart(2)} ta`
-      + `  ·  ma'muriy ${spec.administrative}  ·  iste'molchi aybsiz ${spec.noFault}`
+      + `  ·  ma'muriy ${spec.administrative}  ·  aybsiz ${spec.noFault}`
       + `  ·  ${acts[0]!.actDate} … ${acts[acts.length - 1]!.actDate}`,
     );
   }

@@ -134,7 +134,7 @@ export async function computeAlerts(
     });
   }
 
-  // 2. Qoidabuzarliklar - jinoiy/ma'muriy holat 'high', iste'molchi aybsiz 'medium'.
+  // 2. Qoidabuzarliklar - jinoiy/ma'muriy holat 'high', aybsiz 'medium'.
   for (const row of violationSummary.rows) {
     if (row.count === 0) continue;
     const severity: AlertSeverity = row.caseType === 'NO_FAULT' ? 'medium' : 'high';

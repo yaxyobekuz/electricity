@@ -302,7 +302,7 @@ export const violationActSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['fineMln'],
-        message: 'Iste’molchi aybsiz deb topilgan holatda jarima bo‘lishi mumkin emas',
+        message: 'Aybsiz deb topilgan holatda jarima bo‘lishi mumkin emas',
       });
     }
   });
