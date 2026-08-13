@@ -304,6 +304,23 @@ async function main(): Promise<void> {
       const soldDaily = Array.from({ length: p.days }, () => 0);
 
       for (const rd of rows) {
+        /*
+         * `tp_monthly.kwh_month` - TP ning davr bo'yicha iste'moli.
+         *
+         * ENERGIYA ustuni, shuning uchun egasi shu skript. `load-consumers.ts`
+         * unga ataylab tegmaydi (u faqat abonent ustunlarini yangilaydi), aks
+         * holda ikkalasi bir-birining ustidan yozardi. Yangilanmasa esa eski
+         * davrning qiymati qolib ketadi va /transformers sahifasi eskirgan
+         * raqamni ko'rsatadi.
+         */
+        await c.query(
+          `INSERT INTO fact.tp_monthly (tp_id, period_month, kwh_month)
+           VALUES ($1, $2::date, $3)
+           ON CONFLICT (tp_id, period_month) DO UPDATE
+             SET kwh_month = EXCLUDED.kwh_month, updated_at = now()`,
+          [tpByKey.get(rd.key), p.start, rd.consumers],
+        );
+
         const bal = spread(rd.balance, p.days);
         const con = spread(rd.consumers, p.days);
         const sold = p.soldFrom === 'tp-balance' ? bal : con;

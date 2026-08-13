@@ -2,10 +2,10 @@
  * Transformatorlar - fiderning asosiy tafsiloti.
  *
  * Fider darajasidagi tizimda eng qimmatli kesim shu yerda: har bir TP ning
- * hisoblagichi, oylik iste'moli va iste'molchilari. Jadval «To‘liq hisobot»
- * varag'ining aynan o'zi bo'lib, ustiga tizim hisoblagan ulush qo'shiladi.
+ * balans hisoblagichi, foydali oqimi, yo'qotishi va iste'molchilari. Uch
+ * manba birlashtiriladi - registr, oylik hisobot va TP kunlik yo'qotishi.
  *
- * SARALASH - 51 qator bir ekranga sig'maydi va foydalanuvchining savoli
+ * SARALASH - barcha qator bir ekranga sig'maydi va foydalanuvchining savoli
  * deyarli har doim "qaysi biri eng yomon?" bo'ladi. Har bir ustun sarlavhasi
  * bosiladi va o'sha ustun bo'yicha saralaydi; aniq TP ni topish uchun esa
  * qidiruv maydoni bor. Ikkalasi birga ishlaydi.
@@ -19,23 +19,26 @@ import { useSearchParams } from 'react-router';
 import { LoadingState, PageHeader } from '../../components/layout/AppShell.tsx';
 import { EmptyPanel, Panel } from '../../components/ui/Panel.tsx';
 import { PeriodPicker } from '../district/panels/PeriodPicker.tsx';
-import { useTpMonthly, useTpMonitoring } from '../../lib/queries.ts';
+import { useBootstrap, useMfyTpLoss, useTpMonthly, useTpMonitoring } from '../../lib/queries.ts';
 import { useUi } from '../../lib/ui-store.ts';
 
-/** Jadval qatori - ikki manbadan birlashtirilgan. */
+/** Jadval qatori - uch manbadan birlashtirilgan. */
 interface Row {
   code: string;
   consumersTotal: number | null;
   consumersActive: number | null;
   consumersOff: number | null;
   offShare: number | null;
-  meterNo: string | null;
-  meterCoef: number | null;
-  kwhMonth: number | null;
+  /** Balans hisoblagichi - hisobotdagi «Hisoblangan». */
+  balanceKwh: number | null;
+  /** Biriktirilgan iste'molchilardan yig'ilgan - «Foydali oqim». */
+  soldKwh: number | null;
+  lossKwh: number | null;
+  lossPct: number | null;
   share: number | null;
 }
 
-type SortKey = keyof Omit<Row, 'meterNo'> | 'meterNo';
+type SortKey = keyof Row;
 type SortDir = 'asc' | 'desc';
 
 /*
@@ -44,20 +47,27 @@ type SortDir = 'asc' | 'desc';
  * Sabab: "iste'mol" ustunini bosgan odam eng kattasini ko'rmoqchi, eng
  * kichigini emas. Har safar ikki marta bosishga majburlash - ortiqcha ish.
  */
-const TEXT_KEYS = new Set<SortKey>(['code', 'meterNo']);
+const TEXT_KEYS = new Set<SortKey>(['code']);
 
-const DEFAULT_SORT: SortKey = 'code';
-const DEFAULT_DIR: SortDir = 'asc';
+/*
+ * Sahifa ENG KO'P ISTE'MOL QILGANDAN boshlanadi.
+ *
+ * «Qaysi TP eng ko'p yeyapti?» - sahifaga kirgan odamning birinchi savoli.
+ * Kod bo'yicha alifbo tartibi esa hech qanday savolga javob bermasdi.
+ */
+const DEFAULT_SORT: SortKey = 'soldKwh';
+const DEFAULT_DIR: SortDir = 'desc';
 
 /** Saralanadigan ustunlar - sarlavha matni va kengligi bilan. */
 const COLUMNS: { key: SortKey; label: string; width: string }[] = [
-  { key: 'code', label: 'Transformator', width: 'w-[13%]' },
-  { key: 'meterNo', label: 'Hisoblagich', width: 'w-[17%]' },
-  { key: 'meterCoef', label: 'Koeffitsient', width: 'w-[9%]' },
-  { key: 'consumersTotal', label: 'Iste’molchilar', width: 'w-[12%]' },
-  { key: 'consumersActive', label: 'Aloqada', width: 'w-[11%]' },
-  { key: 'consumersOff', label: 'Aloqada emas', width: 'w-[11%]' },
-  { key: 'kwhMonth', label: 'Oylik iste’mol (kWh)', width: 'w-[12%]' },
+  { key: 'code', label: 'Transformator', width: 'w-[12%]' },
+  { key: 'consumersTotal', label: 'Iste’molchilar', width: 'w-[10%]' },
+  { key: 'consumersActive', label: 'Aloqada', width: 'w-[9%]' },
+  { key: 'consumersOff', label: 'Aloqada emas', width: 'w-[10%]' },
+  { key: 'balanceKwh', label: 'Hisoblangan (kWh)', width: 'w-[12%]' },
+  { key: 'soldKwh', label: 'Foydali oqim (kWh)', width: 'w-[12%]' },
+  { key: 'lossKwh', label: 'Yo’qotish (kWh)', width: 'w-[11%]' },
+  { key: 'lossPct', label: 'Yo’qotish %', width: 'w-[9%]' },
   { key: 'share', label: 'Ulushi', width: 'w-[10%]' },
 ];
 
@@ -105,12 +115,20 @@ export default function TpListPage() {
   const period = useUi((s) => s.period);
   const monitoring = useTpMonitoring(period ?? undefined, 1000);
   const monthly = useTpMonthly(period ?? undefined);
+  /*
+   * Balans hisoblagichi va yo'qotish TP kesimida `fact.tp_loss_daily` da
+   * turadi - oylik hisobotda emas. Tizim qamrovi bitta fider, shuning uchun
+   * registrdagi birinchi (yagona) fider olinadi.
+   */
+  const boot = useBootstrap();
+  const feederId = boot.data?.mfys[0]?.id ?? 0;
+  const tpLoss = useMfyTpLoss(feederId, { period: period ?? undefined });
 
   /*
    * Qidiruv boshlang'ich qiymati manzildan olinadi (`?q=TP-067`).
    *
    * AI agent «TP-067 ni ko'rsat» deganda shu sahifani ochadi va qidiruvni
-   * oldindan to'ldiradi - foydalanuvchi 51 qatordan o'zi izlamaydi. Keyin
+   * oldindan to'ldiradi - foydalanuvchi ro'yxatdan o'zi izlamaydi. Keyin
    * maydon oddiy holatga o'tadi, ya'ni qo'lda o'zgartirish erkin.
    */
   const [params] = useSearchParams();
@@ -130,16 +148,19 @@ export default function TpListPage() {
   }, [queryParam]);
 
   /*
-   * Ikki manba bitta jadvalda: registr (TP kodi, quvvati, masofasi) va oylik
-   * hisobot (hisoblagich, iste'molchilar, iste'mol). Ular TP kodi bo'yicha
-   * birlashtiriladi - hisobot kelmagan TP ham ro'yxatda qoladi.
+   * Uch manba bitta jadvalda: registr (TP kodi), oylik hisobot
+   * (iste'molchilar) va TP kunlik yo'qotishi (balans hisoblagichi, foydali
+   * oqim, yo'qotish). TP kodi bo'yicha birlashtiriladi - ma'lumoti kelmagan
+   * TP ham ro'yxatda qoladi, ustunlari «-» bo'ladi.
    */
   const all = useMemo<Row[]>(() => {
     const byCode = new Map((monthly.data ?? []).map((m) => [m.code, m]));
-    const totalKwh = (monthly.data ?? []).reduce((a, m) => a + m.kwhMonth, 0);
+    const lossByCode = new Map((tpLoss.data ?? []).map((l) => [l.code, l]));
+    const totalSold = (tpLoss.data ?? []).reduce((a, l) => a + l.kwhConsumersAttached, 0);
 
     return (monitoring.data ?? []).map((r) => {
       const m = byCode.get(r.code);
+      const l = lossByCode.get(r.code);
       return {
         code: r.code,
         consumersTotal: m?.consumersTotal ?? null,
@@ -148,22 +169,21 @@ export default function TpListPage() {
         offShare: m && m.consumersTotal > 0
           ? (m.consumersDisconnected / m.consumersTotal) * 100
           : null,
-        meterNo: m?.meterNo ?? null,
-        meterCoef: m?.meterCoef ?? null,
-        kwhMonth: m?.kwhMonth ?? null,
-        share: m && totalKwh > 0 ? (m.kwhMonth / totalKwh) * 100 : null,
+        balanceKwh: l?.kwhBalanceMeter ?? null,
+        soldKwh: l?.kwhConsumersAttached ?? null,
+        lossKwh: l?.kwhLoss ?? null,
+        lossPct: l?.lossPct ?? null,
+        share: l && totalSold > 0 ? (l.kwhConsumersAttached / totalSold) * 100 : null,
       };
     });
-  }, [monitoring.data, monthly.data]);
+  }, [monitoring.data, monthly.data, tpLoss.data]);
 
   const rows = useMemo(() => {
     let out = all;
 
     if (search) {
       const q = search.toLowerCase();
-      out = out.filter(
-        (r) => r.code.toLowerCase().includes(q) || (r.meterNo ?? '').includes(q),
-      );
+      out = out.filter((r) => r.code.toLowerCase().includes(q));
     }
 
     /*
@@ -202,11 +222,14 @@ export default function TpListPage() {
     setSortDir(DEFAULT_DIR);
   };
 
-  if (monitoring.isLoading || monthly.isLoading) return <LoadingState rows={5} />;
+  if (monitoring.isLoading || monthly.isLoading || tpLoss.isLoading) {
+    return <LoadingState rows={5} />;
+  }
 
   const withData = (monthly.data ?? []).length;
   const consumers = (monthly.data ?? []).reduce((a, m) => a + m.consumersTotal, 0);
-  const kwh = (monthly.data ?? []).reduce((a, m) => a + m.kwhMonth, 0);
+  // Jami foydali oqim - jadvaldagi ustun bilan BIR MANBADAN.
+  const kwh = (tpLoss.data ?? []).reduce((a, l) => a + l.kwhConsumersAttached, 0);
 
   return (
     <>
@@ -288,10 +311,6 @@ export default function TpListPage() {
                   <tr key={r.code}>
                     <td className="num text-[10.5px] text-muted">{i + 1}</td>
                     <td className="font-semibold text-accent">{r.code}</td>
-                    <td className="tabular truncate text-[11px]" title={r.meterNo ?? ''}>
-                      {r.meterNo ?? <span className="text-muted">-</span>}
-                    </td>
-                    <td className="num">{r.meterCoef === null ? '-' : num(r.meterCoef)}</td>
                     <td className="num font-semibold">{num(r.consumersTotal)}</td>
                     <td className="num" style={{ color: 'var(--viz-good)' }}>
                       {num(r.consumersActive)}
@@ -303,7 +322,26 @@ export default function TpListPage() {
                     >
                       {num(r.consumersOff)}
                     </td>
-                    <td className="num font-semibold">{num(r.kwhMonth)}</td>
+                    <td className="num">{num(r.balanceKwh, 1)}</td>
+                    <td className="num font-semibold">{num(r.soldKwh, 1)}</td>
+                    {/*
+                      Yo'qotish MANFIY bo'lishi mumkin - biriktirilgan
+                      iste'molchilar balans hisoblagichidan ko'p chiqqanda.
+                      Bu o'lchov nosozligining belgisi, shuning uchun raqam
+                      yashirilmaydi va boshqa rangda ajratiladi.
+                    */}
+                    <td
+                      className="num"
+                      style={
+                        r.lossKwh === null ? undefined
+                          : { color: r.lossKwh < 0 ? 'var(--viz-warning)' : 'var(--viz-critical)' }
+                      }
+                    >
+                      {num(r.lossKwh, 1)}
+                    </td>
+                    <td className="num text-muted">
+                      {r.lossPct === null ? '-' : pct(r.lossPct, 1)}
+                    </td>
                     <td className="num text-muted">
                       {r.share === null ? '-' : pct(r.share, 1)}
                     </td>
