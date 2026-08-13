@@ -167,7 +167,8 @@ async function periodTotals(
 /** Oxirgi 30 kunlik qiymatlar - sparkline uchun. */
 interface Sparks {
   kwhIn: number[]; kwhSold: number[]; kwhLoss: number[]; lossPct: number[];
-  consumersTotal: number[]; consumersLinkPct: number[]; tpCount: number[];
+  kwhInTp: number[];
+  consumersTotal: number[]; tpCount: number[];
 }
 
 /**
@@ -194,7 +195,7 @@ async function sparklines(
 ): Promise<Sparks> {
   const { clause, params } = scopeFilter(mfyId, elektrosetId);
 
-  const [daily, monthly] = await Promise.all([
+  const [daily, monthly, dailyTp] = await Promise.all([
     query<{
       kwh_in: number; kwh_sold: number; kwh_loss_total: number;
     }>(
@@ -225,10 +226,28 @@ async function sparklines(
        GROUP BY a.period_month ORDER BY a.period_month`,
       [period, ...params], ctx,
     ),
+    /*
+     * TP balans hisoblagichlari - `agg` da emas, XOM jadvalda: bu o'lchov
+     * fider balansiga kirmaydi (u yerda AMALDAGI kirim turadi), lekin
+     * kunlik aniqlikda mavjud.
+     */
+    query<{ kwh: number }>(
+      `SELECT d.biz_date, sum(d.kwh_balance_meter) AS kwh
+         FROM fact.tp_loss_daily d
+         JOIN ref.tp t ON t.id = d.tp_id
+         JOIN ref.mfy m ON m.id = t.mfy_id
+        WHERE d.biz_date <= (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '1 day')::date
+          AND d.biz_date >  (($1 || '-01')::date + INTERVAL '1 month' - INTERVAL '31 days')::date
+          AND ($2::int IS NULL OR m.id = $2)
+          AND ($3::int IS NULL OR m.elektroset_id = $3)
+        GROUP BY d.biz_date ORDER BY d.biz_date`,
+      [period, mfyId, elektrosetId], ctx,
+    ),
   ]);
 
   return {
     kwhIn: daily.map((r) => Number(r.kwh_in)),
+    kwhInTp: dailyTp.map((r) => Number(r.kwh ?? 0)),
     kwhSold: daily.map((r) => Number(r.kwh_sold)),
     kwhLoss: daily.map((r) => Number(r.kwh_loss_total ?? 0)),
     // Foiz plitkalarining sparkline'i ham FOIZDA - mutlaq kWh emas.
@@ -236,9 +255,6 @@ async function sparklines(
       (r) => ratePct(Number(r.kwh_loss_total ?? 0), Number(r.kwh_in)) ?? 0,
     ),
     consumersTotal: monthly.map((r) => Number(r.consumers_total ?? 0)),
-    consumersLinkPct: monthly.map(
-      (r) => ratePct(Number(r.consumers_active ?? 0), Number(r.consumers_total ?? 0)) ?? 0,
-    ),
     tpCount: monthly.map((r) => Number(r.tp_total ?? 0)),
   };
 }
@@ -354,29 +370,51 @@ export async function districtOverview(
   });
 
   /*
-   * TP hisoblagichlaridan O'LCHANGAN yig'indilar - «Jami iste'mol» va
-   * «Foydali oqim» kartalaridagi IKKINCHI darajali qiymatlar.
+   * TP BALANS HISOBLAGICHLARI - «TP balans hisobi» kartasining manbasi.
    *
-   * Asosiy raqamlar (`cur.kwh_in`, `cur.kwh_sold`) allaqachon AMALDAGI
-   * qiymatlar: rasmiy son kelgan oyda yuklovchi uni kunlik qatorlarga
-   * yozgan, shuning uchun yo'qotish ham, foizlar ham, samaradorlik ham
-   * o'sha asosda chiqadi. Bu yerda faqat o'lchangan yig'indilar qo'shimcha
-   * olinadi - ular rasmiy sondan farq qilishi mumkin va farqning O'ZI
-   * ma'lumot beradi.
+   * Bu fider balansidan ALOHIDA o'lchov: `cur.kwh_in` fider boshidagi
+   * (yoki rasmiy) qiymat, bu esa TP larda qayd etilgani. Ikkalasining
+   * FARQI fider boshi bilan TP lar orasidagi yo'qotishni ko'rsatadi -
+   * shuning uchun u alohida karta bo'lib turadi, izoh qatori emas.
+   *
+   * O'tgan oy ham olinadi: kartaning solishtirish qatori uchun.
    */
-  const feederRow = await queryOne<{ kwh_in_tp: number | null; kwh_sold_tp: number | null }>(
-    `SELECT sum(f.kwh_in_tp) AS kwh_in_tp, sum(f.kwh_sold_tp) AS kwh_sold_tp
+  const feederRows = await query<{ p: string; kwh_in_tp: number | null }>(
+    `SELECT f.period_month::text AS p, sum(f.kwh_in_tp) AS kwh_in_tp
        FROM fact.feeder_monthly f
        JOIN ref.mfy m ON m.id = f.mfy_id
-      WHERE f.period_month = ($1 || '-01')::date
-        AND ($2::int IS NULL OR f.mfy_id = $2)
-        AND ($3::int IS NULL OR m.elektroset_id = $3)`,
-    [period, mfyId, elektrosetId], ctx,
+      WHERE f.period_month IN (($1 || '-01')::date, ($2 || '-01')::date)
+        AND ($3::int IS NULL OR f.mfy_id = $3)
+        AND ($4::int IS NULL OR m.elektroset_id = $4)
+      GROUP BY f.period_month`,
+    [period, prevPeriod, mfyId, elektrosetId], ctx,
   );
   const numOrNull = (v: number | null | undefined): number | null =>
     v === null || v === undefined ? null : Number(v);
-  const kwhInTp = numOrNull(feederRow?.kwh_in_tp);
-  const kwhSoldTp = numOrNull(feederRow?.kwh_sold_tp);
+  const inTpOf = (per: string): number | null =>
+    numOrNull(feederRows.find((r) => r.p.startsWith(per))?.kwh_in_tp);
+  const kwhInTp = inTpOf(period);
+
+  /*
+   * O'tgan oyning TP yig'indisi - joriy oy TUGAMAGAN bo'lsa shuncha kunlik
+   * qismi. Boshqa energiya plitkalari bilan bir xil qoida (`alignedPrev`):
+   * 12 kunni 31 kunga solishtirish "71% kamaydi" degan soxta xulosa berardi.
+   */
+  const alignedPrevInTp = isPartial
+    ? numOrNull(
+        (await queryOne<{ kwh: number | null }>(
+          `SELECT sum(d.kwh_balance_meter) AS kwh
+             FROM fact.tp_loss_daily d
+             JOIN ref.tp t ON t.id = d.tp_id
+             JOIN ref.mfy m ON m.id = t.mfy_id
+            WHERE d.biz_date >= ($1 || '-01')::date
+              AND d.biz_date <  ($1 || '-01')::date + make_interval(days => $2::int)
+              AND ($3::int IS NULL OR m.id = $3)
+              AND ($4::int IS NULL OR m.elektroset_id = $4)`,
+          [prevPeriod, alignDays, mfyId, elektrosetId], ctx,
+        ))?.kwh,
+      )
+    : null;
 
   const tiles: KpiTile[] = [
     tile({
@@ -384,16 +422,26 @@ export async function districtOverview(
       value: cur.kwh_in, prev: alignedPrev?.kwh_in ?? p.kwh_in,
       goodDirection: 'down', spark: spark.kwhIn, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
-      /*
-       * TP yig'indisi DOIM ko'rsatiladi - rasmiy qiymat bo'lganda ham,
-       * bo'lmaganda ham. Rasmiy qiymat kelmagan oyda u asosiy raqamning
-       * o'zi bo'ladi, lekin yorlig'i raqamning QAYERDAN kelganini aytadi.
-       */
-      secondary: [{ labelUz: 'TP bo‘yicha', value: kwhInTp ?? cur.kwh_in, unit: 'kWh' }],
+    }),
+    /*
+     * TP balans hisobi - «Jami iste'mol» bilan «Foydali oqim» ORASIDA.
+     *
+     * Energiya shu tartibda oqadi: fider boshi → TP balans hisoblagichlari
+     * → iste'molchi hisoblagichlari. Uchtasi yonma-yon turganda oqim
+     * qayerda kamayganini sanamasdan ko'rish mumkin.
+     *
+     * Ilgari bu raqam «Jami iste'mol» kartasining ostida «TP bo'yicha:
+     * 662.8 ming kWh» degan mayda qator edi - ko'zga tashlanmasdi va
+     * o'tgan oy bilan solishtirilmasdi.
+     */
+    tile({
+      key: 'kwhInTp', metric: 'kwhInTp', labelUz: 'TP balans hisobi', unit: 'kWh',
+      value: kwhInTp, prev: alignedPrevInTp ?? inTpOf(prevPeriod),
+      goodDirection: 'up', spark: spark.kwhInTp, sparkBucket: 'day',
+      daysCompared: isPartial ? alignDays : null,
     }),
     tile({
       key: 'kwhSold', metric: 'kwhSold', labelUz: 'Foydali oqim', unit: 'kWh',
-      secondary: [{ labelUz: 'TP bo‘yicha', value: kwhSoldTp ?? cur.kwh_sold, unit: 'kWh' }],
       value: cur.kwh_sold, prev: alignedPrev?.kwh_sold ?? p.kwh_sold,
       goodDirection: 'up', spark: spark.kwhSold, sparkBucket: 'day',
       daysCompared: isPartial ? alignDays : null,
@@ -445,28 +493,6 @@ export async function districtOverview(
       secondary: [
         { labelUz: 'Aholi', value: cur.consumers_population, unit: 'ta' },
         { labelUz: 'Yuridik', value: cur.consumers_legal, unit: 'ta' },
-      ],
-    }),
-    /*
-     * ALOQADA va ALOQADA EMAS - BITTA plitkada.
-     *
-     * Ilgari ular ikkita alohida karta edi va ayni bir bo'linishni ikki
-     * marta aytardi: 3 129 va 26 yig'indisi «Umumiy abonentlar» ning o'zi,
-     * o'zgarish esa har ikkisida bir xil «85 ta» bo'lib, biri o'sish, biri
-     * kamayish deb ko'rsatilardi - qarama-qarshi ko'rinardi.
-     *
-     * Endi asosiy raqam ULUSH: "abonentlarning qanchasi hisobga tushyapti".
-     * Ikkita mutlaq son tarkibda qoladi, ya'ni hech narsa yo'qolmaydi.
-     */
-    tile({
-      key: 'consumersLinkPct', metric: 'consumersActive',
-      labelUz: 'Hisoblagich aloqasi', unit: '%',
-      value: ratePct(cur.consumers_active, cur.consumers_total),
-      prev: ratePct(p.consumers_active, p.consumers_total),
-      goodDirection: 'up', spark: spark.consumersLinkPct, sparkBucket: 'month',
-      secondary: [
-        { labelUz: 'Aloqada', value: cur.consumers_active, unit: 'ta' },
-        { labelUz: 'Aloqada emas', value: cur.consumers_disconnected, unit: 'ta' },
       ],
     }),
     tile({

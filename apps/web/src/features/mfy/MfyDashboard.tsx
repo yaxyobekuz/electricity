@@ -40,8 +40,8 @@ import {
   TrendingUp,
   User,
   UsersRound,
-  Wifi,
   Zap,
+  ZapOff,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -75,6 +75,7 @@ import { TpMonitorPanel } from "../district/panels/TpMonitorPanel.tsx";
 import {
   useBootstrap,
   useFeederMonthly,
+  useMfyConsumers,
   useMfyDebt,
   useMfyDynamics,
   useMfyEnergySplit,
@@ -108,10 +109,10 @@ const faultRank = (r: { condition: string | null }): number =>
 
 const TILE_ICONS: Record<string, React.ReactNode> = {
   kwhIn: <Zap className="size-4" />,
+  kwhInTp: <GaugeIcon className="size-4" />,
   kwhSold: <CircleDollarSign className="size-4" />,
   kwhLossTotal: <Activity className="size-4" />,
   consumersTotal: <UsersRound className="size-4" />,
-  consumersLinkPct: <Wifi className="size-4" />,
   tpCount: <Building2 className="size-4" />,
   lossPct: <Percent className="size-4" />,
 };
@@ -199,10 +200,10 @@ function CompareFooter({
 
 const TILE_TONES: Record<string, Tone> = {
   kwhIn: "blue",
+  kwhInTp: "purple",
   kwhSold: "green",
   kwhLossTotal: "orange",
   consumersTotal: "pink",
-  consumersLinkPct: "sky",
   tpCount: "cyan",
   lossPct: "amber",
 };
@@ -248,6 +249,16 @@ export default function MfyDashboard() {
     prevPeriod !== null,
   );
   const prevDebt = useMfyDebt(
+    mfyId,
+    prevPeriod ?? undefined,
+    prevPeriod !== null,
+  );
+  /*
+   * O'tgan oyning abonent kesimi - FAQAT «Aloqaga chiqmayotgan» kartasidagi
+   * solishtirish uchun. Joriy oy raqamlari `overview.totals` da bor, o'tgani
+   * esa yo'q: `totals` bitta davrni beradi.
+   */
+  const prevConsumers = useMfyConsumers(
     mfyId,
     prevPeriod ?? undefined,
     prevPeriod !== null,
@@ -347,6 +358,14 @@ export default function MfyDashboard() {
     totals.consumersTotal > 0
       ? (totals.consumersDisconnected / totals.consumersTotal) * 100
       : 0;
+  /*
+   * O'tgan oyga nisbatan farq - o'tgan oy ma'lumoti kelmagan bo'lsa `null`
+   * (0 EMAS: "o'zgarmadi" bilan "ma'lumot yo'q" bir narsa emas).
+   */
+  const offDelta =
+    prevConsumers.data === undefined
+      ? null
+      : totals.consumersDisconnected - prevConsumers.data.disconnected;
 
   return (
     <MotionStage
@@ -567,7 +586,7 @@ export default function MfyDashboard() {
         </div>
 
         {/*
-          3 ta ko'rsatkich - BITTA USTUNDA, uch qator.
+          4 ta ko'rsatkich - BITTA USTUNDA, to'rt qator.
           `flex-1` bilan har biri teng balandlikda va ustun qatordagi
           boshqa panellar bilan bir xil bo'yga yetadi.
 
@@ -576,6 +595,27 @@ export default function MfyDashboard() {
           allaqachon turibdi - bir xil son ikki joyda ko'rinardi.
         */}
         <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-2">
+          {/*
+            «Hisoblagich aloqasi» KPI plitkasi o'rniga SHU karta.
+
+            Plitkada asosiy raqam ulush (99.2%) edi va u savolga javob
+            bermasdi: e'tiborni talab qiladigan narsa - aloqaga chiqmagan
+            26 ta abonent, foiz emas. Bu yerda asosiy raqam o'sha 26,
+            o'ng chekkada esa o'tgan oyga nisbatan farqi.
+          */}
+          <MiniStat
+            className="flex-1"
+            compact
+            delta={offDelta === null ? undefined : `${num(Math.abs(offDelta))} ta`}
+            /* Kamayish YAXSHI - aloqaga chiqmayotgan abonent kamaygani. */
+            deltaGood={offDelta === null || offDelta === 0 ? null : offDelta < 0}
+            hint={`Aloqada: ${num(totals.consumersActive)} ta`}
+            icon={<ZapOff className="size-4" />}
+            label="Aloqaga chiqmayotgan"
+            tone={offShare >= 5 ? 'critical' : 'warning'}
+            unit="ta"
+            value={num(totals.consumersDisconnected)}
+          />
           <MiniStat
             className="flex-1"
             compact

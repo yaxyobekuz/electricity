@@ -200,10 +200,11 @@ export function useMfyCapacity(id: number, period?: string) {
   });
 }
 
-export function useMfyConsumers(id: number, period?: string) {
+export function useMfyConsumers(id: number, period?: string, enabled = true) {
   return useQuery({
     queryKey: keys.mfy(id, 'consumers', { period }),
     queryFn: ({ signal }) => api.get<ConsumerBreakdown>(`/dash/mfy/${id}/consumers${qs({ period })}`, signal),
+    enabled,
     ...DASH_OPTIONS,
   });
 }
