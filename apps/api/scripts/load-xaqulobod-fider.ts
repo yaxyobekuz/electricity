@@ -97,12 +97,22 @@ const PERIODS: PeriodSpec[] = [
      */
     officialIn: 1_048_000,
     /*
-     * Iyulda foydali oqim TP BALANS hisoblagichlaridan olinadi: iste'molchi
-     * hisoblagichlari yig'indisi (816 199) balansdan 153 ming kWh KO'P
-     * chiqadi, chunki bir qancha TP da hisoblagich yoki tok transformatori
-     * nosoz. Uni oqim deb olish yo'qotishni sun'iy kichraytirardi.
+     * Foydali oqim ISTE'MOLCHI hisoblagichlaridan (816 199 kWh).
+     *
+     * Ilgari bu yerda TP balans hisoblagichlari yig'indisi (662 827) turardi
+     * va ikki narsani buzardi: birinchidan, aynan o'sha son «Jami iste'mol»
+     * kartasining «TP bo'yicha» qatorida ham turib, bitta raqam ikki joyda
+     * ikki xil nom bilan ko'rinardi; ikkinchidan, iyul avgustdan boshqa
+     * o'lchovda hisoblanardi va ikki oyni solishtirib bo'lmasdi.
+     *
+     * NATIJASI OCHIQ: iste'molchi hisoblagichlari balansdan 153 ming kWh
+     * KO'P ko'rsatadi (21 ta TP da balans hisoblagichi yoki tok
+     * transformatori nosoz), shuning uchun yo'qotish 385 173 dan 231 801 ga
+     * (36,75% → 22,12%) tushadi. Bu yaxshilanish EMAS - o'lchov asosining
+     * o'zgarishi. TP darajasidagi nosozlik `/transformers` sahifasida
+     * manfiy yo'qotish bo'lib ko'rinib turadi.
      */
-    soldFrom: 'tp-balance',
+    soldFrom: 'consumers',
   },
   {
     period: '2026-08', label: 'Avgust', start: '2026-08-01', end: '2026-08-12', days: 12,
