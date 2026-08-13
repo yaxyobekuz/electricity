@@ -10,7 +10,7 @@
  */
 import type { KpiTile } from '@beap/shared';
 import {
-  energyParts, isKnownMetric, moneyParts, num, pct, provenanceText, type MetricKey,
+  energyParts, isKnownMetric, moneyParts, monthShort, num, pct, provenanceText, type MetricKey,
 } from '@beap/shared';
 import { Button, Chip, Popover, cn } from '@heroui/react';
 import { ArrowDown, ArrowUp, Info, Minus } from 'lucide-react';
@@ -71,9 +71,22 @@ interface StatTileProps {
   icon?: ReactNode;
   tone?: Tone;
   compact?: boolean;
+  /**
+   * `compare` - bitta katta raqam o'rniga IKKI DAVR yonma-yon.
+   *
+   * Darajali ko'rsatkichlar («yo'qotish darajasi») uchun: 20.1% o'zi kam
+   * narsa aytadi, "31.1% edi → 20.1% bo'ldi" esa hamma narsani aytadi.
+   * Mutlaq miqdorlarda (kWh, ta) bu kerak emas - u yerda o'zgarish qatori
+   * yetarli, chunki qiymatning o'zi ma'noli.
+   */
+  variant?: 'default' | 'compare';
+  /** `compare` uchun joriy davr belgisi (`2026-08`) - o'tganisi plitkada bor. */
+  period?: string;
 }
 
-export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) {
+export function StatTile({
+  tile, icon, tone = 'blue', compact, variant = 'default', period,
+}: StatTileProps) {
   const { value, unit } = formatValue(tile);
 
   const delta = tile.deltaPct;
@@ -92,6 +105,28 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
     labelUz: s.labelUz,
     ...fmtByUnit(s.value, s.unit),
   }));
+
+  /*
+   * Ikki davr solishtiruvi - ikkala qiymat ham bo'lgandagina.
+   *
+   * `diff` MUTLAQ ayirma (foiz punkti), nisbiy o'zgarish emas: 31.1% dan
+   * 20.1% ga tushish "11.0" - foizning foizi («35% kamaydi») bu yerda
+   * chalkashtirardi.
+   */
+  const compare =
+    variant === 'compare' && tile.value !== null && tile.prevValue !== null
+      ? {
+          diff: tile.value - tile.prevValue,
+          prevText: fmtByUnit(tile.prevValue, tile.unit),
+          curText: fmtByUnit(tile.value, tile.unit),
+        }
+      : null;
+  const compareGood =
+    compare === null || compare.diff === 0
+      ? null
+      : tile.goodDirection === 'up'
+        ? compare.diff > 0
+        : compare.diff < 0;
 
   return (
     <article className={cn('kpi group', `tone-${tone}`, compact && 'gap-2 p-3')}>
@@ -124,17 +159,72 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
         </div>
       </header>
 
-      <div className="flex items-end gap-1.5">
-        {/* Raqam 0 dan joriy qiymatga sanalib chiqadi */}
-        <CountUp
-          className={cn('kpi__value', compact && 'text-xl')}
-          format={(v) => fmtByUnit(v, tile.unit).value}
-          value={tile.value}
-        />
-        <span className="kpi__unit">{unit}</span>
-      </div>
+      {compare ? (
+        /*
+          IKKI DAVR yonma-yon: o'tgani xira va kichik, joriysi katta va
+          rangli. Davr belgisi qiymatdan AJRATIB o'ng chekkaga qo'yiladi -
+          ikki qatorda bir vertikalda turadi va raqamlarni o'qishga
+          xalaqit bermaydi.
+        */
+        <div>
+          <p className="flex items-baseline justify-between gap-2">
+            <span className="tabular text-[17px] font-bold leading-none text-muted">
+              {compare.prevText.value}
+              <span className="ml-0.5 text-[11px] font-semibold">{compare.prevText.unit}</span>
+            </span>
+            {tile.prevPeriod && (
+              <span className="text-[11px] font-medium text-accent">
+                ({monthShort(tile.prevPeriod)})
+              </span>
+            )}
+          </p>
 
-      {/* Yo'nalish + mutlaq o'zgarish + foiz - uchalasi birga */}
+          <p className="mt-2 flex items-baseline justify-between gap-2">
+            <span
+              className="tabular text-[21px] font-bold leading-none"
+              style={{
+                color:
+                  compareGood === null
+                    ? undefined
+                    : `var(--viz-${compareGood ? 'good' : 'critical'})`,
+              }}
+            >
+              {compare.curText.value}
+              <span className="ml-0.5 text-[12px] font-semibold">{compare.curText.unit}</span>
+            </span>
+            {period && (
+              <span className="text-[11px] font-medium text-accent">({monthShort(period)})</span>
+            )}
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-end gap-1.5">
+          {/* Raqam 0 dan joriy qiymatga sanalib chiqadi */}
+          <CountUp
+            className={cn('kpi__value', compact && 'text-xl')}
+            format={(v) => fmtByUnit(v, tile.unit).value}
+            value={tile.value}
+          />
+          <span className="kpi__unit">{unit}</span>
+        </div>
+      )}
+
+      {compare ? (
+        /* Farq - alohida "tabletka"da, yo'nalishiga qarab yashil yoki qizil. */
+        <p
+          className="rounded-full px-2.5 py-1.5 text-center text-[11.5px] font-semibold"
+          style={{
+            background: `color-mix(in oklab, var(--viz-${
+              compareGood === false ? 'critical' : 'good'
+            }) 10%, transparent)`,
+            color: `var(--viz-${compareGood === false ? 'critical' : 'good'})`,
+          }}
+        >
+          Farq: {fmtByUnit(Math.abs(compare.diff), tile.unit).value}
+          {tile.unit === '%' ? '%' : ` ${fmtByUnit(Math.abs(compare.diff), tile.unit).unit}`}
+        </p>
+      ) : (
+      /* Yo'nalish + mutlaq o'zgarish + foiz - uchalasi birga */
       <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
         <span
           className="inline-flex items-center gap-0.5 text-[11.5px] font-semibold"
@@ -151,11 +241,21 @@ export function StatTile({ tile, icon, tone = 'blue', compact }: StatTileProps) 
           {change && change.abs ? change.abs : delta === null ? '-' : `${Math.abs(delta).toFixed(1)}%`}
         </span>
 
+        {/*
+          Qavs ichidagi NISBIY foiz - faqat qiymatning o'zi foiz BO'LMAGANDA.
+
+          "17.7% dan 36.8% ga" o'zgarishi 19.1 p.p., nisbiy hisobda esa 51.9%.
+          Ikkalasini yonma-yon yozish foizning foizini keltirib chiqaradi va
+          o'quvchi qaysi biri "yo'qotish qancha kamaydi" degan savolga javob
+          ekanini ajrata olmaydi.
+        */}
         <span className="text-[10.5px] leading-tight text-muted">
           {change ? change.word : 'o‘tgan oyga nisbatan'}
-          {change && change.abs && delta !== null && ` (${Math.abs(delta).toFixed(1)}%)`}
+          {change && change.abs && delta !== null && tile.unit !== '%'
+            && ` (${Math.abs(delta).toFixed(1)}%)`}
         </span>
       </div>
+      )}
 
       {/*
         IKKINCHI DARAJALI qiymat - bir xil narsaning boshqa manbadan

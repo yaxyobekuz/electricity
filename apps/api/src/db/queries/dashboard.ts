@@ -166,10 +166,18 @@ async function periodTotals(
 
 /** Oxirgi 30 kunlik qiymatlar - sparkline uchun. */
 interface Sparks {
-  kwhIn: number[]; kwhSold: number[]; kwhLoss: number[];
-  consumersTotal: number[]; consumersActive: number[];
-  consumersDisconnected: number[]; tpCount: number[];
+  kwhIn: number[]; kwhSold: number[]; kwhLoss: number[]; lossPct: number[];
+  consumersTotal: number[]; consumersLinkPct: number[]; tpCount: number[];
 }
+
+/**
+ * Ulush foizi - maxraj nol bo'lsa `null`.
+ *
+ * "0 tadan 0 tasi aloqada" holatida 0% ham, 100% ham yolg'on bo'lardi:
+ * ma'lumot yo'qligini raqam bilan yashirmaymiz.
+ */
+const ratePct = (part: number, whole: number): number | null =>
+  whole > 0 ? Number(((part / whole) * 100).toFixed(2)) : null;
 
 /**
  * KPI kartalaridagi mikro-diagrammalar.
@@ -223,9 +231,14 @@ async function sparklines(
     kwhIn: daily.map((r) => Number(r.kwh_in)),
     kwhSold: daily.map((r) => Number(r.kwh_sold)),
     kwhLoss: daily.map((r) => Number(r.kwh_loss_total ?? 0)),
+    // Foiz plitkalarining sparkline'i ham FOIZDA - mutlaq kWh emas.
+    lossPct: daily.map(
+      (r) => ratePct(Number(r.kwh_loss_total ?? 0), Number(r.kwh_in)) ?? 0,
+    ),
     consumersTotal: monthly.map((r) => Number(r.consumers_total ?? 0)),
-    consumersActive: monthly.map((r) => Number(r.consumers_active ?? 0)),
-    consumersDisconnected: monthly.map((r) => Number(r.consumers_disconnected ?? 0)),
+    consumersLinkPct: monthly.map(
+      (r) => ratePct(Number(r.consumers_active ?? 0), Number(r.consumers_total ?? 0)) ?? 0,
+    ),
     tpCount: monthly.map((r) => Number(r.tp_total ?? 0)),
   };
 }
@@ -421,16 +434,27 @@ export async function districtOverview(
         { labelUz: 'Yuridik', value: cur.consumers_legal, unit: 'ta' },
       ],
     }),
+    /*
+     * ALOQADA va ALOQADA EMAS - BITTA plitkada.
+     *
+     * Ilgari ular ikkita alohida karta edi va ayni bir bo'linishni ikki
+     * marta aytardi: 3 129 va 26 yig'indisi «Umumiy abonentlar» ning o'zi,
+     * o'zgarish esa har ikkisida bir xil «85 ta» bo'lib, biri o'sish, biri
+     * kamayish deb ko'rsatilardi - qarama-qarshi ko'rinardi.
+     *
+     * Endi asosiy raqam ULUSH: "abonentlarning qanchasi hisobga tushyapti".
+     * Ikkita mutlaq son tarkibda qoladi, ya'ni hech narsa yo'qolmaydi.
+     */
     tile({
-      key: 'consumersActive', metric: 'consumersActive', labelUz: 'Aloqaga chiqayotgan istemolchilar', unit: 'ta',
-      value: cur.consumers_active, prev: p.consumers_active,
-      goodDirection: 'up', spark: spark.consumersActive, sparkBucket: 'month',
-    }),
-    tile({
-      key: 'consumersDisconnected', metric: 'consumersDisconnected',
-      labelUz: 'Aloqaga chiqmayotgan istemolchilar', unit: 'ta',
-      value: cur.consumers_disconnected, prev: p.consumers_disconnected,
-      goodDirection: 'down', spark: spark.consumersDisconnected, sparkBucket: 'month',
+      key: 'consumersLinkPct', metric: 'consumersActive',
+      labelUz: 'Hisoblagich aloqasi', unit: '%',
+      value: ratePct(cur.consumers_active, cur.consumers_total),
+      prev: ratePct(p.consumers_active, p.consumers_total),
+      goodDirection: 'up', spark: spark.consumersLinkPct, sparkBucket: 'month',
+      secondary: [
+        { labelUz: 'Aloqada', value: cur.consumers_active, unit: 'ta' },
+        { labelUz: 'Aloqada emas', value: cur.consumers_disconnected, unit: 'ta' },
+      ],
     }),
     tile({
       key: 'tpCount', metric: 'tpCount', labelUz: 'Transformatorlar', unit: 'ta',
@@ -449,6 +473,23 @@ export async function districtOverview(
         { labelUz: 'Nosoz', value: cur.tp_repair_needed, unit: 'ta' },
         { labelUz: 'Soz', value: Math.max(0, cur.tp_total - cur.tp_repair_needed), unit: 'ta' },
       ],
+    }),
+    /*
+     * YO'QOTISH DARAJASI - qatorning oxirgi kartasi.
+     *
+     * Yuqoridagi «Yo'qotish» plitkasi MIQDORNI (kWh) beradi, bu esa
+     * DARAJANI. Ikkalasi bir narsaning ikki o'lchovi emas: 33 ming kWh
+     * o'zi yaxshimi yomonmi ayta olmaydi, 17.7% esa aytadi - va oy
+     * to'lmagan bo'lsa ham, kun soniga bog'liq emas.
+     *
+     * Solishtirish ham shu sababli kun-songa moslashtirilmaydi: foiz
+     * o'tgan oyning TO'LIQ darajasi bilan solishtiriladi.
+     */
+    tile({
+      key: 'lossPct', metric: 'lossPct', labelUz: 'Yo‘qotish darajasi', unit: '%',
+      value: cur.loss_pct,
+      prev: p.loss_pct,
+      goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
     }),
   ];
 

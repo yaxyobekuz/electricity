@@ -5,9 +5,9 @@
  *
  *   yuqori chiziq │ sarlavha + yo'l ····· davr tanlagich · hisobot · global
  *   1-qator       │ KPI kartalari (bir xil o'lchamda, rangli fon bilan)
- *   2-qator       │ Dinamika (4) │ Quvvat (3) │ Abonentlar (3) │ 4 ko'rsatkich (2)
+ *   2-qator       │ Dinamika (4) │ Quvvat (3) │ Abonentlar (3) │ 3 ko'rsatkich (2)
  *   3-qator       │ Transformatorlar (4) │ Taqsimot (3) │ Qarzdorlik (3) │ Tezkor (2)
- *   4-qator       │ Bajarilgan (3) │ Reja (3) │ Natijadorlik (3) │ Hisobotlar (3)
+ *   4-qator       │ Bajarilgan (4) │ Reja (4) │ Hisobotlar (4)
  *   5-qator       │ TP balans hisoblagichi - kunlik (12, to'liq kenglik)
  *
  * ZICHLIK QOIDASI: har bir panel o'z mazmuniga yetadigan balandlikda -
@@ -33,15 +33,15 @@ import {
   Building2,
   CircleDollarSign,
   Gauge as GaugeIcon,
+  Percent,
   Phone,
   PowerOff,
   TrendingDown,
   TrendingUp,
   User,
-  Users,
   UsersRound,
+  Wifi,
   Zap,
-  ZapOff,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -75,13 +75,11 @@ import { TpMonitorPanel } from "../district/panels/TpMonitorPanel.tsx";
 import {
   useBootstrap,
   useFeederMonthly,
-  useMfyConsumers,
   useMfyDebt,
   useMfyDynamics,
   useMfyEnergySplit,
   useMfyOverview,
   useMfyResponsible,
-  useMfyResults,
   useMfyTpLoss,
   useMfyTpLossAnomalies,
   useMfyTpLossSeries,
@@ -113,9 +111,9 @@ const TILE_ICONS: Record<string, React.ReactNode> = {
   kwhSold: <CircleDollarSign className="size-4" />,
   kwhLossTotal: <Activity className="size-4" />,
   consumersTotal: <UsersRound className="size-4" />,
-  consumersActive: <Users className="size-4" />,
-  consumersDisconnected: <ZapOff className="size-4" />,
+  consumersLinkPct: <Wifi className="size-4" />,
   tpCount: <Building2 className="size-4" />,
+  lossPct: <Percent className="size-4" />,
 };
 
 /**
@@ -204,9 +202,9 @@ const TILE_TONES: Record<string, Tone> = {
   kwhSold: "green",
   kwhLossTotal: "orange",
   consumersTotal: "pink",
-  consumersActive: "sky",
-  consumersDisconnected: "amber",
+  consumersLinkPct: "sky",
   tpCount: "cyan",
+  lossPct: "amber",
 };
 
 export default function MfyDashboard() {
@@ -235,7 +233,6 @@ export default function MfyDashboard() {
     last: 7,
     ...(asOfDate ? { to: asOfDate } : {}),
   });
-  const consumers = useMfyConsumers(mfyId, period ?? undefined);
   const energySplit = useMfyEnergySplit(mfyId, period ?? undefined);
   const debt = useMfyDebt(mfyId, period ?? undefined);
   /*
@@ -256,7 +253,6 @@ export default function MfyDashboard() {
     prevPeriod !== null,
   );
   const works = useMfyWorks(mfyId);
-  const results = useMfyResults(mfyId, period ?? undefined);
   const violations = useMfyViolations(mfyId, period ?? undefined);
   const feeder = useFeederMonthly(mfyId, period ?? undefined);
   const tpMonthly = useMfyTpMonthly(mfyId, period ?? undefined);
@@ -310,8 +306,6 @@ export default function MfyDashboard() {
    * soxta manzara berardi.
    */
   const days = feeder.data?.days ?? 31;
-  // Taxminiy tarif - "tejalgan energiya" ni so'mga o'girish uchun.
-  const TARIFF_SUM_PER_KWH = 1000;
   const avgPerConsumer =
     totals.consumersActive > 0 && days > 0
       ? totals.kwhSold / totals.consumersActive / days
@@ -390,8 +384,18 @@ export default function MfyDashboard() {
           <StatTile
             key={tile.key}
             icon={TILE_ICONS[tile.key]}
+            period={period ?? overview.data.period.to}
             tile={tile}
             tone={TILE_TONES[tile.key] ?? "blue"}
+            /*
+             * «Yo'qotish darajasi» IKKI DAVR ko'rinishida.
+             *
+             * 17.7% yolg'iz turganda yaxshimi-yomonmi bilinmaydi; "36.8%
+             * edi → 17.7% bo'ldi" esa asosiy xabarni bir qarashda beradi.
+             * Boshqa plitkalarda qiymatning o'zi ma'noli, shuning uchun
+             * ular odatiy ko'rinishda qoladi.
+             */
+            variant={tile.key === "lossPct" ? "compare" : "default"}
           />
         ))}
       </div>
@@ -563,22 +567,15 @@ export default function MfyDashboard() {
         </div>
 
         {/*
-          4 ta ko'rsatkich - BITTA USTUNDA, to'rt qator.
+          3 ta ko'rsatkich - BITTA USTUNDA, uch qator.
           `flex-1` bilan har biri teng balandlikda va ustun qatordagi
           boshqa panellar bilan bir xil bo'yga yetadi.
+
+          «Yuridik iste'molchilar» kartasi OLIB TASHLANDI: 69 raqami ham,
+          uning «Jami: 3 155» izohi ham «Umumiy abonentlar» KPI plitkasida
+          allaqachon turibdi - bir xil son ikki joyda ko'rinardi.
         */}
         <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-2">
-          <MiniStat
-            className="flex-1"
-            compact
-            delta={`${num(consumers.data?.new ?? 0)} ta`}
-            deltaGood
-            hint={`Jami: ${num(totals.consumersTotal)} ta`}
-            icon={<Building2 className="size-4" />}
-            label="Yuridik iste’molchilar"
-            unit="ta"
-            value={num(consumers.data?.legal ?? 0)}
-          />
           <MiniStat
             className="flex-1"
             compact
@@ -778,12 +775,15 @@ export default function MfyDashboard() {
         </Panel>
       </div>
 
-      {/* ═══ 4-QATOR: ishlar · natijadorlik · hisobotlar ═════════════════ */}
+      {/* ═══ 4-QATOR: ishlar · hisobotlar ═══════════════════════════════ */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
         {/*
           Bajarilgan va rejadagi ishlar ALOHIDA kartalarda: ilgari ular bitta
           panelning ikki ustuni edi va qaysi ro'yxat qayerda tugashi
           ko'rinmasdi.
+
+          Uchta panel 4+4+4 = 12: «Natijadorlik ko'rsatkichlari» olib
+          tashlanganda qator 9/12 bo'lib, o'ngda bo'sh joy qolardi.
         */}
         <Panel
           actions={
@@ -797,7 +797,7 @@ export default function MfyDashboard() {
               </Link>
             </>
           }
-          className="xl:col-span-3"
+          className="xl:col-span-4"
           flush
           title="Amalga oshirilgan ishlar"
         >
@@ -816,128 +816,14 @@ export default function MfyDashboard() {
               </Link>
             </>
           }
-          className="xl:col-span-3"
+          className="xl:col-span-4"
           flush
           title="Rejalashtirilgan ishlar"
         >
           <WorkTimeline limit={4} planned rows={planned} />
         </Panel>
 
-        <Panel className="xl:col-span-3" title="Natijadorlik ko‘rsatkichlari">
-          {results.data ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:divide-x sm:divide-separator">
-              {/* Chap ustun - yo'qotish darajasining davr boshi va oxiri */}
-              <div className="min-w-0 sm:pr-4">
-                <p className="text-[11px] font-medium leading-tight text-muted">
-                  Yo‘qotish darajasi
-                </p>
-
-                {/*
-                  Davr belgisi qiymatdan AJRATIB, o'ng chekkaga qo'yiladi:
-                  ikki qatorda ham bir vertikalda turadi va katta raqamlarni
-                  o'qishga xalaqit bermaydi.
-                */}
-                <p className="mt-2.5 flex items-baseline justify-between gap-2">
-                  <span className="tabular text-[17px] font-bold leading-none">
-                    {pct(results.data.lossPctStart ?? 0, 1)}
-                  </span>
-                  <span className="text-[11px] font-medium text-accent">
-                    ({monthShort(results.data.periodFrom)})
-                  </span>
-                </p>
-
-                <p className="mt-2 flex items-baseline justify-between gap-2">
-                  <span className="flex items-baseline gap-1.5">
-                    <span
-                      className="tabular text-[19px] font-bold leading-none"
-                      style={{ color: "var(--viz-good)" }}
-                    >
-                      {pct(results.data.lossPctEnd ?? 0, 1)}
-                    </span>
-                  </span>
-                  <span className="text-[11px] font-medium text-accent">
-                    ({monthShort(results.data.periodTo)})
-                  </span>
-                </p>
-
-                {results.data.improvementPp !== null && (
-                  /*
-                    "p.p." - FOIZ PUNKTI. 11.2% dan 5.0% ga tushish "6.2%"
-                    emas: foizda o'lchansa bu 55% bo'lardi. Maketda "%" yozilgan,
-                    lekin raqamning ma'nosi p.p.
-                  */
-                  <p
-                    className="mt-3 rounded-full px-2.5 py-1.5 text-center text-[11.5px] font-semibold"
-                    style={{
-                      background: `color-mix(in oklab, var(--viz-${
-                        results.data.improvementPp > 0 ? "good" : "critical"
-                      }) 10%, transparent)`,
-                      color: `var(--viz-${results.data.improvementPp > 0 ? "good" : "critical"})`,
-                    }}
-                  >
-                    Farq: {Math.abs(results.data.improvementPp).toFixed(1)}%
-                  </p>
-                )}
-              </div>
-
-              {/*
-                O'ng ustun - yo'qotish darajasi pasayishining natijasi:
-                (boshlang'ich % − oxirgi %) × oxirgi davr kirimi. Ya'ni
-                "yo'qotish eski darajada qolganda shuncha kWh ortiqcha
-                yo'qolgan bo'lardi".
-              */}
-              <div className="min-w-0 sm:pl-4">
-                <p className="text-[11px] font-medium leading-tight text-muted">
-                  Foyda
-                </p>
-
-                <div className="mt-3.5 flex items-center gap-2.5">
-                  <Zap
-                    aria-hidden="true"
-                    className="size-6 shrink-0"
-                    style={{ color: "var(--viz-good)", fill: "currentColor" }}
-                  />
-                  {/*
-                    To'liq raqam - `energy()` uni "128.6 ming kWh" ga
-                    yaxlitlardi, bu yerda esa aniq qiymat muhim.
-                  */}
-                  <span className="tabular min-w-0 truncate text-[15px] font-bold leading-tight">
-                    {num(results.data.savedKwh)}
-                    <span className="ml-1 text-[10.5px] font-medium text-muted">
-                      kWh
-                    </span>
-                  </span>
-                </div>
-
-                {/*
-                  Pul ekvivalenti - TAXMINIY: 1 kWh = 1000 so'm.
-                  Aniq tarif toifaga qarab farq qiladi, shuning uchun raqam
-                  "≈" bilan beriladi va tarif ochiq yoziladi: hokim "bu qayerdan
-                  chiqdi?" deb so'raganda javob kartaning o'zida turadi.
-                */}
-                <p className="mt-1.5 pl-8.5 text-[12.5px] font-semibold leading-tight">
-                  ≈{" "}
-                  {
-                    money((results.data.savedKwh * TARIFF_SUM_PER_KWH) / 1e6)
-                      .text
-                  }
-                </p>
-
-                <p
-                  className="mt-1.5 pl-8.5 text-[10.5px] leading-tight"
-                  style={{ color: "var(--viz-good)" }}
-                >
-                  (yo‘qotish kamayishi hisobiga · {num(TARIFF_SUM_PER_KWH)}{" "}
-                  so‘m/kWh)
-                </p>
-              </div>
-            </div>
-          ) : (
-            <EmptyPanel message="Ma’lumot yo‘q" />
-          )}
-        </Panel>
-
-        <Panel className="xl:col-span-3" title="Hisobotlar">
+        <Panel className="xl:col-span-4" title="Hisobotlar">
           <ReportShortcuts />
         </Panel>
       </div>
