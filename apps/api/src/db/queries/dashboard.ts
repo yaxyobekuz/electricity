@@ -399,6 +399,20 @@ export async function districtOverview(
       daysCompared: isPartial ? alignDays : null,
     }),
     /*
+     * YO'QOTISH DARAJASI - miqdordan OLDIN.
+     *
+     * Avval "qanchalik yomon" (17.7%), keyin "qancha" (33.8 ming kWh).
+     * Daraja kun soniga bog'liq emas va o'tgan oy bilan bevosita
+     * solishtiriladi, shuning uchun savolga birinchi bo'lib u javob
+     * beradi; miqdor esa uning og'irligini ko'rsatadi.
+     */
+    tile({
+      key: 'lossPct', metric: 'lossPct', labelUz: 'Yo‘qotish darajasi', unit: '%',
+      value: cur.loss_pct,
+      prev: p.loss_pct,
+      goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
+    }),
+    /*
      * Yo'qotish MIQDORDA beriladi, foizda emas.
      *
      * "34.8%" degan plitka yonidagi "1 048 ming kWh" bilan bir o'lchovda emas -
@@ -473,23 +487,6 @@ export async function districtOverview(
         { labelUz: 'Nosoz', value: cur.tp_repair_needed, unit: 'ta' },
         { labelUz: 'Soz', value: Math.max(0, cur.tp_total - cur.tp_repair_needed), unit: 'ta' },
       ],
-    }),
-    /*
-     * YO'QOTISH DARAJASI - qatorning oxirgi kartasi.
-     *
-     * Yuqoridagi «Yo'qotish» plitkasi MIQDORNI (kWh) beradi, bu esa
-     * DARAJANI. Ikkalasi bir narsaning ikki o'lchovi emas: 33 ming kWh
-     * o'zi yaxshimi yomonmi ayta olmaydi, 17.7% esa aytadi - va oy
-     * to'lmagan bo'lsa ham, kun soniga bog'liq emas.
-     *
-     * Solishtirish ham shu sababli kun-songa moslashtirilmaydi: foiz
-     * o'tgan oyning TO'LIQ darajasi bilan solishtiriladi.
-     */
-    tile({
-      key: 'lossPct', metric: 'lossPct', labelUz: 'Yo‘qotish darajasi', unit: '%',
-      value: cur.loss_pct,
-      prev: p.loss_pct,
-      goodDirection: 'down', spark: spark.lossPct, sparkBucket: 'day',
     }),
   ];
 

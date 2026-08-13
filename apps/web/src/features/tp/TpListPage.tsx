@@ -64,7 +64,7 @@ const COLUMNS: { key: SortKey; label: string; width: string }[] = [
   { key: 'consumersTotal', label: 'Iste’molchilar', width: 'w-[10%]' },
   { key: 'consumersActive', label: 'Aloqada', width: 'w-[9%]' },
   { key: 'consumersOff', label: 'Aloqada emas', width: 'w-[10%]' },
-  { key: 'balanceKwh', label: 'Hisoblangan (kWh)', width: 'w-[12%]' },
+  { key: 'balanceKwh', label: 'Qabul qilingan (kWh)', width: 'w-[12%]' },
   { key: 'soldKwh', label: 'Foydali oqim (kWh)', width: 'w-[12%]' },
   { key: 'lossKwh', label: 'Yo’qotish (kWh)', width: 'w-[11%]' },
   { key: 'lossPct', label: 'Yo’qotish %', width: 'w-[9%]' },
