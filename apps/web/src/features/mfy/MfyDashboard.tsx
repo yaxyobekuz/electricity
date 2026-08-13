@@ -198,6 +198,56 @@ function CompareFooter({
   );
 }
 
+/**
+ * «Abonentlar aloqasi» panelidagi yarim katak.
+ *
+ * Uchta narsa birga: son, jamidagi ulushi va o'tgan oyga nisbatan farqi.
+ * Yolg'iz «26 ta» ko'p narsa aytmaydi - u 3 155 tadan 26 tami yoki
+ * 100 tadan 26 tami, javob shu yerda turishi kerak.
+ */
+function ConsumerLinkCell({
+  label, value, total, delta, positiveIsGood = false,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  /** O'tgan oyga nisbatan farq; `null` - o'tgan oy ma'lumoti yo'q. */
+  delta: number | null;
+  positiveIsGood?: boolean;
+}) {
+  const isGood =
+    delta === null || delta === 0 ? null : positiveIsGood ? delta > 0 : delta < 0;
+  const Icon = delta === null || delta === 0 ? null : delta > 0 ? TrendingUp : TrendingDown;
+
+  return (
+    <div className="min-w-0 rounded-lg bg-subtle px-2.5 py-2">
+      <p className="truncate text-[10.5px] leading-tight text-muted" title={label}>
+        {label}
+      </p>
+      <p className="tabular mt-1 truncate text-[17px] font-bold leading-none">
+        {num(value)}
+        <span className="ml-1 text-[10px] font-medium text-muted">ta</span>
+      </p>
+      <p className="mt-1 flex items-baseline justify-between gap-1">
+        <span className="text-[10px] text-muted">
+          {total > 0 ? pct((value / total) * 100, 1) : '-'}
+        </span>
+        {delta !== null && delta !== 0 && Icon && (
+          <span
+            className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold"
+            style={{
+              color: isGood ? 'var(--viz-delta-good)' : 'var(--viz-delta-bad)',
+            }}
+          >
+            <Icon aria-hidden="true" className="size-3" />
+            {num(Math.abs(delta))} ta
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
 const TILE_TONES: Record<string, Tone> = {
   kwhIn: "blue",
   kwhInTp: "purple",
@@ -254,10 +304,13 @@ export default function MfyDashboard() {
     prevPeriod !== null,
   );
   /*
-   * O'tgan oyning abonent kesimi - FAQAT «Aloqaga chiqmayotgan» kartasidagi
-   * solishtirish uchun. Joriy oy raqamlari `overview.totals` da bor, o'tgani
-   * esa yo'q: `totals` bitta davrni beradi.
+   * Abonent kesimi - «Abonentlar aloqasi» paneli uchun ikki davrda.
+   *
+   * Joriy oyning aloqada/aloqada emas raqamlari `overview.totals` da ham
+   * bor, lekin «yangi ulangan» yo'q; o'tgan oy esa umuman yo'q - `totals`
+   * bitta davrni beradi.
    */
+  const consumers = useMfyConsumers(mfyId, period ?? undefined);
   const prevConsumers = useMfyConsumers(
     mfyId,
     prevPeriod ?? undefined,
@@ -362,10 +415,15 @@ export default function MfyDashboard() {
    * O'tgan oyga nisbatan farq - o'tgan oy ma'lumoti kelmagan bo'lsa `null`
    * (0 EMAS: "o'zgarmadi" bilan "ma'lumot yo'q" bir narsa emas).
    */
-  const offDelta =
-    prevConsumers.data === undefined
-      ? null
-      : totals.consumersDisconnected - prevConsumers.data.disconnected;
+  const prev = prevConsumers.data;
+  const offDelta = prev === undefined ? null : totals.consumersDisconnected - prev.disconnected;
+  const activeDelta = prev === undefined ? null : totals.consumersActive - prev.active;
+
+  /** Hisobga tushayotgan abonentlar ulushi - maxraj nol bo'lsa `null`. */
+  const rate = (part: number, whole: number): number | null =>
+    whole > 0 ? (part / whole) * 100 : null;
+  const linkPct = rate(totals.consumersActive, totals.consumersTotal);
+  const prevLinkPct = prev === undefined ? null : rate(prev.active, prev.total);
 
   return (
     <MotionStage
@@ -469,68 +527,84 @@ export default function MfyDashboard() {
         </Panel>
 
         {/*
-          Tarmoq quvvati O'RNIGA fider hisoblagichi.
+          Fider hisoblagichi O'RNIGA abonentlar aloqasi.
 
-          Quvvat (kVA) TP pasportidan keladi va hozircha tizimda yo'q - bo'sh
-          gauge o'rniga hisobotda BOR raqam ko'rsatiladi: fider boshidagi
-          hisoblagich va uning TP hisoblagichlari bilan solishtiruvi. Halqa
-          esa "qancha energiya hisobga olindi" degan savolga javob beradi -
-          bu fider uchun asosiy sifat ko'rsatkichi.
+          Eski panel deyarli bo'sh edi: «Oldingi ko'rsatkich», «Joriy
+          ko'rsatkich» va «Koeffitsient» manba fayllarda YO'Q - uchalasi
+          ham 0/1 bo'lib turardi. Qolgan ikki raqami («O'rtacha yuklama»,
+          «TP larda qayd etilgan») esa yonidagi panellarda takrorlanardi.
+
+          O'rniga hisobotda BOR va har oy o'zgaradigan kesim: nechta
+          abonent hisobga tushyapti, nechtasi tushmayapti va o'tgan oydan
+          farqi qancha.
         */}
-        <Panel className="xl:col-span-3" title="Fider hisoblagichi">
-          {feeder.data ? (
-            <div className="flex h-full flex-col gap-3">
-              <Gauge
-                height={158}
-                label="Hisobga olingan"
-                suffix="%"
-                value={feeder.data.meteredPct}
+        <Panel
+          className="xl:col-span-3"
+          footer={
+            /*
+             * ULUSH solishtiriladi, mutlaq son emas: abonentlar soni
+             * o'zgarganda (yangi ulanish, uzilish) 3 044 → 3 129 o'sishi
+             * aloqa yaxshilangani degani bo'lmasligi mumkin.
+             */
+            <CompareFooter
+              current={linkPct}
+              diffAsPp
+              format={(v) => pct(v, 1)}
+              goodDirection="up"
+              labelUz="Aloqada ulushi"
+              prevPeriod={prevPeriod}
+              previous={prevLinkPct}
+            />
+          }
+          title="Abonentlar aloqasi"
+        >
+          <div className="flex h-full flex-col gap-3">
+            <Gauge
+              height={158}
+              label="Aloqada"
+              suffix="%"
+              value={linkPct ?? 0}
+            />
+
+            {/*
+              Ikki tomon YONMA-YON: biri o'sganda ikkinchisi shuncha
+              kamayadi, shuning uchun ular birga o'qilishi kerak.
+            */}
+            <div className="grid grid-cols-2 gap-2">
+              <ConsumerLinkCell
+                delta={activeDelta}
+                label="Aloqaga chiqayotgan"
+                /* Ko'payishi yaxshi. */
+                positiveIsGood
+                total={totals.consumersTotal}
+                value={totals.consumersActive}
               />
+              <ConsumerLinkCell
+                delta={offDelta}
+                label="Aloqaga chiqmayotgan"
+                /* Kamayishi yaxshi - shuning uchun `positiveIsGood` yo'q. */
+                total={totals.consumersTotal}
+                value={totals.consumersDisconnected}
+              />
+            </div>
 
-              <dl className="grid grid-cols-2 gap-2 text-center">
-                <MeterCell
-                  label="Oldingi ko‘rsatkich"
-                  value={num(feeder.data.meterPrev, 0)}
-                />
-                <MeterCell
-                  label="Joriy ko‘rsatkich"
-                  value={num(feeder.data.meterCurr, 0)}
-                />
-                <MeterCell
-                  label="Koeffitsient"
-                  value={num(feeder.data.meterCoef, 0)}
-                />
-                <MeterCell
-                  label="O‘rtacha yuklama"
-                  value={`${num(feeder.data.avgLoadKw, 0)} kW`}
-                />
-              </dl>
-
-              {/* TP hisoblagichlarida qayd etilgan energiya - xulosa qiymat */}
-              <div
-                className="mt-auto flex items-baseline justify-center gap-2 rounded-lg px-3 py-3"
+            {/*
+              Yangi ulangan abonent - aloqa ulushining o'zgarishini
+              izohlaydi: 26 ta uzilganning o'rniga 5 ta yangi ulangan
+              bo'lsa, ulush "o'z-o'zidan" ko'tarilgan bo'ladi.
+            */}
+            {consumers.data && consumers.data.new > 0 && (
+              <p className="mt-auto rounded-lg px-3 py-2.5 text-center text-[11.5px] font-medium"
                 style={{
-                  background:
-                    "color-mix(in oklab, var(--viz-good) 10%, transparent)",
-                  color: "var(--viz-good)",
+                  background: 'color-mix(in oklab, var(--viz-good) 10%, transparent)',
+                  color: 'var(--viz-good)',
                 }}
               >
-                <span className="text-[11px] font-medium">
-                  TP larda qayd etilgan
-                </span>
-                <CountUp
-                  className="tabular text-[19px] font-bold leading-none"
-                  format={(v) => num(energy(v).value, 1)}
-                  value={feeder.data.kwhSold}
-                />
-                <span className="text-[11px] font-semibold">
-                  {energy(feeder.data.kwhSold).unit}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <EmptyPanel message="Ma’lumot yo‘q" />
-          )}
+                Shu oyda yangi ulangan:{' '}
+                <span className="font-bold">{num(consumers.data.new)} ta</span>
+              </p>
+            )}
+          </div>
         </Panel>
 
         {/*
@@ -586,36 +660,15 @@ export default function MfyDashboard() {
         </div>
 
         {/*
-          4 ta ko'rsatkich - BITTA USTUNDA, to'rt qator.
-          `flex-1` bilan har biri teng balandlikda va ustun qatordagi
+          2 ta ko'rsatkich - BITTA USTUNDA.
+          `flex-1` bilan ikkalasi teng balandlikda va ustun qatordagi
           boshqa panellar bilan bir xil bo'yga yetadi.
 
-          «Yuridik iste'molchilar» kartasi OLIB TASHLANDI: 69 raqami ham,
-          uning «Jami: 3 155» izohi ham «Umumiy abonentlar» KPI plitkasida
-          allaqachon turibdi - bir xil son ikki joyda ko'rinardi.
+          Shu ustundan OLIB TASHLANGANLAR - hammasi takror bo'lgani uchun:
+          «Yuridik iste'molchilar» («Umumiy abonentlar» plitkasida bor),
+          «Yo'qotish» (KPI plitkasi va «Energiya taqsimoti» donutida bor).
         */}
         <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-2">
-          {/*
-            «Hisoblagich aloqasi» KPI plitkasi o'rniga SHU karta.
-
-            Plitkada asosiy raqam ulush (99.2%) edi va u savolga javob
-            bermasdi: e'tiborni talab qiladigan narsa - aloqaga chiqmagan
-            26 ta abonent, foiz emas. Bu yerda asosiy raqam o'sha 26,
-            o'ng chekkada esa o'tgan oyga nisbatan farqi.
-          */}
-          <MiniStat
-            className="flex-1"
-            compact
-            delta={offDelta === null ? undefined : `${num(Math.abs(offDelta))} ta`}
-            /* Kamayish YAXSHI - aloqaga chiqmayotgan abonent kamaygani. */
-            deltaGood={offDelta === null || offDelta === 0 ? null : offDelta < 0}
-            hint={`Aloqada: ${num(totals.consumersActive)} ta`}
-            icon={<ZapOff className="size-4" />}
-            label="Aloqaga chiqmayotgan"
-            tone={offShare >= 5 ? 'critical' : 'warning'}
-            unit="ta"
-            value={num(totals.consumersDisconnected)}
-          />
           <MiniStat
             className="flex-1"
             compact
@@ -633,16 +686,6 @@ export default function MfyDashboard() {
             label="O‘rtacha hisob"
             unit="so‘m"
             value={num(avgBillSum, 0)}
-          />
-          <MiniStat
-            className="flex-1"
-            compact
-            hint={`Ulushi: ${pct(lossPart?.pct ?? 0, 1)}`}
-            icon={<Activity className="size-4" />}
-            label="Yo‘qotish"
-            tone="warning"
-            unit={energy(lossPart?.kwh ?? 0).unit}
-            value={num(energy(lossPart?.kwh ?? 0).value, 1)}
           />
         </div>
       </div>
@@ -801,12 +844,6 @@ export default function MfyDashboard() {
                 icon={<GaugeIcon className="size-3.5" />}
                 label="Kunlik iste’mol"
                 value={`${num(feeder.data.avgDailyKwh, 0)} kWh`}
-              />
-              <QuickMetric
-                icon={<PowerOff className="size-3.5" />}
-                label="Aloqada emas"
-                tone={offShare >= 5 ? "critical" : "good"}
-                value={`${pieces(totals.consumersDisconnected)} · ${pct(offShare, 1)}`}
               />
             </div>
           ) : (
@@ -1032,15 +1069,3 @@ export function BucketPicker({
   );
 }
 
-/** Quvvat panelidagi uchta ustunli qiymat. */
-/** Fider hisoblagichi kartasidagi katak - yorliq ustida, qiymat ostida. */
-function MeterCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <dt className="truncate text-[11px] leading-tight text-muted">{label}</dt>
-      <dd className="tabular truncate text-[15px] font-bold leading-tight">
-        {value}
-      </dd>
-    </div>
-  );
-}
