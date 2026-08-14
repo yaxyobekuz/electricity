@@ -52,7 +52,7 @@ const COL_JULY_ACTIVE = 6;
 const COL_JULY_OFFLINE = 7;
 
 /** Yangi fayl - TP ro'yxati, jami abonent va AVGUST aloqa holati. */
-const NEW_FILE = join(REPO_ROOT, 'xaqulobod_fider_12kunlik.xlsx');
+const NEW_FILE = join(REPO_ROOT, 'xaqulobod_13kunlik.xlsx');
 const NEW_SHEET = 'Sheet0 (2)';
 const NEW_FIRST_ROW = 5;
 const NEW_COL_CODE = 2;

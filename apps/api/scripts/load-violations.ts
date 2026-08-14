@@ -50,7 +50,7 @@ interface PeriodSpec {
 
 const PERIODS: PeriodSpec[] = [
   { period: '2026-07', label: 'iyul', administrative: 11, noFault: 10, lastDay: 31 },
-  { period: '2026-08', label: 'avgust', administrative: 2, noFault: 5, lastDay: 12 },
+  { period: '2026-08', label: 'avgust', administrative: 2, noFault: 5, lastDay: 13 },
 ];
 
 interface ActRow {

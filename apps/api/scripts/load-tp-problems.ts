@@ -3,8 +3,8 @@
  *
  * IKKI MANBA:
  *
- * ─── 1. `xaqulobod_fider_12kunlik.xlsx` · «Аниқланган камчиликлар» ─────────
- * Eng yangi hisobotning 8-ustuni - 12.08.2026 holatidagi nosozliklar. Bir
+ * ─── 1. `xaqulobod_13kunlik.xlsx` · «Аниқланган камчиликлар» ───────────────
+ * Eng yangi hisobotning 8-ustuni - 13.08.2026 holatidagi nosozliklar. Bir
  * necha xil yozuv uchraydi:
  *
  *   «Баланс хисоблагич носоз»                        → hisoblagichning o'zi nosoz
@@ -52,10 +52,10 @@ const DEFAULT_FILE = join(REPO_ROOT, 'xaqulobod_fider.xlsx');
 
 /**
  * NOSOZLIKLAR RO'YXATI - eng yangi hisobotning «Аниқланган камчиликлар»
- * ustuni (12.08.2026 holati). Eski faylning «Muammolar» varag'i O'RNINI
+ * ustuni (13.08.2026 holati). Eski faylning «Muammolar» varag'i O'RNINI
  * BOSADI: u 51 ta TP davridagi ro'yxat edi va bugungi holatni bermaydi.
  */
-const PROBLEM_FILE = join(REPO_ROOT, 'xaqulobod_fider_12kunlik.xlsx');
+const PROBLEM_FILE = join(REPO_ROOT, 'xaqulobod_13kunlik.xlsx');
 const PROBLEM_SHEET = 'Sheet0 (2)';
 const PROBLEM_FIRST_ROW = 5;
 const PROBLEM_COL_CODE = 2;
@@ -67,14 +67,14 @@ const PERIODS = ['2026-07', '2026-08'] as const;
 /**
  * Nosozlik QAYSI oyga tegishli.
  *
- * Ro'yxat 12.08.2026 holatini beradi, iyul uchun nosozlik qayd etilmagan -
+ * Ro'yxat 13.08.2026 holatini beradi, iyul uchun nosozlik qayd etilmagan -
  * shuning uchun iyulda hamma TP soz deb yoziladi. Aks holda avgustdagi
  * nosozlik iyulga ham "orqaga qarab" yozilib, o'tmish soxtalashtirilardi.
  */
 const FAULT_PERIOD = '2026-08';
 
 /** Faqat shu skript yozgan qatorlarni qayta topish uchun belgi. */
-const TAG_PROBLEM = '[manba: xaqulobod_fider_12kunlik.xlsx · Aniqlangan kamchiliklar]';
+const TAG_PROBLEM = '[manba: xaqulobod_13kunlik.xlsx · Aniqlangan kamchiliklar]';
 const TAG_INSPECTION = '[manba: xaqulobod_fider.xlsx · bir kunlik xatlov]';
 
 /**
@@ -89,11 +89,30 @@ const LEGACY_TAGS = [
 ];
 
 /**
+ * TOZALASH NAQSHLARI - FAYL NOMIGA BOG'LIQ EMAS.
+ *
+ * Belgida manba fayl nomi turadi (kimdir bazaga qarab "bu qayerdan keldi?"
+ * deb so'rasa javob o'sha yerda). Lekin TOZALASH uchun aynan shu nomdan
+ * foydalanib bo'lmaydi: hisobot yangi fayl bilan qayta berilganda belgi
+ * o'zgaradi va eski qatorlar topilmay, ro'yxatda ikki marta qolib ketadi -
+ * 12 kunlikdan 13 kunlikka o'tishda aynan shu yuz berdi (8 ta eski reja
+ * ishi yangilari bilan yonma-yon turib qoldi).
+ *
+ * Shuning uchun naqsh belgining O'ZGARMAS qismiga - manba nomidan keyingi
+ * bo'limga - tayanadi.
+ */
+const WIPE_PATTERNS = [
+  '%· Aniqlangan kamchiliklar]%',
+  '%· bir kunlik xatlov]%',
+  ...LEGACY_TAGS.map((t) => `%${t}%`),
+];
+
+/**
  * Reja oynasi - manbada muddat yo'q, izohda shunday deb aytiladi.
- * Boshlanish sanasi ma'lumot oynasidan (12.08) KEYIN turishi kerak, aks
+ * Boshlanish sanasi ma'lumot oynasidan (13.08) KEYIN turishi kerak, aks
  * holda reja o'z ma'lumot davrining ichiga tushib qoladi.
  */
-const PLAN_START = '2026-08-13';
+const PLAN_START = '2026-08-14';
 const PLAN_END = '2026-09-30';
 const PLAN_NOTE = 'Muddat manba faylda ko‘rsatilmagan - reja oynasi shartli.';
 
@@ -374,7 +393,7 @@ async function main(): Promise<void> {
     const wiped = await client.query(
       `DELETE FROM fact.work
         WHERE description LIKE ANY($1)`,
-      [[TAG_PROBLEM, TAG_INSPECTION, ...LEGACY_TAGS].map((t) => `%${t}%`)]);
+      [WIPE_PATTERNS]);
     if (wiped.rowCount) console.log(`\nEski ${wiped.rowCount} ta ish o‘chirildi (qayta yozish).`);
 
     // 2a. Rejalashtirilgan - hal etilmagan nosozliklar.

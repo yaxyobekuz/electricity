@@ -6,7 +6,7 @@
  * IKKI MANBA, chunki avgust hisoboti qayta berilgan:
  *
  *   • iyul   - `xaqulobod_fider.xlsx`, «Iyul» varag'i (01–31.07, 31 kun);
- *   • avgust - `xaqulobod_fider_12kunlik.xlsx`, «Sheet0 (2)» (01–12.08, 12 kun).
+ *   • avgust - `xaqulobod_13kunlik.xlsx`, «Sheet0 (2)» (01–13.08, 13 kun).
  *
  * Har ikkalasida ham TP kesimi: balans hisoblagichi va biriktirilgan
  * iste'molchilardan yig'ilgan energiya.
@@ -115,21 +115,23 @@ const PERIODS: PeriodSpec[] = [
     soldFrom: 'consumers',
   },
   {
-    period: '2026-08', label: 'Avgust', start: '2026-08-01', end: '2026-08-12', days: 12,
+    period: '2026-08', label: 'Avgust', start: '2026-08-01', end: '2026-08-13', days: 13,
     layout: {
-      file: 'xaqulobod_fider_12kunlik.xlsx', sheet: 'Sheet0 (2)',
+      file: 'xaqulobod_13kunlik.xlsx', sheet: 'Sheet0 (2)',
       firstRow: 5, colCode: 2, colBalance: 4, colConsumers: 5,
     },
     /*
-     * Avgust uchun fider boshidagi rasmiy o'lchov berilmagan, shuning uchun
-     * kirim ham, oqim ham TP hisoblagichlaridan olinadi va natija fayldagi
-     * «Жами» qatoriga aynan tushadi: 191 184,5 → 157 399,0, yo'qotish 17,67%.
+     * Fider boshidagi RASMIY kirim - biriktirilgan oylik qiymat.
      *
-     * DIQQAT: bu iyuldan BOSHQA narsani o'lchaydi. Iyulda yo'qotish fider
-     * boshi bilan TP lar orasida, avgustda esa TP bilan iste'molchi orasida.
-     * Rasmiy son kelganda shu yerga yozilsa, ikkala oy bir asosga qaytadi.
+     * Manba Excel faylida bu son YO'Q: u yerda faqat TP balans
+     * hisoblagichlari yig'indisi (240 499 kWh) turibdi, u endi «TP balans
+     * hisobi» kartasida alohida ko'rinadi.
+     *
+     * Shu bilan avgust IYUL BILAN BIR ASOSGA keldi: ikkala oyda ham kirim
+     * fider boshidan, oqim esa iste'molchi hisoblagichlaridan olinadi.
+     * Ya'ni yo'qotish darajalarini endi bevosita solishtirsa bo'ladi.
      */
-    officialIn: null,
+    officialIn: 248_300,
     soldFrom: 'consumers',
   },
 ];

@@ -37,7 +37,7 @@ import { tpMatchKey } from './chinobod-common.ts';
 
 const FEEDER_CODE = 'FIDER-XAQULOBOD';
 /** Amaldagi TP ro'yxatining manbasi - eng yangi hisobot. */
-const SOURCE_FILE = join(REPO_ROOT, 'xaqulobod_fider_12kunlik.xlsx');
+const SOURCE_FILE = join(REPO_ROOT, 'xaqulobod_13kunlik.xlsx');
 const SOURCE_SHEET = 'Sheet0 (2)';
 const COL_CODE = 2;
 /** Ma'lumot 5-qatordan boshlanadi (1-4 sarlavhalar), oxirgi qator «Жами». */
